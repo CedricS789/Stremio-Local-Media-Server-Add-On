@@ -1,0 +1,542 @@
+export const adminCss = `
+:root{color-scheme:dark;--bg:#000000;--panel:#0a0b10;--panel2:#12141d;--line:#1f2637;--line-strong:#2e394f;--text:#ffffff;--muted:#cbd5e1;--dim:#94a3b8;--brand:#0ea5e9;--brand2:#38bdf8;--warn:#f59e0b;--danger:#f43f5e;--radius:14px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+*{box-sizing:border-box}html,body{max-width:100%;overflow-x:hidden}body{margin:0;background:radial-gradient(ellipse at 50% -15%,rgba(14,165,233,0.08) 0,transparent 55rem),#000000;color:var(--text);min-height:100vh}body.modal-open{overflow:hidden}button,input,select{font:inherit}button{cursor:pointer}button:disabled{cursor:wait;opacity:.58}.shell{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100vh;min-width:0;width:100%}.sidebar{padding:28px 20px;border-right:1px solid var(--line);background:rgba(10,11,16,.94);backdrop-filter:blur(16px);position:sticky;top:0;height:100vh;min-width:0}.brand{display:flex;gap:12px;align-items:center;margin:0 8px 34px}.brand-mark{display:grid;place-items:center;width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,#0284c7,#06b6d4);color:#ffffff;box-shadow:inset 0 1px 0 rgba(255,255,255,0.3),0 2px 0 #0369a1,0 4px 12px rgba(14,165,233,0.35);font-weight:900;overflow:hidden;flex:0 0 auto}.brand-mark img{display:block;width:100%;height:100%;object-fit:cover}.branding-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap}.branding-preview{width:88px;height:88px;border-radius:20px;overflow:hidden;background:#050609;border:1px solid var(--line);flex:0 0 auto}.branding-preview img{display:block;width:100%;height:100%;object-fit:cover}.branding-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.manifest-row{display:flex;gap:9px;align-items:center;min-width:0}.manifest-row .input{flex:1 1 auto;min-width:0}.manifest-row .btn{flex:0 0 auto}.brand h1{font-size:15px;font-weight:800;color:#ffffff;margin:0}.brand p{font-size:12px;color:var(--muted);margin:2px 0 0}.nav{display:grid;gap:17px;min-width:0;max-width:100%}.nav-group{display:grid;gap:5px;min-width:0}.nav-label{padding:0 13px;color:var(--dim);font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.nav button{border:0;background:transparent;color:var(--muted);text-align:left;padding:11px 13px;border-radius:10px;font-weight:600;font-size:13px}.nav button:hover,.nav button.active{background:var(--panel2);color:#ffffff}.nav button.active{box-shadow:inset 3px 0 var(--brand2);font-weight:700}.sidebar-foot{position:absolute;bottom:24px;left:20px;right:20px}
+.server-state{font-size:12px;color:var(--muted);font-weight:600;padding:12px;border:1px solid var(--line);border-radius:12px;background:#050609}
+.server-version{display:block;margin:7px 0 0 15px;color:var(--dim);font-size:11px;font-weight:600;white-space:nowrap}
+.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--brand2);box-shadow:0 0 0 5px #38bdf822;margin-right:8px}.main{padding:34px 42px 64px;max-width:1500px;width:100%;min-width:0;margin:auto}.topbar{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-bottom:28px}.eyebrow{color:var(--brand2);font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:800}.topbar h2{font-size:30px;letter-spacing:-.035em;font-weight:800;margin:4px 0;color:#ffffff}.muted{color:var(--muted);font-size:13px}.actions{display:flex;gap:9px;flex-wrap:wrap}.btn{border:1px solid var(--line);background:var(--panel2);color:#f1f5f9;border-radius:9px;padding:9px 14px;font-weight:700;font-size:13px;min-width:0;max-width:100%;box-shadow:0 2px 0 rgba(0,0,0,0.5);transition:transform .08s ease,box-shadow .08s ease,border-color .15s ease}.btn:hover{border-color:var(--line-strong);color:#ffffff;transform:translateY(-1px);box-shadow:0 3px 0 rgba(0,0,0,0.5)}.btn:active{transform:translateY(1.5px)!important;box-shadow:0 .5px 0 rgba(0,0,0,0.5)!important}.btn:focus-visible,.input:focus-visible,.select:focus-visible,summary:focus-visible{outline:2px solid var(--brand2);outline-offset:2px}.btn.primary{background:linear-gradient(135deg,#0284c7,#0ea5e9);color:#fff;border-color:rgba(56,189,248,0.5);box-shadow:inset 0 1px 0 rgba(255,255,255,0.25),0 2px 0 #0369a1,0 4px 12px rgba(14,165,233,0.35)}.btn.primary:hover{box-shadow:inset 0 1px 0 rgba(255,255,255,0.35),0 3px 0 #0369a1,0 6px 16px rgba(14,165,233,0.45)}.btn.danger{background:rgba(244,63,94,0.14);border-color:rgba(244,63,94,0.38);color:#fda4af}.btn.danger:hover{background:#f43f5e;color:#fff;border-color:#f43f5e}.btn.small{padding:6px 10px;font-size:12px;border-radius:7px}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 24px}.stat{background:linear-gradient(155deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:var(--radius);padding:18px;min-width:0}.stat span{display:block;color:var(--muted);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em}.stat strong{display:block;font-size:30px;margin-top:8px;font-weight:800;color:#ffffff;letter-spacing:-.04em}.stat.alert strong{color:var(--warn)}.grid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(300px,.9fr);gap:16px}.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;min-width:0}.card-head{padding:16px 19px;border-bottom:1px solid var(--line);background:#0d0f15;display:flex;align-items:center;justify-content:space-between;gap:16px;min-width:0}.card-head h3{font-size:14px;font-weight:750;color:#ffffff;margin:0;min-width:0}.card-body{padding:18px}.list{display:grid;min-width:0}.list-row{display:grid;grid-template-columns:46px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 18px;border-bottom:1px solid var(--line);min-width:0}.list-row>*{min-width:0}.list-row:last-child{border:0}.poster{width:42px;height:58px;border-radius:7px;object-fit:cover;background:#050609;max-width:100%}.file-icon{width:42px;height:42px;border-radius:10px;display:grid;place-items:center;background:#0d1824;color:var(--brand2);font-size:11px;font-weight:800}.list-title{font-size:13px;font-weight:700;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.list-meta{font-size:12px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.badge{display:inline-flex;align-items:center;max-width:100%;font-size:11px;text-transform:uppercase;letter-spacing:.05em;font-weight:800;padding:5px 8px;border-radius:999px;background:#181d28;color:#cbd5e1;border:1px solid var(--line)}.badge.warn{background:rgba(245,158,11,0.15);color:#fde68a;border-color:rgba(245,158,11,0.38)}.badge.danger{background:rgba(244,63,94,0.15);color:#fecdd3;border-color:rgba(244,63,94,0.38)}.badge.good{background:rgba(16,185,129,0.15);color:#a7f3d0;border-color:rgba(16,185,129,0.38)}.empty{padding:34px 20px;text-align:center;color:var(--muted);font-size:13px;overflow-wrap:anywhere}.view{display:none}.view.active{display:block}.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:15px;min-width:0}.toolbar>*{min-width:0}.input,.select{width:100%;max-width:100%;background:#050609;color:#ffffff;border:1px solid var(--line);padding:10px 12px;border-radius:10px;font-size:13px;font-weight:500;outline:none;transition:border-color .15s ease,box-shadow .15s ease}.input:focus,.select:focus{border-color:var(--brand2);box-shadow:0 0 0 2px rgba(56,189,248,0.25)}.toolbar .input{max-width:430px}.table-wrap{overflow:auto}.table{width:100%;border-collapse:collapse;min-width:760px}.table th,.table td{text-align:left;padding:12px 15px;border-bottom:1px solid var(--line);font-size:13px}.table th{color:var(--muted);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.08em;background:#07080c}.table td{color:#f1f5f9}.table tr:hover td{background:#121622}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;min-width:0}.form-grid>*{min-width:0}.field label{display:block;font-size:12px;font-weight:700;color:#e2e8f0;margin:0 0 7px}.field.full{grid-column:1/-1}.help{font-size:12px;color:var(--dim);margin:6px 0 0;line-height:1.5}.settings-nav{grid-column:1/-1;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;padding:6px;border:1px solid var(--line);border-radius:13px;background:#050609}.settings-tab{border:0;border-radius:9px;padding:10px 12px;background:transparent;color:var(--muted);font-size:12px;font-weight:700}.settings-tab:hover{color:#ffffff;background:#181c28}.settings-tab.active{color:#fff;background:linear-gradient(135deg,#0284c7,#0ea5e9);box-shadow:0 2px 0 #0369a1,0 4px 10px rgba(14,165,233,0.35)}.settings-panel{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;min-width:0;padding-top:4px}.settings-panel[hidden]{display:none}.settings-panel>*{min-width:0}.settings-section{grid-column:1/-1;margin-top:8px;padding-top:18px;border-top:1px solid var(--line)}.settings-section:first-child{margin-top:0;padding-top:0;border-top:0}.settings-section h3{margin:0 0 5px;font-size:14px;font-weight:800;color:#ffffff}.settings-section>p{margin:0 0 15px;color:var(--muted);font-size:12px;line-height:1.5}.logs{font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace}.toast{position:fixed;right:22px;bottom:22px;background:#e8fff7;color:#09231c;padding:12px 16px;border-radius:11px;font-size:13px;font-weight:700;box-shadow:0 12px 40px #0008;transform:translateY(80px);opacity:0;transition:.2s;z-index:5;max-width:min(420px,calc(100vw - 32px));overflow-wrap:anywhere}.toast.show{transform:none;opacity:1}.login-wrap{min-height:100vh;min-height:100dvh;width:100%;max-width:100%;display:flex;align-items:center;justify-content:center;padding:16px;background:radial-gradient(ellipse at 50% -20%,rgba(14,165,233,0.1) 0,transparent 50%),#000000;box-sizing:border-box}.login{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:28px 22px;box-shadow:0 30px 80px rgba(0,0,0,0.8);box-sizing:border-box;margin:auto}.login h1{margin:10px 0 6px;letter-spacing:-.03em;color:#ffffff;font-size:24px;font-weight:800}.login form{display:grid;gap:14px;margin-top:24px}.login .error{color:#fecdd3;font-size:12px}.tmdb{margin-top:28px;padding-top:20px;border-top:1px solid var(--line);font-size:11px;color:var(--dim)}
+.health-banner{display:flex;align-items:center;justify-content:space-between;gap:18px;margin:-8px 0 20px;padding:17px 19px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}.health-banner.good{border-color:rgba(16,185,129,0.4)}.health-banner.warn{border-color:rgba(245,158,11,0.4)}.health-banner.danger{border-color:rgba(244,63,94,0.4)}.health-banner-title{font-size:16px;font-weight:800;color:#ffffff}.health-banner-meta{margin-top:5px;color:var(--muted);font-size:12px}.health-checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.health-check{padding:16px 17px;border:1px solid var(--line);border-radius:13px;background:var(--panel);min-width:0}.health-check-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.health-check-title{font-size:14px;font-weight:750;color:#ffffff}.health-check-summary{margin-top:9px;color:#e2e8f0;font-size:13px;line-height:1.5;overflow-wrap:anywhere}.health-check-meta{margin-top:9px;color:var(--dim);font-size:11px}.health-diagnostics{margin-top:14px}.health-diagnostics .technical-inner{padding:14px}.health-outcome-summary{color:var(--muted);font-size:12px;line-height:1.6}
+.scan-current{margin:-8px 0 20px;padding:18px 19px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}.scan-current.active{border-color:rgba(14,165,233,0.4)}.scan-current-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.scan-current-title{font-size:15px;font-weight:800;color:#ffffff}.scan-current-meta{margin-top:5px;color:var(--muted);font-size:12px}.scan-progress-track{height:9px;margin-top:16px;overflow:hidden;border-radius:999px;background:#050609;border:1px solid var(--line)}.scan-progress-bar{height:100%;min-width:0;border-radius:inherit;background:linear-gradient(90deg,var(--brand2),var(--brand));transition:width .2s ease}.scan-progress-track.indeterminate .scan-progress-bar{width:34%;animation:scan-progress 1.2s ease-in-out infinite}@keyframes scan-progress{0%{transform:translateX(-110%)}100%{transform:translateX(310%)}}.scan-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:14px}.scan-metric{padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:#050609}.scan-metric span{display:block;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}.scan-metric strong{display:block;margin-top:4px;font-size:15px;font-weight:800;color:#ffffff}.scan-history{display:grid;gap:10px}.scan-history-row{display:grid;grid-template-columns:minmax(150px,.8fr) auto minmax(260px,1.6fr);gap:14px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}.scan-history-row:last-child{border-bottom:0}.scan-history-main{min-width:0}.scan-history-title{font-size:13px;font-weight:750;color:#ffffff}.scan-history-meta{margin-top:4px;color:var(--dim);font-size:12px;overflow-wrap:anywhere}
+.backup-note{margin-top:18px}.backup-table .btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}.backup-running{border-color:#285c56}
+.modal{border:0;padding:0;background:transparent;color:var(--text);width:min(900px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);margin:auto;overflow:hidden}.modal::backdrop{background:#000000d9;backdrop-filter:blur(6px)}.modal-card{width:100%;max-width:100%;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-width:0;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,0.85)}.modal-header,.modal-footer{position:sticky;z-index:2;background:#0d0f15;min-width:0}.modal-header{top:0;padding:15px 19px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px}.modal-heading{min-width:0}.modal-heading .eyebrow{margin-bottom:4px}.modal-heading h3{font-size:17px;line-height:1.3;font-weight:800;color:#ffffff;margin:0;overflow-wrap:anywhere;word-break:break-word}.modal-close{flex:0 0 auto}.modal-body{padding:20px;min-width:0;max-width:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable}.modal-footer,.form-actions{padding:14px 19px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap}.modal-footer{bottom:0}.modal-footer:empty{display:none}.modal-loading{display:grid;place-items:center;min-height:260px;color:var(--muted)}.modal-loading span{display:inline-flex;align-items:center;gap:10px}.modal-loading span::before{content:"";width:16px;height:16px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--brand2);animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.details-section{min-width:0}.details-section+.details-section{margin-top:25px;padding-top:24px;border-top:1px solid var(--line)}.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;min-width:0}.section-head>div{min-width:0}.section-head h4{font-size:14px;font-weight:800;color:#ffffff;margin:0}.section-head p{font-size:12px;color:var(--muted);margin:4px 0 0;line-height:1.5;overflow-wrap:anywhere}.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}.info-grid>*{min-width:0}.info-item{background:#050609;border:1px solid var(--line);border-radius:11px;padding:12px;min-width:0}.info-item.full{grid-column:1/-1}.info-label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:6px}.info-value{display:block;min-width:0;max-width:100%;font-size:13px;line-height:1.55;color:#ffffff;overflow-wrap:anywhere;word-break:break-word}.path-row{display:flex;align-items:flex-start;gap:10px;min-width:0}.path-row .info-value{flex:1 1 auto}.copy-btn{flex:0 0 auto}.notice{border:1px solid var(--line);background:#050609;border-radius:11px;padding:12px 14px;font-size:13px;line-height:1.5;color:#e2e8f0;overflow-wrap:anywhere}.notice.error{border-color:rgba(244,63,94,0.4);background:#1a070c;color:#fecdd3}.notice.warn{border-color:rgba(245,158,11,0.4);background:#181206;color:#fde68a}.notice[hidden]{display:none}.match-card{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:14px;align-items:center;min-width:0;padding:14px;background:#050609;border:1px solid var(--line);border-radius:13px}.match-card>*{min-width:0}.match-card .poster{width:72px;height:102px}.match-content{min-width:0}.match-title{font-size:15px;font-weight:750;color:#ffffff;line-height:1.35;overflow-wrap:anywhere}.match-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:11px;margin-top:7px}.match-description{margin:9px 0 0;color:var(--muted);font-size:13px;line-height:1.55;overflow-wrap:anywhere;word-break:break-word}.match-search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;min-width:0;margin-top:14px}.match-search .field{min-width:0}.match-search .btn{min-height:42px}.search-status{min-height:20px;margin:9px 0 0;color:var(--muted);font-size:12px}.search-results{display:grid;gap:10px;min-width:0;margin-top:8px}.search-result{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:13px;align-items:center;min-width:0;padding:12px;background:#050609;border:1px solid var(--line);border-radius:12px}.search-result>*{min-width:0}.search-result .poster,.poster-placeholder{width:64px;height:91px;border-radius:8px}.poster-placeholder{display:grid;place-items:center;background:#0d0f15;color:var(--muted);font-size:10px;text-align:center}.result-copy{min-width:0}.result-copy .match-title{font-size:14px;color:#ffffff;font-weight:750}.result-copy .match-description{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:var(--muted);font-size:12px}.confidence{color:var(--brand2);font-weight:800}.technical-details{border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}.technical-details summary{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;background:#050609;color:#ffffff;font-size:13px;font-weight:700}.technical-details summary::marker{color:var(--brand2)}.technical-details summary::after{content:"Show";color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}.technical-details[open] summary::after{content:"Hide"}.technical-inner{padding:12px;min-width:0;border-top:1px solid var(--line)}.technical-actions{display:flex;justify-content:flex-end;margin-bottom:9px}.code{display:block;width:100%;max-width:100%;max-height:320px;margin:0;overflow-y:auto;overflow-x:hidden;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;background:#050609;border:1px solid var(--line);border-radius:10px;padding:12px;color:#cbd5e1;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:900px){.shell{grid-template-columns:1fr}.sidebar{height:auto;position:relative;border-right:0;border-bottom:1px solid var(--line);padding:15px}.brand{margin:0 4px 14px}.nav{display:flex;gap:5px;overflow:auto}.nav-group{display:flex;gap:5px}.nav-label{display:none}.nav button{white-space:nowrap}.sidebar-foot{display:none}.main{padding:24px 16px 50px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}.topbar{align-items:flex-start}.form-grid,.settings-panel{grid-template-columns:1fr}.settings-nav{display:flex;overflow-x:auto}.settings-tab{flex:0 0 auto}.field.full{grid-column:auto}}
+@media(max-width:600px){.stats{grid-template-columns:1fr 1fr}.stat{padding:14px}.stat strong{font-size:24px}.topbar{display:block}.topbar .actions{margin-top:14px}.main{padding:16px 12px 40px}.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}.modal{width:min(900px,calc(100vw - 16px));max-width:calc(100vw - 16px)}.modal-header{padding:12px 14px}.modal-body{padding:14px}.modal-footer{padding:12px 14px}}
+.manifest-row{flex-wrap:wrap}.manifest-row .input{flex-basis:420px}
+`;
+
+export function loginHtml(error = '', nextUrl = '/downloads'): string {
+  const safeNext = String(nextUrl || '/downloads').replace(/[^\w\d_./?&=-]/g, '');
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in · Stremio Local Media Server</title><style>${adminCss}</style></head><body><main class="login-wrap"><section class="login"><div class="brand-mark"><img src="/addon-icon" alt="Stremio Local Media Server"></div><h1>Welcome back</h1><p class="muted">Sign in to access your Stremio Local Media Server.</p>${error ? `<p class="error">${error}</p>` : ''}<form method="post" action="/admin/login"><input type="hidden" name="next" value="${safeNext}"><div class="field"><label for="loginUsername">Username</label><input id="loginUsername" class="input" name="username" autocomplete="username" required></div><div class="field"><label for="loginPassword">Password</label><input id="loginPassword" class="input" name="password" type="password" autocomplete="current-password" required></div><button class="btn primary" type="submit">Sign in</button></form><p class="tmdb">This product uses the TMDB API but is not endorsed or certified by TMDB.</p></section></main></body></html>`;
+}
+
+export function adminHtml(csrf: string): string {
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="${csrf}"><title>Stremio Local Media Server</title><style>${adminCss}</style></head><body>
+  <div class="shell"><aside class="sidebar"><div class="brand"><div class="brand-mark"><img id="sidebarBrandIcon" src="/addon-icon" alt="Stremio Local Media Server"></div><div><h1 id="brandName">Stremio Local Media Server</h1><p>Self-hosted media & downloader</p></div></div><nav class="nav" aria-label="Admin sections"><div class="nav-group"><span class="nav-label">Dock</span><button class="active" data-view="dashboard" aria-current="page">Overview</button></div><div class="nav-group"><span class="nav-label">Media</span><button data-view="library">Library</button><button data-view="logs">Scan logs</button></div><div class="nav-group"><span class="nav-label">System</span><button data-view="settings">Settings</button><button data-view="health">System health</button><button data-view="backups">Backups</button></div></nav>
+<div class="sidebar-foot"><div class="server-state"><div><span class="pulse"></span><span id="serverState">Server online</span></div><span class="server-version" id="buildVersion">Version loading…</span></div></div></aside>
+<main class="main"><section id="dashboard" class="view active"><div class="topbar"><div><div class="eyebrow">Dock Control</div><h2>Stremio Local Media Server Overview</h2><div class="muted" id="lastScan">Loading scan status…</div></div>
+<div class="actions"><a class="btn primary" href="/downloads" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">⚡ Downloads & Storage</a><button class="btn" data-scan="changed">Scan changes</button><button class="btn" data-scan="full">Full rescan</button></div></div><div class="stats" id="stats"></div><div class="grid"><div class="card"><div class="card-head"><h3>Recently added</h3><button class="btn small" data-view-go="library">View library</button></div><div class="list" id="recentList"></div></div><div class="card"><div class="card-head"><h3>Downloads & Storage Manager</h3><a class="btn small" href="/downloads" style="text-decoration:none;">Open dashboard</a></div><div style="padding:18px 20px;"><p style="margin:0 0 16px 0;color:var(--muted);font-size:13px;line-height:1.6;">Manage downloaded movies and TV series, track your allocated storage quota, choose stream quality directly from Stremio, or trigger instant file cleanup.</p><div style="display:flex;gap:10px;flex-wrap:wrap;"><a class="btn primary" href="/downloads" style="text-decoration:none;">⚡ Open Live Downloads Dashboard</a></div></div></div></div></section>
+  <section id="health" class="view"><div class="topbar"><div><div class="eyebrow">Operational readiness</div><h2>System health</h2><p class="muted">On-demand, sanitized checks for the services and storage Stremio Local Media Server depends on.</p></div><div class="actions"><button class="btn" id="copyDiagnostics" type="button" data-copy="diagnosticsJson" data-copy-label="Diagnostics copied" disabled>Copy diagnostics</button><button class="btn primary" type="button" data-refresh-health>Run checks</button></div></div><div class="health-banner" id="healthSummary" aria-live="polite"><div><div class="health-banner-title">Checks have not run yet</div><div class="health-banner-meta">Open this page or run the checks manually.</div></div></div><div class="health-checks" id="healthChecks"></div><section class="outcome-section" aria-labelledby="healthDiagnosticsHeading"><div class="section-head"><div><h3 id="healthDiagnosticsHeading">Sanitized diagnostic bundle</h3><p>Useful for troubleshooting without paths, URLs, credentials, tokens, or raw device identities.</p></div></div><div class="card"><div class="card-body"><div class="health-outcome-summary" id="healthOutcomeSummary">No diagnostic snapshot has loaded.</div><details class="technical-details health-diagnostics"><summary>Diagnostic JSON</summary><div class="technical-inner"><pre class="code" id="diagnosticsJson">Run system checks to create a diagnostic bundle.</pre></div></details></div></div></section></section>
+  <section id="backups" class="view"><div class="topbar"><div><div class="eyebrow">Data protection</div><h2>Database backups</h2><p class="muted">Live, integrity-checked SQLite snapshots with bounded automatic retention.</p></div><div class="actions"><button class="btn" type="button" data-refresh-backups>Refresh</button><button class="btn primary" type="button" data-create-backup>Create backup</button></div></div><div class="health-banner" id="backupSummary" aria-live="polite"><div><div class="health-banner-title">Backups have not loaded yet</div><div class="health-banner-meta">Open this page to inspect verified recovery points.</div></div></div><div class="stats activity-operations" id="backupStats" aria-label="Backup status"></div><div class="card table-wrap backup-table"><table class="table"><thead><tr><th>Created</th><th>Trigger</th><th>Size</th><th>Integrity</th><th></th></tr></thead><tbody id="backupRows"></tbody></table></div><div class="notice backup-note">Restores are intentionally offline: stop Stremio Local Media Server, preserve the current database, replace it with a downloaded snapshot, remove stale <code>-wal</code>/<code>-shm</code> companions, then restart and run System Health.</div></section>
+  <section id="library" class="view"><div class="topbar"><div><div class="eyebrow">All local files</div><h2>Library</h2></div></div><div class="toolbar"><label class="sr-only" for="librarySearch">Filter library</label><input id="librarySearch" class="input" placeholder="Filter by title or filename"><label class="sr-only" for="libraryType">Filter by media type</label><select id="libraryType" class="select" style="max-width:160px"><option value="">All types</option><option value="movie">Movies</option><option value="series">TV</option></select></div><div class="card table-wrap"><table class="table"><thead><tr><th>Title</th><th>Type</th><th>File</th><th>Quality</th><th>Duration</th><th>Status</th><th></th></tr></thead><tbody id="libraryRows"></tbody></table></div></section>
+  <section id="logs" class="view"><div class="topbar"><div><div class="eyebrow">Scanner activity</div><h2>Scan logs</h2><p class="muted">Live, cancellable library discovery and media inspection with durable terminal history.</p></div><div class="actions"><button class="btn" type="button" data-scan="changed">Scan changes</button><button class="btn primary" type="button" data-scan="full">Full rescan</button><button class="btn danger" type="button" data-cancel-scan hidden>Cancel scan</button></div></div><div class="scan-current" id="scanCurrent" aria-live="polite"></div><div class="card scan-history" id="scanLogs"></div></section>
+  <section id="settings" class="view"><div class="topbar"><div><div class="eyebrow">Runtime configuration</div><h2>Settings</h2><p class="muted">Configuration is grouped into clear sections. All sections save together.</p></div></div><form class="card" id="settingsForm"><div class="card-body form-grid">
+
+<div class="settings-nav" role="tablist" aria-label="Settings sections">
+  <button class="settings-tab active" id="settings-tab-general" type="button" role="tab" aria-selected="true" aria-controls="settings-panel-general" tabindex="0" data-settings-tab="general">General</button>
+  <button class="settings-tab" id="settings-tab-downloads" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-downloads" tabindex="-1" data-settings-tab="downloads">Downloads Engine</button>
+  <button class="settings-tab" id="settings-tab-storage" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-storage" tabindex="-1" data-settings-tab="storage">Storage & Quota</button>
+  <button class="settings-tab" id="settings-tab-streaming" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-streaming" tabindex="-1" data-settings-tab="streaming">Network & Streaming</button>
+  <button class="settings-tab" id="settings-tab-security" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-security" tabindex="-1" data-settings-tab="security">Security</button>
+  <button class="settings-tab" id="settings-tab-danger" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-danger" tabindex="-1" data-settings-tab="danger" style="color:#fda4af;">Danger Zone</button>
+</div>
+
+<!-- Panel 1: General -->
+<section class="settings-panel" id="settings-panel-general" role="tabpanel" aria-labelledby="settings-tab-general" data-settings-panel="general">
+<div class="settings-section">
+  <h3>Addon Identity</h3>
+  <p>Public name, branding, and Stremio manifest URL.</p>
+</div>
+<div class="field full">
+  <label for="addonName">Addon name</label>
+  <input id="addonName" class="input" name="addonName" maxlength="80" required>
+  <p class="help">This is the provider name shown in Stremio stream listings and catalogs.</p>
+</div>
+<div class="field full">
+  <label>Addon icon</label>
+  <div class="branding-row">
+    <div class="branding-preview">
+      <img id="addonIconPreview" src="/addon-icon" alt="Addon icon preview">
+    </div>
+    <div>
+      <div class="branding-actions">
+        <input id="addonIconFile" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+        <button id="changeAddonIcon" class="btn" type="button">Change icon</button>
+        <button id="removeAddonIcon" class="btn danger" type="button">Remove icon</button>
+      </div>
+      <p class="help">PNG, JPG or WEBP · maximum 2 MB. Square images work best.</p>
+    </div>
+  </div>
+</div>
+<div class="settings-section">
+  <h3>Network & Playback Addresses</h3>
+  <p>Public remote streaming and high-speed local LAN playback endpoints.</p>
+</div>
+<div class="field full">
+  <label for="baseUrl">Public base URL (Remote Access)</label>
+  <input id="baseUrl" class="input" name="baseUrl" type="url" required placeholder="https://media.yourdomain.com">
+  <p class="help">Public HTTPS URL configured through your Cloudflare Tunnel (used when streaming outside your home network).</p>
+</div>
+<div class="field full">
+  <label for="lanBaseUrl">LAN Direct Streaming Base URL (Home Gigabit Playback)</label>
+  <input id="lanBaseUrl" class="input" name="lanBaseUrl" type="url" placeholder="http://192.168.129.10:60500">
+  <p class="help">Your server's local network address and port (e.g. <code>http://192.168.129.10:60500</code>). When playing media on your home Wi-Fi or Ethernet LAN, Stremio uses this address for pure Gigabit local streaming with 0 internet data. You can change this here at any time if your server's local IP changes.</p>
+</div>
+<div class="field full">
+  <label for="manifestUrl">Stremio addon manifest URL</label>
+  <div class="manifest-row">
+    <input id="manifestUrl" class="input" type="text" readonly aria-readonly="true">
+    <button class="btn" type="button" data-copy="manifestUrl" data-copy-label="Manifest URL copied">Copy manifest URL</button>
+    <button id="regenerateAddonUrl" class="btn danger" type="button">Regenerate secure URL</button>
+  </div>
+  <p class="help">Keep this URL private. Regenerating it immediately revokes the old addon installation and requires reinstalling in Stremio.</p>
+</div>
+<div class="field full">
+  <label for="tmdbApiKey">TMDB API key (optional)</label>
+  <input id="tmdbApiKey" class="input" name="tmdbApiKey" type="password" placeholder="Optional — automatic metadata works via Cinemeta">
+  <p class="help" id="tmdbStatus"></p>
+</div>
+</section>
+
+<!-- Panel: Downloads Engine (NEW!) -->
+<section class="settings-panel" id="settings-panel-downloads" role="tabpanel" aria-labelledby="settings-tab-downloads" data-settings-panel="downloads" hidden>
+<div class="settings-section">
+  <h3>Parallel Downloads & Queue</h3>
+  <p>Control simultaneous file downloads across movies and series episodes.</p>
+</div>
+<div class="field">
+  <label for="maxConcurrentDownloads">Parallel Downloads</label>
+  <input id="maxConcurrentDownloads" class="input" name="maxConcurrentDownloads" type="number" min="1" max="10" step="1" required placeholder="2">
+  <p class="help">Number of files to download simultaneously in parallel. When downloading seasons or multiple items, this many files download at the same time.</p>
+</div>
+<div class="field">
+  <label for="downloadTimeoutSeconds">Download Stall Timeout (seconds)</label>
+  <input id="downloadTimeoutSeconds" class="input" name="downloadTimeoutSeconds" type="number" min="15" max="300" step="5" required placeholder="60">
+  <p class="help">If no data is received from the remote source within this timeframe, the stalled download fails gracefully and frees its slot.</p>
+</div>
+<div class="settings-section">
+  <h3>Bandwidth Throttling</h3>
+  <p>Global download rate limiting across all active download streams.</p>
+</div>
+<div class="field full">
+  <label for="maxDownloadSpeedMBps">Max Download Speed (MB/s)</label>
+  <input id="maxDownloadSpeedMBps" class="input" name="maxDownloadSpeedMBps" type="number" min="0" max="1000" step="1" placeholder="0">
+  <p class="help">Global speed cap in Megabytes per second (MB/s). Set to 0 for unlimited maximum network speed.</p>
+</div>
+<div class="settings-section">
+  <h3>Automation & Post-Processing</h3>
+  <p>Post-download tasks and library integration.</p>
+</div>
+<div class="field full">
+  <label for="autoRescanOnDownload">Auto-Rescan Library on Download Finish</label>
+  <select id="autoRescanOnDownload" class="select" name="autoRescanOnDownload">
+    <option value="true">Enabled (instantly index finished files for Stremio)</option>
+    <option value="false">Disabled (wait for scheduled interval)</option>
+  </select>
+  <p class="help">Automatically runs an incremental library scan when a download completes so it appears immediately in Stremio and Media Library.</p>
+</div>
+</section>
+
+<!-- Panel 2: Storage & Quota (NEW!) -->
+<section class="settings-panel" id="settings-panel-storage" role="tabpanel" aria-labelledby="settings-tab-storage" data-settings-panel="storage" hidden>
+<div class="settings-section">
+  <h3>Storage Quota</h3>
+  <p>Dedicated storage allocation for downloaded media.</p>
+</div>
+<div class="field full">
+  <label for="mediaSoftLimitGb">Max Allocated Storage Space (GB)</label>
+  <input id="mediaSoftLimitGb" class="input" name="mediaSoftLimitGb" type="number" min="1" max="100000" step="1" placeholder="100">
+  <p class="help">Total allocated storage space in Gigabytes. Downloads verify available quota and host disk space before starting.</p>
+</div>
+<div class="settings-section">
+  <h3>Media Library Folders</h3>
+  <p>Paths on the server and automated background library scanning.</p>
+</div>
+<div class="field"><label for="moviesPath">Movies directory</label><input id="moviesPath" class="input" name="moviesPath" required></div>
+<div class="field"><label for="tvPath">TV directory</label><input id="tvPath" class="input" name="tvPath" required></div>
+<div class="field"><label for="scanIntervalMinutes">Scan interval (minutes)</label><input id="scanIntervalMinutes" class="input" name="scanIntervalMinutes" type="number" min="1"></div>
+<div class="field"><label for="minimumFileSizeMb">Minimum file size (MB)</label><input id="minimumFileSizeMb" class="input" name="minimumFileSizeMb" type="number" min="0"></div>
+</section>
+
+<!-- Panel 3: Network & Streaming (NEW!) -->
+<section class="settings-panel" id="settings-panel-streaming" role="tabpanel" aria-labelledby="settings-tab-streaming" data-settings-panel="streaming" hidden>
+<div class="settings-section">
+  <h3>Direct LAN & Remote Addresses</h3>
+  <p>Local LAN playback and public base URLs are configured on the <button type="button" class="btn small" data-settings-tab="general" style="margin-left:6px;">General Tab</button></p>
+</div>
+<div class="settings-section">
+  <h3>Stream Tokens</h3>
+  <p>Manage security token lifespans for video player streams.</p>
+</div>
+<div class="field"><label for="streamTokenExpiryHours">Stream token expiry (hours)</label><input id="streamTokenExpiryHours" class="input" name="streamTokenExpiryHours" type="number" min="1"></div>
+<div class="field"><label for="longLivedStreamTokens">Token mode</label><select id="longLivedStreamTokens" class="select" name="longLivedStreamTokens"><option value="false">Expiring tokens</option><option value="true">Long-lived tokens</option></select></div>
+</section>
+
+<!-- Panel 4: Security -->
+<section class="settings-panel" id="settings-panel-security" role="tabpanel" aria-labelledby="settings-tab-security" data-settings-panel="security" hidden>
+<div class="settings-section">
+  <h3>Admin Access</h3>
+  <p>Credentials to access this console and the downloads dashboard.</p>
+</div>
+<div class="field"><label for="adminUsername">Admin username</label><input id="adminUsername" class="input" name="adminUsername" required></div>
+<div class="field"><label for="newPassword">New admin password</label><input id="newPassword" class="input" name="newPassword" type="password" minlength="10" placeholder="Leave blank to keep current"></div>
+</section>
+
+<!-- Panel 5: Danger Zone -->
+<section class="settings-panel" id="settings-panel-danger" role="tabpanel" aria-labelledby="settings-tab-danger" data-settings-panel="danger" hidden>
+<div class="settings-section">
+  <h3 style="color:#fda4af;">Destructive System Maintenance</h3>
+  <p>Irreversible storage wipe operations protected by multi-step confirmation.</p>
+</div>
+<div class="field full">
+  <div style="background:#160b10; border:1px solid #6e2430; border-radius:12px; padding:20px 22px;">
+    <div style="display:flex; align-items:center; gap:10px; margin-bottom:8px;">
+      <span style="font-size:18px;">⚠️</span>
+      <strong style="color:#fecdd3; font-size:14px;">Wipe All Downloaded Media Files</strong>
+    </div>
+    <p style="color:#fda4af; font-size:12px; line-height:1.6; margin:0 0 16px 0; max-width:680px;">
+      Permanently delete all downloaded movies, TV series, episodes, and directory folders from home server disk storage. This action cannot be undone and requires confirmation phrase verification and your administrator password.
+    </p>
+    <button class="btn danger" type="button" id="adminWipeAllMediaBtn" style="font-weight:800; padding:10px 18px; display:inline-flex; align-items:center; gap:8px;">
+      <span>🗑️</span><span>Wipe All Downloaded Media...</span>
+    </button>
+  </div>
+</div>
+</section>
+
+</div><div class="form-actions"><button class="btn primary" type="submit">Save all settings</button></div></form><p class="tmdb">Metadata is matched automatically through Cinemeta. An optional TMDB key enables direct TMDB poster lookups.</p></section></main></div>
+  <dialog class="modal" id="fileModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-card"><header class="modal-header"><div class="modal-heading"><div class="eyebrow">Media details</div><h3 id="modalTitle" tabindex="-1">File details</h3></div><button class="btn small modal-close" type="button" data-close aria-label="Close media details">Close</button></header><div class="modal-body" id="modalBody"></div><footer class="modal-footer" id="modalActions"></footer></div></dialog>
+  <dialog class="modal" id="dangerModal" role="dialog" aria-modal="true" aria-labelledby="dangerModalTitle">
+    <div class="modal-card" style="width:min(520px, calc(100vw - 32px)); border-color:#6e2430; box-shadow:0 30px 80px rgba(0,0,0,0.95), 0 0 35px rgba(244,63,94,0.18);">
+      <header class="modal-header" style="background:#13080c; border-bottom:1px solid #4a151e;">
+        <div class="modal-heading">
+          <div class="eyebrow" style="color:#f43f5e; font-weight:800; letter-spacing:0.12em;">DANGER ZONE</div>
+          <h3 id="dangerModalTitle" style="color:#ffffff; font-size:18px;">Wipe All Downloaded Media</h3>
+        </div>
+        <button class="btn small modal-close" type="button" id="dangerModalClose" aria-label="Close dialog">✕</button>
+      </header>
+      <div class="modal-body" style="padding:22px;">
+        <div id="dangerStep1">
+          <div style="background:#1a070c; border:1px solid rgba(244,63,94,0.38); border-radius:12px; padding:15px 16px; margin-bottom:18px; display:flex; gap:12px; align-items:flex-start;">
+            <span style="font-size:22px; line-height:1; flex:0 0 auto;">🚨</span>
+            <div style="font-size:13px; color:#fecdd3; line-height:1.55;">
+              <strong style="color:#ffffff; display:block; margin-bottom:4px; font-size:14px;">Irreversible Storage Wipe</strong>
+              This will permanently delete <strong>ALL</strong> downloaded movies, TV series, episodes, and directory folders from your home server disk storage. This cannot be undone.
+            </div>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label for="dangerPhraseInput" style="display:block; color:#fda4af; font-size:12px; font-weight:750; margin-bottom:8px;">
+              Type <code style="background:#260a12; color:#fecdd3; padding:2px 7px; border-radius:5px; border:1px solid #6e2430; font-family:monospace; font-weight:800; font-size:12px;">DELETE ALL MEDIA</code> to proceed:
+            </label>
+            <input id="dangerPhraseInput" class="input" style="width:100%; font-family:monospace; font-size:14px; letter-spacing:0.04em; background:#050609; border-color:#4a151e; color:#ffffff;" placeholder="DELETE ALL MEDIA" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+        <div id="dangerStep2" style="display:none;">
+          <div style="background:#10141f; border:1px solid #1f2b42; border-radius:12px; padding:14px 16px; margin-bottom:18px;">
+            <div style="color:var(--muted); font-size:11px; text-transform:uppercase; font-weight:800; letter-spacing:0.08em; margin-bottom:4px;">Security Authorization</div>
+            <div style="color:#ffffff; font-size:13px; font-weight:600;">Confirm administrator credentials to authorize storage wipe:</div>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label for="dangerPasswordInput" style="display:block; color:#cbd5e1; font-size:12px; font-weight:750; margin-bottom:8px;">
+              Administrator Password
+            </label>
+            <div style="position:relative; display:flex; align-items:center;">
+              <input id="dangerPasswordInput" class="input" type="password" style="width:100%; padding-right:42px; background:#050609; border-color:var(--line); color:#ffffff;" placeholder="Enter admin password" autocomplete="current-password">
+              <button type="button" id="dangerPasswordToggle" style="position:absolute; right:10px; background:none; border:none; color:var(--dim); cursor:pointer; padding:4px; font-size:14px;" title="Show/hide password">👁️</button>
+            </div>
+          </div>
+        </div>
+        <div id="dangerModalError" class="notice error" style="margin-top:16px; display:none;"></div>
+      </div>
+      <footer class="modal-footer" style="background:#0d0f15; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+        <button class="btn" type="button" id="dangerCancelBtn">Cancel</button>
+        <div style="display:flex; gap:9px;">
+          <button class="btn" type="button" id="dangerBackBtn" style="display:none;">← Back</button>
+          <button class="btn danger" type="button" id="dangerNextBtn" disabled style="font-weight:750;">Next: Enter Password →</button>
+          <button class="btn danger" type="button" id="dangerExecuteBtn" style="display:none; font-weight:800;">🗑️ Permanently Wipe All Media</button>
+        </div>
+      </footer>
+    </div>
+  </dialog>
+  <dialog class="modal" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
+    <div class="modal-card" style="width:min(460px, calc(100vw - 32px));">
+      <header class="modal-header">
+        <div class="modal-heading">
+          <div class="eyebrow" id="confirmModalEyebrow">Confirmation</div>
+          <h3 id="confirmModalTitle">Confirm Action</h3>
+        </div>
+        <button class="btn small modal-close" type="button" id="confirmModalClose" aria-label="Close dialog">✕</button>
+      </header>
+      <div class="modal-body" style="padding:20px;">
+        <p id="confirmModalMessage" style="color:var(--text); font-size:13px; line-height:1.55; margin:0;"></p>
+      </div>
+      <footer class="modal-footer" style="display:flex; justify-content:flex-end; gap:9px;">
+        <button class="btn" type="button" id="confirmModalCancel">Cancel</button>
+        <button class="btn primary" type="button" id="confirmModalOk">Confirm</button>
+      </footer>
+    </div>
+  </dialog><div class="toast" id="toast" role="status" aria-live="polite"></div><script>${adminJs}</script></body></html>`;
+}
+
+export const adminJs = String.raw`
+const csrf=document.querySelector('meta[name="csrf-token"]')?.content||'';
+let state={files:[],counts:{},recent:[],logs:[],scan:null,health:null,backups:null,settings:{}},stateRequest=0,healthRequest=0,backupRequest=0,scanRequest=0,settingsDirty=false,toastTimer=null;
+const modalState={id:null,file:null,request:0,operation:0,opener:null,openerContext:null,busy:false,searchController:null};
+const fileModal=document.getElementById('fileModal'),modalBody=document.getElementById('modalBody'),modalActions=document.getElementById('modalActions'),modalTitle=document.getElementById('modalTitle');
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function api(url,options={}){const headers={'x-csrf-token':csrf,...options.headers};if(options.body!==undefined&&!(options.body instanceof FormData)&&!Object.keys(headers).some(key=>key.toLowerCase()==='content-type'))headers['content-type']='application/json';const response=await fetch(url,{...options,headers});if(response.status===401){location='/admin/login';throw new Error('Session expired')}const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'The request could not be completed.');return data}
+function toast(message){const node=document.getElementById('toast');node.textContent=message;node.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>{node.classList.remove('show');toastTimer=null},2400)}
+function showConfirm({ title = 'Confirm Action', eyebrow = 'Confirmation', message, confirmText = 'Confirm', danger = false }){
+  return new Promise(resolve => {
+    const modal = document.getElementById('confirmModal');
+    const titleEl = document.getElementById('confirmModalTitle');
+    const eyeEl = document.getElementById('confirmModalEyebrow');
+    const msgEl = document.getElementById('confirmModalMessage');
+    const okBtn = document.getElementById('confirmModalOk');
+    const cancelBtn = document.getElementById('confirmModalCancel');
+    const closeBtn = document.getElementById('confirmModalClose');
+
+    titleEl.textContent = title;
+    eyeEl.textContent = eyebrow;
+    msgEl.textContent = message;
+    okBtn.textContent = confirmText;
+    okBtn.className = 'btn ' + (danger ? 'danger' : 'primary');
+
+    let resolved = false;
+    const finish = (result) => {
+      if (resolved) return;
+      resolved = true;
+      modal.close();
+      resolve(result);
+    };
+
+    okBtn.onclick = () => finish(true);
+    cancelBtn.onclick = () => finish(false);
+    closeBtn.onclick = () => finish(false);
+    modal.onclick = (e) => { if(e.target === modal) finish(false); };
+    modal.oncancel = (e) => { e.preventDefault(); finish(false); };
+
+    modal.showModal();
+    okBtn.focus();
+  });
+}
+function brandingIconUrl(){return '/addon-icon?v='+encodeURIComponent(state.settings.addonIconUpdatedAt||0)}
+function syncManifestUrl(){const form=document.getElementById('settingsForm'),output=document.getElementById('manifestUrl');if(!form||!output)return;const base=String(form.elements.baseUrl?.value||state.settings.baseUrl||'').trim().replace(/\/+$/,'');const accessPath=String(state.settings.addonAccessPath||'');output.value=base&&accessPath?base+accessPath+'/manifest.json':''}
+function refreshBuild(){const node=document.getElementById('buildVersion'),build=state.build||{};if(node)node.textContent='v'+String(build.version||'unknown')+' · '+String(build.revision||'dev')}
+async function regenerateAddonUrl(button){if(!await showConfirm({title:'Regenerate Secure URL',eyebrow:'Security Action',message:'Regenerating the secure addon URL will cause any existing Stremio installation using this URL to stop working immediately. You will need to reinstall the addon in Stremio.',confirmText:'Regenerate URL',danger:true}))return;const original=button.textContent;button.disabled=true;button.textContent='Regenerating…';try{const data=await api('/admin/api/addon-access/regenerate',{method:'POST'});state.settings=data.settings;syncManifestUrl();toast('Secure addon URL regenerated. Reinstall it in Stremio.')}catch(err){toast(err.message||'Could not regenerate addon URL')}finally{button.disabled=false;button.textContent=original}}
+function refreshBranding(){refreshBuild();const url=brandingIconUrl(),name=state.settings.addonName||'Stremio Local Media Server';for(const id of ['sidebarBrandIcon','addonIconPreview']){const image=document.getElementById(id);if(image&&image.getAttribute('src')!==url){image.src=url;image.alt=name}}const brandName=document.getElementById('brandName');if(brandName)brandName.textContent=name;document.title=name}
+async function uploadAddonIcon(file){if(!file)return;if(file.size>2*1024*1024){toast('Icon must be 2 MB or smaller');return}const input=document.getElementById('addonIconFile'),body=new FormData();body.append('icon',file);try{const data=await api('/admin/api/branding/icon',{method:'POST',body});if(data.settings)state.settings=data.settings;refreshBranding();toast('Addon icon updated')}catch(err){toast(err.message||'Icon upload failed')}finally{if(input)input.value=''}}
+async function removeAddonIconNow(button){if(!await showConfirm({title:'Restore Default Icon',eyebrow:'Branding',message:'Remove the custom icon and restore the Stremio Local Media Server default?',confirmText:'Restore Default',danger:false}))return;const original=button.textContent;button.disabled=true;button.textContent='Removing…';try{const data=await api('/admin/api/branding/icon',{method:'DELETE'});if(data.settings)state.settings=data.settings;refreshBranding();toast('Default icon restored')}catch(err){toast(err.message||'Could not remove icon')}finally{button.disabled=false;button.textContent=original}}
+function duration(seconds){if(!seconds)return '—';const h=Math.floor(seconds/3600),m=Math.floor(seconds%3600/60),s=Math.round(seconds%60);return h?h+'h '+m+'m':m?m+'m '+s+'s':s+'s'}
+function statusBadge(file){const cls=file.status==='matched'?'good':file.status==='error'?'danger':'warn';const label=file.status==='matched'&&file.confidence!=null?Math.round(file.confidence*100)+'% match':file.status;return '<span class="badge '+cls+'">'+esc(label)+'</span>'}
+function listRow(file,action='Details'){return '<div class="list-row"><div class="file-icon">'+(file.libraryType==='movie'?'MOV':'TV')+'</div><div><div class="list-title">'+esc(file.displayTitle||file.parsedTitle||file.relativePath)+'</div><div class="list-meta">'+esc(file.relativePath)+' · '+esc(file.quality||file.height&&file.height+'p'||'Unknown quality')+'</div></div><button class="btn small" type="button" data-file="'+esc(file.id)+'">'+action+'</button></div>'}
+function render(){const c=state.counts;document.getElementById('stats').innerHTML=[['Movies',c.movies||0,''],['Series',c.series||0,''],['Episodes',c.episodes||0,''],['Total Files',state.files.length||0,'']].map(x=>'<div class="stat '+x[2]+'"><span>'+x[0]+'</span><strong>'+x[1]+'</strong></div>').join('');document.getElementById('recentList').innerHTML=state.recent.length?state.recent.map(f=>listRow(f)).join(''):'<div class="empty">No media has been scanned yet.</div>';renderLibrary();renderScanOperations();fillSettings()}
+function diagnosticBadge(status){const cls=status==='healthy'?'good':status==='warning'?'warn':status==='error'?'danger':'',label=status==='healthy'?'Healthy':status==='warning'?'Attention':status==='error'?'Unavailable':'Disabled';return '<span class="badge '+cls+'">'+label+'</span>'}
+function formatUptime(seconds){const total=Math.max(0,Math.floor(Number(seconds)||0)),days=Math.floor(total/86400),hours=Math.floor(total%86400/3600),minutes=Math.floor(total%3600/60);return days?days+'d '+hours+'h':hours?hours+'h '+minutes+'m':minutes+'m'}
+function renderHealth(){const health=state.health,summary=document.getElementById('healthSummary'),checks=document.getElementById('healthChecks'),outcomes=document.getElementById('healthOutcomeSummary'),diagnostics=document.getElementById('diagnosticsJson'),copy=document.getElementById('copyDiagnostics');if(!health||!summary||!checks)return;const cls=health.status==='healthy'?'good':health.status==='degraded'?'warn':'danger',label=health.status==='healthy'?'All checked systems ready':health.status==='degraded'?'System needs attention':'System is not ready',generated=new Date(health.generatedAt).toLocaleString();summary.className='health-banner '+cls;summary.innerHTML='<div><div class="health-banner-title">'+esc(label)+'</div><div class="health-banner-meta">Checked '+esc(generated)+' · uptime '+esc(formatUptime(health.uptimeSeconds))+' · v'+esc(health.build?.version||'unknown')+' / '+esc(health.build?.revision||'dev')+'</div></div>'+diagnosticBadge(health.status==='healthy'?'healthy':health.status==='degraded'?'warning':'error');checks.innerHTML=(health.checks||[]).map(check=>'<article class="health-check"><div class="health-check-head"><div class="health-check-title">'+esc(check.label)+'</div>'+diagnosticBadge(check.status)+'</div><div class="health-check-summary">'+esc(check.summary)+'</div><div class="health-check-meta">'+(check.latencyMs==null?'Local state':'Completed in '+esc(check.latencyMs)+' ms')+'</div></article>').join('')||'<div class="card"><div class="empty">No checks were returned.</div></div>';if(outcomes)outcomes.textContent='System status: '+(health.status==='healthy'?'All services operational':'Review highlighted checks above');if(diagnostics)diagnostics.textContent=JSON.stringify(health,null,2);if(copy)copy.disabled=false}
+function formatBytes(value){const bytes=Math.max(0,Number(value)||0);if(bytes<1024)return bytes+' B';const units=['KB','MB','GB','TB'];let size=bytes/1024,index=0;while(size>=1024&&index<units.length-1){size/=1024;index++}return size.toFixed(size>=10?1:2)+' '+units[index]}
+function renderBackups(){const data=state.backups,summary=document.getElementById('backupSummary'),stats=document.getElementById('backupStats'),rows=document.getElementById('backupRows');if(!data||!summary||!stats||!rows)return;const backups=data.backups||[],automatic=data.automatic||{},latest=data.latest,total=backups.reduce((sum,backup)=>sum+Number(backup.sizeBytes||0),0),create=document.querySelector('[data-create-backup]');if(create){create.disabled=Boolean(data.running);create.textContent=data.running?'Creating…':'Create backup'}let cls='good',title='Recovery points ready';if(data.running){cls='backup-running';title='Creating and verifying backup…'}else if(data.lastError){cls='warn';title='Backup operation needs attention'}else if(!latest){cls='warn';title='No verified backup yet'}summary.className='health-banner '+cls;const schedule=automatic.enabled?'Automatic every '+esc(automatic.intervalHours)+' hours · keeping '+esc(automatic.retention):'Automatic backups disabled · manual backups available',latestText=latest?'Latest '+esc(new Date(latest.createdAt).toLocaleString()):'Create the first recovery point now';summary.innerHTML='<div><div class="health-banner-title">'+title+'</div><div class="health-banner-meta">'+latestText+' · '+schedule+'</div>'+(data.lastError?'<div class="health-banner-meta">'+esc(data.lastError.message)+'</div>':'')+'</div>'+diagnosticBadge(data.running?'healthy':data.lastError||!latest?'warning':'healthy');stats.innerHTML='<div class="stat"><span>Verified copies</span><strong>'+esc(backups.length)+'</strong><span>retention limit '+esc(automatic.retention||0)+'</span></div><div class="stat"><span>Stored size</span><strong>'+esc(formatBytes(total))+'</strong><span>database snapshots only</span></div><div class="stat"><span>Automatic</span><strong>'+(automatic.enabled?'On':'Off')+'</strong><span>'+(automatic.enabled?'every '+esc(automatic.intervalHours)+' hours':'manual only')+'</span></div><div class="stat"><span>Next due</span><strong>'+(automatic.nextDueAt?esc(relativeFutureTime(automatic.nextDueAt)):'—')+'</strong><span>'+(automatic.nextDueAt?esc(new Date(automatic.nextDueAt).toLocaleString()):'not scheduled')+'</span></div>';rows.innerHTML=backups.map(backup=>'<tr><td><strong>'+esc(new Date(backup.createdAt).toLocaleString())+'</strong></td><td>'+esc(backup.reason==='scheduled'?'Automatic':'Manual')+'</td><td>'+esc(formatBytes(backup.sizeBytes))+'</td><td>'+diagnosticBadge('healthy')+'</td><td><a class="btn small" href="/admin/api/backups/'+encodeURIComponent(backup.id)+'/download">Download</a></td></tr>').join('')||'<tr><td colspan="5"><div class="empty">No verified backups are stored yet.</div></td></tr>'}
+function scanStatusBadge(status){const cls=status==='completed'||status==='idle'?'good':status==='failed'||status==='interrupted'?'danger':'warn',label=String(status||'unknown').replaceAll('_',' ');return '<span class="badge '+cls+'">'+esc(label)+'</span>'}
+function formatScanElapsed(milliseconds){const seconds=Math.max(0,Math.floor(Number(milliseconds)||0)/1000),minutes=Math.floor(seconds/60),remaining=Math.floor(seconds%60);return minutes?minutes+'m '+remaining+'s':remaining+'s'}
+function renderScanOperations(){const current=state.scan,box=document.getElementById('scanCurrent'),history=document.getElementById('scanLogs'),last=document.getElementById('lastScan'),cancel=document.querySelector('[data-cancel-scan]');document.querySelectorAll('[data-scan]').forEach(button=>{button.disabled=Boolean(current)});if(cancel){cancel.hidden=!current;cancel.disabled=!current||Boolean(current.cancelRequested);cancel.textContent=current?.cancelRequested?'Stopping…':'Cancel scan'}if(box){if(current){const phase=String(current.phase||'working').replaceAll('_',' '),percent=current.progressPercent==null?null:Math.max(0,Math.min(100,Number(current.progressPercent)||0)),progressClass=percent==null?'scan-progress-track indeterminate':'scan-progress-track';box.className='scan-current active';box.innerHTML='<div class="scan-current-head"><div><div class="scan-current-title">'+esc(current.status==='cancelling'?'Stopping scan safely…':String(current.mode||'changed')+' scan · '+phase)+'</div><div class="scan-current-meta">Started '+esc(new Date(current.startedAt).toLocaleString())+' · elapsed '+esc(formatScanElapsed(current.elapsedMs))+'</div></div>'+scanStatusBadge(current.status)+'</div><div class="'+progressClass+'" role="progressbar" aria-label="Scan progress" aria-valuemin="0" aria-valuemax="100"'+(percent==null?'':' aria-valuenow="'+esc(percent)+'"')+'><div class="scan-progress-bar" style="'+(percent==null?'':'width:'+esc(percent)+'%')+'"></div></div><div class="scan-metrics"><div class="scan-metric"><span>Discovered</span><strong>'+esc(current.discovered||0)+'</strong></div><div class="scan-metric"><span>Examined</span><strong>'+esc(current.examined||0)+'</strong></div><div class="scan-metric"><span>Changed</span><strong>'+esc(current.processed||0)+'</strong></div><div class="scan-metric"><span>Matched</span><strong>'+esc(current.matched||0)+'</strong></div><div class="scan-metric"><span>Errors</span><strong>'+esc(current.errors||0)+'</strong></div></div>'}else{box.className='scan-current';box.innerHTML='<div class="scan-current-head"><div><div class="scan-current-title">Scanner idle</div><div class="scan-current-meta">Start a changed-file scan or a full media reinspection.</div></div>'+scanStatusBadge('idle')+'</div>'}}if(history){history.innerHTML=(state.logs||[]).map(run=>{const elapsed=run.finishedAt?formatScanElapsed(Number(run.finishedAt)-Number(run.startedAt)):'No finish time',details=run.discovered+' found · '+run.processed+' changed · '+run.matched+' matched · '+run.unmatched+' unmatched · '+run.errors+' errors';return '<div class="scan-history-row"><div class="scan-history-main"><div class="scan-history-title">'+esc(new Date(run.startedAt).toLocaleString())+'</div><div class="scan-history-meta">'+esc(String(run.mode||'unknown')+' scan · '+elapsed)+'</div></div>'+scanStatusBadge(run.status)+'<div class="scan-history-main"><div class="scan-history-title">'+esc(details)+'</div>'+(run.message?'<div class="scan-history-meta">'+esc(run.message)+'</div>':'')+'</div></div>'}).join('')||'<div class="empty">No scans have run yet.</div></div>'}if(last){const latest=(state.logs||[])[0];last.textContent=current?'Scan in progress · '+String(current.phase||'working').replaceAll('_',' '):latest?'Last scan '+new Date(latest.startedAt).toLocaleString()+' · '+latest.status:'No scans have run yet'}}
+function renderLibrary(){const term=(document.getElementById('librarySearch').value||'').toLowerCase(),type=document.getElementById('libraryType').value;const rows=state.files.filter(f=>(!type||f.libraryType===type)&&(!term||(f.parsedTitle||'').toLowerCase().includes(term)||f.relativePath.toLowerCase().includes(term)));document.getElementById('libraryRows').innerHTML=rows.map(f=>'<tr><td><strong>'+esc(f.displayTitle||f.parsedTitle||'Unknown')+'</strong></td><td>'+esc(f.libraryType)+'</td><td>'+esc(f.relativePath)+'</td><td>'+esc(f.quality||f.height&&f.height+'p'||'—')+'</td><td>'+duration(f.durationSeconds)+'</td><td>'+statusBadge(f)+'</td><td><button class="btn small" type="button" data-file="'+esc(f.id)+'">Open</button></td></tr>').join('')||'<tr><td colspan="7"><div class="empty">No files match this filter.</div></td></tr>'}
+function setSelectValue(select,value,label){if(!select)return;const stringValue=String(value??'');if(stringValue&&!Array.from(select.options).some(option=>option.value===stringValue)){const option=document.createElement('option');option.value=stringValue;option.textContent=label||stringValue;select.appendChild(option)}select.value=stringValue}
+function fillSettings(force=false){if(settingsDirty&&!force)return;const form=document.getElementById('settingsForm'),s=state.settings;for(const name of ['addonName','baseUrl','mediaSoftLimitGb','lanBaseUrl','moviesPath','tvPath','scanIntervalMinutes','minimumFileSizeMb','streamTokenExpiryHours','longLivedStreamTokens','adminUsername','maxConcurrentDownloads','maxDownloadSpeedMBps','downloadTimeoutSeconds','autoRescanOnDownload'])if(form.elements[name])form.elements[name].value=String(s[name]??'');document.getElementById('tmdbStatus').textContent=s.metadataProvider||'Automatic metadata is active.';refreshBranding();syncManifestUrl()}
+async function load(){const request=++stateRequest,data=await api('/admin/api/state');if(request!==stateRequest)return;state={...state,...data};render()}
+async function loadHealth(force=false){const request=++healthRequest,summary=document.getElementById('healthSummary');if(!state.health&&summary){summary.className='health-banner';summary.innerHTML='<div><div class="health-banner-title">Running system checks…</div><div class="health-banner-meta">External checks are bounded and cached for one minute.</div></div>'}try{const data=await api('/admin/api/system-health'+(force?'?refresh=1':''));if(request!==healthRequest)return;state.health=data;renderHealth()}catch(err){if(request===healthRequest&&summary){summary.className='health-banner danger';summary.innerHTML='<div><div class="health-banner-title">System checks could not run</div><div class="health-banner-meta">'+esc(err.message||'The diagnostic request failed.')+'</div></div>'+diagnosticBadge('error')}throw err}}
+async function refreshHealth(button){const original=button.textContent;button.disabled=true;button.textContent='Checking…';try{await loadHealth(true);toast('System checks refreshed')}catch(err){toast(err.message||'System checks failed')}finally{button.disabled=false;button.textContent=original}}
+async function loadBackups(){const request=++backupRequest,data=await api('/admin/api/backups');if(request!==backupRequest)return;state.backups=data;renderBackups()}
+async function createBackup(button){const original=button.textContent;button.disabled=true;button.textContent='Creating…';try{state.backups=await api('/admin/api/backups',{method:'POST'});state.health=null;renderBackups();toast('Verified database backup created')}catch(err){toast(err.message||'Database backup could not be created');await loadBackups().catch(()=>{})}finally{button.disabled=false;button.textContent=original;renderBackups()}}
+async function loadScans(){const request=++scanRequest,data=await api('/admin/api/scans');if(request!==scanRequest)return;state.scan=data.current||null;state.logs=data.recent||[];renderScanOperations()}
+async function startScan(button){const mode=button.dataset.scan==='full'?'full':'changed';button.disabled=true;try{const data=await api('/admin/api/scan',{method:'POST',body:JSON.stringify({mode})});state.scan=data.scan||state.scan;state.health=null;renderScanOperations();toast(mode==='full'?'Full rescan started':'Changed-file scan started');await loadScans()}catch(err){toast(err.message||'Scan could not start');await loadScans().catch(()=>{})}finally{renderScanOperations()}}
+async function cancelScan(button){if(!await showConfirm({title:'Cancel Library Scan',eyebrow:'Scan Control',message:'Cancel the active library scan? Completed file updates are kept, but removal reconciliation will not run.',confirmText:'Stop Scan',danger:true}))return;button.disabled=true;button.textContent='Stopping…';try{const data=await api('/admin/api/scan/cancel',{method:'POST'});state.scan=data.scan||state.scan;state.health=null;renderScanOperations();toast('Scan cancellation requested');await loadScans()}catch(err){toast(err.message||'Scan could not be cancelled');await loadScans().catch(()=>{})}finally{renderScanOperations()}}
+function activateSettingsPanel(id,{focus=false}={}){const tabs=[...document.querySelectorAll('[data-settings-tab]')],panels=[...document.querySelectorAll('[data-settings-panel]')],selected=panels.find(panel=>panel.dataset.settingsPanel===id)||panels[0];if(!selected)return;panels.forEach(panel=>{panel.hidden=panel!==selected});tabs.forEach(tab=>{const active=tab.dataset.settingsTab===selected.dataset.settingsPanel;tab.classList.toggle('active',active);tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;if(active&&focus)tab.focus()})}
+function switchView(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));document.querySelectorAll('.nav button').forEach(b=>{const active=b.dataset.view===id;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});if(id==='health')loadHealth().catch(err=>toast(err.message));if(id==='backups')loadBackups().catch(err=>toast(err.message));if(id==='logs')loadScans().catch(err=>toast(err.message));window.scrollTo({top:0,behavior:'smooth'})}
+function poster(url,alt){return url?'<img class="poster" src="'+esc(url)+'" alt="'+esc(alt)+' poster">':'<div class="poster-placeholder" aria-hidden="true">No poster</div>'}
+function setModalError(message){const node=document.getElementById('modalError');if(!node)return;node.textContent=message||'';node.hidden=!message;if(message)node.scrollIntoView({block:'nearest'})}
+function syncBusyControls(){fileModal.querySelectorAll('button,input').forEach(node=>{if(node.dataset.close!==undefined||node.closest('.modal-body')||node.closest('.modal-footer'))node.disabled=modalState.busy});fileModal.setAttribute('aria-busy',String(modalState.busy))}
+function beginOperation(){modalState.busy=true;const token=++modalState.operation;syncBusyControls();return token}
+function endOperation(token){if(token!==modalState.operation)return;modalState.busy=false;syncBusyControls()}
+function showModal(opener){if(!fileModal.open){const actual=opener||document.activeElement,container=actual?.closest?.('[id]');modalState.opener=actual;modalState.openerContext=actual?.dataset?.file?{containerId:container?.id||null,fileId:actual.dataset.file}:null;fileModal.showModal();document.body.classList.add('modal-open');requestAnimationFrame(()=>fileModal.querySelector('[data-close]')?.focus())}}
+function cleanupModal(){document.body.classList.remove('modal-open');modalState.searchController?.abort();modalState.searchController=null;modalState.id=null;modalState.file=null;modalState.busy=false;modalState.request++;modalState.operation++;modalBody.innerHTML='';modalActions.innerHTML='';const opener=modalState.opener,context=modalState.openerContext;modalState.opener=null;modalState.openerContext=null;let focusTarget=opener&&opener.isConnected?opener:null;if(!focusTarget&&context){const scope=context.containerId?document.getElementById(context.containerId):document;if(scope)focusTarget=[...scope.querySelectorAll('[data-file]')].find(node=>node.dataset.file===context.fileId)||null}focusTarget?.focus()}
+function closeModal(){if(modalState.busy)return;if(fileModal.open)fileModal.close();else cleanupModal()}
+function renderFooter(file){const buttons=[];if(file.status==='matched'&&file.currentMatch){buttons.push('<button class="btn primary" type="button" data-action="test" data-id="'+esc(file.id)+'">Test stream</button>')}modalActions.innerHTML=buttons.join('');syncBusyControls()}
+function renderFile(file){modalState.file=file;modalTitle.textContent=file.parsedTitle||file.relativePath;const current=file.status==='matched'&&file.currentMatch?'<div class="match-card">'+poster(file.currentMatch.poster,file.currentMatch.title)+'<div class="match-content"><div class="match-title">'+esc(file.currentMatch.title)+(file.currentMatch.year?' ('+esc(file.currentMatch.year)+')':'')+'</div><div class="match-meta"><span class="badge good">Current match</span><span>'+esc(file.libraryType==='series'?'TV series':'Movie')+'</span><span>'+esc(file.currentMatch.stremioId)+'</span></div>'+(file.currentMatch.description?'<p class="match-description">'+esc(file.currentMatch.description)+'</p>':'')+'</div><button class="btn" type="button" data-change-match>Change match</button></div>':'<div class="notice '+(file.status==='ignored'?'warn':'')+'">'+(file.status==='ignored'?'This file is ignored. Apply a TMDB match below to return it to the library.':'No metadata match is assigned yet. Search TMDB and apply the correct result.')+'</div>';
+const edit=file.status==='matched'&&file.mediaItemId?'<div class="details-section"><div class="section-head"><div><h4>Display overrides</h4><p>Optional presentation changes for this matched title.</p></div></div><div class="form-grid"><div class="field full"><label for="editTitle">Display title</label><input id="editTitle" class="input" value="'+esc(file.displayTitle||'')+'"></div><div class="field"><label for="editPoster">Poster URL</label><input id="editPoster" class="input" value="'+esc(file.poster||'')+'"></div><div class="field"><label for="editBackground">Backdrop URL</label><input id="editBackground" class="input" value="'+esc(file.background||'')+'"></div><div class="field full"><button class="btn" type="button" data-save-overrides>Save display overrides</button></div></div></div>':'';
+modalBody.innerHTML='<div id="modalError" class="notice error" role="alert" hidden></div><section class="details-section" aria-labelledby="fileInfoHeading"><div class="section-head"><div><h4 id="fileInfoHeading">File information</h4><p>Local path and catalog assignment.</p></div></div><div class="info-grid"><div class="info-item full"><span class="info-label">File</span><div class="path-row"><span class="info-value path-value" id="filePathValue">'+esc(file.relativePath)+'</span><button class="btn small copy-btn" type="button" data-copy="filePathValue" data-copy-label="Path copied">Copy path</button></div></div><div class="info-item"><span class="info-label">Status</span><span class="info-value">'+esc(file.status)+'</span></div><div class="info-item"><span class="info-label">Stremio ID</span><span class="info-value">'+esc(file.stremioId||'Not assigned')+'</span></div></div></section><section class="details-section" aria-labelledby="matchHeading"><div class="section-head"><div><h4 id="matchHeading">Metadata match</h4><p>Search TMDB to '+(file.status==='matched'?'change':'identify')+' this '+(file.libraryType==='series'?'series':'movie')+'.</p></div></div>'+current+'<div class="match-search"><div class="field"><label for="tmdbQuery">TMDB title search</label><input id="tmdbQuery" class="input" value="'+esc(file.parsedTitle||'')+'" autocomplete="off"></div><button id="tmdbSearch" class="btn primary" type="button">Search TMDB</button></div><div id="tmdbSearchStatus" class="search-status" role="status" aria-live="polite">Enter a title and search to find matches.</div><div id="tmdbResults" class="search-results"></div></section>'+edit;renderFooter(file);modalBody.scrollTop=0;syncBusyControls()}
+function renderDetailError(id,message){modalTitle.textContent='Unable to load file';modalBody.innerHTML='<div class="notice error" role="alert">'+esc(message)+'</div><div style="margin-top:14px"><button class="btn" type="button" data-retry-file="'+esc(id)+'">Try again</button></div>';modalActions.innerHTML='';syncBusyControls()}
+async function fetchFile(id,{loading=false}={}){const request=++modalState.request;if(loading){modalTitle.textContent='Loading file details';modalBody.innerHTML='<div class="modal-loading"><span>Loading media details…</span></div>';modalActions.innerHTML=''}try{const data=await api('/admin/api/files/'+encodeURIComponent(id));if(request!==modalState.request||modalState.id!==id)return null;renderFile(data.file);return data.file}catch(err){if(request===modalState.request&&modalState.id===id)renderDetailError(id,err.message||'Media details could not be loaded.');return null}}
+async function openFile(id,opener){modalState.searchController?.abort();modalState.searchController=null;modalState.operation++;modalState.busy=false;modalState.id=id;modalState.file=null;showModal(opener);syncBusyControls();return fetchFile(id,{loading:true})}
+async function refreshAfterAction(id,updatedFile=null){if(modalState.id!==id)return;if(updatedFile){const scrollTop=modalBody.scrollTop;renderFile(updatedFile);modalBody.scrollTop=scrollTop}else await fetchFile(id);try{await load()}catch{toast('The file was updated, but the library summary could not refresh.')}}
+function renderSearchResults(results,type){const box=document.getElementById('tmdbResults'),status=document.getElementById('tmdbSearchStatus');if(!box||!status)return;if(!results.length){box.innerHTML='<div class="empty">No online results found. Try another title or include the release year.</div>';status.textContent='No matches found.';return}status.textContent=results.length+' result'+(results.length===1?'':'s')+' found.';box.innerHTML=results.map(r=>'<article class="search-result">'+poster(r.poster,r.title)+'<div class="result-copy"><div class="match-title">'+esc(r.title)+(r.year?' ('+esc(r.year)+')':'')+'</div><div class="match-meta"><span class="badge">'+esc(type==='series'?'TV series':'Movie')+'</span><span class="badge">'+esc(r.provider==='tmdb'?'TMDB':'Cinemeta')+'</span><span class="confidence">'+Math.round((r.confidence||0)*100)+'% similarity</span></div><p class="match-description">'+esc(r.overview||'No description is available for this result.')+'</p></div><button class="btn primary small" type="button" data-apply-match="'+esc(r.id)+'" data-provider="'+esc(r.provider)+'">Apply Match</button></article>').join('')}
+async function searchTmdb(){const file=modalState.file,input=document.getElementById('tmdbQuery'),status=document.getElementById('tmdbSearchStatus'),box=document.getElementById('tmdbResults'),searchButton=document.getElementById('tmdbSearch');if(!file||!input||!status||!box||!searchButton)return;const query=input.value.trim();if(!query){status.textContent='Enter a title before searching.';box.innerHTML='<div class="notice error" role="alert">A TMDB search title is required.</div>';input.focus();return}modalState.searchController?.abort();const controller=new AbortController();modalState.searchController=controller;const token=beginOperation();searchButton.textContent='Searching…';status.textContent='Searching TMDB…';box.innerHTML='<div class="modal-loading"><span>Searching for matches…</span></div>';try{const year=file.parsedYear?'&year='+encodeURIComponent(file.parsedYear):'';const data=await api('/admin/api/tmdb/search?type='+encodeURIComponent(file.libraryType)+'&query='+encodeURIComponent(query)+year,{signal:controller.signal});if(token!==modalState.operation||modalState.id!==file.id)return;renderSearchResults(data.results,file.libraryType)}catch(err){if(err.name==='AbortError')return;if(token===modalState.operation){status.textContent='Search failed.';box.innerHTML='<div class="notice error" role="alert">'+esc(err.message||'TMDB search failed. Please try again.')+'</div>'}}finally{if(modalState.searchController===controller)modalState.searchController=null;const activeButton=document.getElementById('tmdbSearch');if(activeButton)activeButton.textContent='Search TMDB';endOperation(token)}}
+async function applyMatch(id,provider,button){const file=modalState.file;if(!file)return;const token=beginOperation();setModalError('');button.textContent='Applying…';try{const data=await api('/admin/api/files/'+encodeURIComponent(file.id)+'/match',{method:'POST',body:JSON.stringify({type:file.libraryType,id,provider})});await refreshAfterAction(file.id,data.file);toast('Metadata match applied')}catch(err){setModalError(err.message||'The match could not be applied.');toast('Match failed')}finally{endOperation(token)}}
+async function saveOverrides(){const file=modalState.file;if(!file?.mediaItemId)return;const token=beginOperation();setModalError('');try{await api('/admin/api/items/'+encodeURIComponent(file.mediaItemId),{method:'PATCH',body:JSON.stringify({displayTitle:document.getElementById('editTitle').value,poster:document.getElementById('editPoster').value,background:document.getElementById('editBackground').value})});await refreshAfterAction(file.id);toast('Display overrides saved')}catch(err){setModalError(err.message||'Display overrides could not be saved.')}finally{endOperation(token)}}
+async function handleAction(button){const action=button.dataset.action,id=button.dataset.id;if(action==='test'){const preview=window.open('about:blank','_blank');if(preview)preview.opener=null;const token=beginOperation();setModalError('');try{const data=await api('/admin/api/files/'+encodeURIComponent(id)+'/stream',{method:'POST'});if(preview)preview.location.replace(data.url);else setModalError('The stream URL was created, but the browser blocked the new tab. Allow pop-ups for this admin page and try again.')}catch(err){preview?.close();setModalError(err.message||'The stream test could not be created.')}finally{endOperation(token)}return}const promptText=action==='ignore'?'Ignore this file? It will stay out of the catalog until you apply a match.':'Remove the current manual match? The file will return to Library.';if(!await showConfirm({title:action==='ignore'?'Ignore Media File':'Remove Match',eyebrow:'Catalog Management',message:promptText,confirmText:action==='ignore'?'Ignore File':'Remove Match',danger:action==='ignore'}))return;const token=beginOperation();setModalError('');try{const data=await api('/admin/api/files/'+encodeURIComponent(id)+'/'+action,{method:'POST'});await refreshAfterAction(id,data.file);toast(action==='ignore'?'File ignored':'Match removed')}catch(err){setModalError(err.message||'The action could not be completed.');toast('Action failed')}finally{endOperation(token)}}
+async function copyText(id,label){const node=document.getElementById(id),value=node&&'value'in node?String(node.value||''):node?.textContent||'';try{if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(value);else{const area=document.createElement('textarea');area.value=value;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();document.execCommand('copy');area.remove()}toast(label||'Copied')}catch{toast('Copy failed. Select the text and copy it manually.')}}
+document.addEventListener('click',async e=>{const target=e.target.closest('button');if(!target)return;if(target.dataset.view)switchView(target.dataset.view);else if(target.dataset.viewGo)switchView(target.dataset.viewGo);else if(target.dataset.settingsTab)activateSettingsPanel(target.dataset.settingsTab,{focus:true});else if(target.dataset.refreshHealth!==undefined)refreshHealth(target);else if(target.dataset.refreshBackups!==undefined)loadBackups().catch(err=>toast(err.message));else if(target.dataset.createBackup!==undefined)createBackup(target);else if(target.dataset.close)closeModal();else if(target.dataset.file)openFile(target.dataset.file,target);else if(target.dataset.retryFile)openFile(target.dataset.retryFile,target);else if(target.dataset.scan)startScan(target);else if(target.dataset.cancelScan!==undefined)cancelScan(target);else if(target.id==='changeAddonIcon')document.getElementById('addonIconFile')?.click();else if(target.id==='removeAddonIcon')removeAddonIconNow(target);else if(target.id==='adminWipeAllMediaBtn')openDangerModal();else if(target.id==='tmdbSearch')searchTmdb();else if(target.dataset.applyMatch)applyMatch(target.dataset.applyMatch,target.dataset.provider,target);else if(target.dataset.action)handleAction(target);else if(target.dataset.changeMatch!==undefined){document.getElementById('tmdbQuery')?.focus();document.getElementById('tmdbQuery')?.scrollIntoView({block:'center'})}else if(target.dataset.saveOverrides!==undefined)saveOverrides();else if(target.dataset.copy)copyText(target.dataset.copy,target.dataset.copyLabel)});
+document.getElementById('librarySearch').addEventListener('input',renderLibrary);document.getElementById('libraryType').addEventListener('change',renderLibrary);
+const addonIconFile=document.getElementById('addonIconFile');addonIconFile?.addEventListener('change',e=>uploadAddonIcon(e.target.files?.[0]));
+document.getElementById('regenerateAddonUrl')?.addEventListener('click',e=>regenerateAddonUrl(e.currentTarget));
+const settingsForm=document.getElementById('settingsForm');settingsForm.addEventListener('input',e=>{if(e.target?.id!=='addonIconFile')settingsDirty=true;if(e.target?.name==='baseUrl')syncManifestUrl()});settingsForm.addEventListener('change',e=>{if(e.target?.id==='addonIconFile')return;settingsDirty=true});settingsForm.addEventListener('invalid',e=>{const panel=e.target.closest?.('[data-settings-panel]');if(panel)activateSettingsPanel(panel.dataset.settingsPanel)},true);settingsForm.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target));try{state.settings=(await api('/admin/api/settings',{method:'PUT',body:JSON.stringify(data)})).settings;state.health=null;settingsDirty=false;fillSettings(true);toast('Settings saved')}catch(err){toast(err.message)}});
+document.querySelector('.settings-nav')?.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;const tabs=[...document.querySelectorAll('[data-settings-tab]')],current=tabs.indexOf(document.activeElement);if(current<0)return;e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(current+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;activateSettingsPanel(tabs[next].dataset.settingsTab,{focus:true})});
+fileModal.addEventListener('close',cleanupModal);fileModal.addEventListener('cancel',e=>{e.preventDefault();closeModal()});fileModal.addEventListener('click',e=>{if(e.target===fileModal)closeModal()});fileModal.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target?.id==='tmdbQuery'){e.preventDefault();if(!modalState.busy)searchTmdb();return}if(e.key==='Escape'){e.preventDefault();closeModal();return}if(e.key!=='Tab')return;const focusable=[...fileModal.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),summary,[tabindex]:not([tabindex="-1"])')].filter(node=>node.offsetParent!==null||node===document.activeElement);if(!focusable.length)return;const first=focusable[0],last=focusable[focusable.length-1];if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}});
+
+function openDangerModal(){
+  const modal=document.getElementById('dangerModal');
+  const step1=document.getElementById('dangerStep1');
+  const step2=document.getElementById('dangerStep2');
+  const phraseInput=document.getElementById('dangerPhraseInput');
+  const passwordInput=document.getElementById('dangerPasswordInput');
+  const errorEl=document.getElementById('dangerModalError');
+  const nextBtn=document.getElementById('dangerNextBtn');
+  const execBtn=document.getElementById('dangerExecuteBtn');
+  const backBtn=document.getElementById('dangerBackBtn');
+
+  step1.style.display='block';
+  step2.style.display='none';
+  phraseInput.value='';
+  passwordInput.value='';
+  passwordInput.type='password';
+  errorEl.style.display='none';
+  errorEl.textContent='';
+  nextBtn.disabled=true;
+  nextBtn.style.display='inline-flex';
+  execBtn.disabled=false;
+  execBtn.textContent='🗑️ Permanently Wipe All Media';
+  execBtn.style.display='none';
+  backBtn.style.display='none';
+
+  modal.showModal();
+  setTimeout(()=>phraseInput.focus(),60);
+}
+
+function closeDangerModal(){
+  const modal=document.getElementById('dangerModal');
+  modal?.close();
+}
+
+function checkDangerPhrase(){
+  const phraseInput=document.getElementById('dangerPhraseInput');
+  const nextBtn=document.getElementById('dangerNextBtn');
+  const isMatch=phraseInput.value.trim()==='DELETE ALL MEDIA';
+  nextBtn.disabled=!isMatch;
+  return isMatch;
+}
+
+function goToDangerStep2(){
+  if(!checkDangerPhrase()) return;
+  const step1=document.getElementById('dangerStep1');
+  const step2=document.getElementById('dangerStep2');
+  const passwordInput=document.getElementById('dangerPasswordInput');
+  const nextBtn=document.getElementById('dangerNextBtn');
+  const execBtn=document.getElementById('dangerExecuteBtn');
+  const backBtn=document.getElementById('dangerBackBtn');
+  const errorEl=document.getElementById('dangerModalError');
+
+  step1.style.display='none';
+  step2.style.display='block';
+  nextBtn.style.display='none';
+  execBtn.style.display='inline-flex';
+  backBtn.style.display='inline-flex';
+  errorEl.style.display='none';
+  errorEl.textContent='';
+  setTimeout(()=>passwordInput.focus(),60);
+}
+
+function goToDangerStep1(){
+  const step1=document.getElementById('dangerStep1');
+  const step2=document.getElementById('dangerStep2');
+  const nextBtn=document.getElementById('dangerNextBtn');
+  const execBtn=document.getElementById('dangerExecuteBtn');
+  const backBtn=document.getElementById('dangerBackBtn');
+  const errorEl=document.getElementById('dangerModalError');
+  const phraseInput=document.getElementById('dangerPhraseInput');
+
+  step1.style.display='block';
+  step2.style.display='none';
+  nextBtn.style.display='inline-flex';
+  execBtn.style.display='none';
+  backBtn.style.display='none';
+  errorEl.style.display='none';
+  checkDangerPhrase();
+  setTimeout(()=>phraseInput.focus(),60);
+}
+
+async function executeWipeMedia(){
+  const passwordInput=document.getElementById('dangerPasswordInput');
+  const password=passwordInput.value.trim();
+  const errorEl=document.getElementById('dangerModalError');
+  const execBtn=document.getElementById('dangerExecuteBtn');
+  const backBtn=document.getElementById('dangerBackBtn');
+
+  if(!password){
+    errorEl.textContent='Please enter your administrator password.';
+    errorEl.style.display='block';
+    passwordInput.focus();
+    return;
+  }
+
+  errorEl.style.display='none';
+  execBtn.disabled=true;
+  backBtn.disabled=true;
+  execBtn.textContent='⏳ Wiping all media...';
+
+  try{
+    const res=await fetch('/downloads/delete-all',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-csrf-token':csrf},
+      body:JSON.stringify({password})
+    });
+    const data=await res.json().catch(()=>({}));
+    if(!res.ok){
+      errorEl.textContent=data.error||'Failed: Incorrect administrator password.';
+      errorEl.style.display='block';
+      execBtn.disabled=false;
+      backBtn.disabled=false;
+      execBtn.textContent='🗑️ Permanently Wipe All Media';
+      passwordInput.focus();
+      passwordInput.select();
+      return;
+    }
+    closeDangerModal();
+    toast('✅ All media files successfully wiped from disk storage.');
+    await load();
+  }catch(err){
+    errorEl.textContent='Error connecting to server: '+(err.message||'Unknown error');
+    errorEl.style.display='block';
+    execBtn.disabled=false;
+    backBtn.disabled=false;
+    execBtn.textContent='🗑️ Permanently Wipe All Media';
+  }
+}
+
+document.getElementById('dangerModalClose')?.addEventListener('click',()=>closeDangerModal());
+document.getElementById('dangerCancelBtn')?.addEventListener('click',()=>closeDangerModal());
+document.getElementById('dangerBackBtn')?.addEventListener('click',()=>goToDangerStep1());
+document.getElementById('dangerNextBtn')?.addEventListener('click',()=>goToDangerStep2());
+document.getElementById('dangerExecuteBtn')?.addEventListener('click',()=>executeWipeMedia());
+
+document.getElementById('dangerPhraseInput')?.addEventListener('input',()=>checkDangerPhrase());
+document.getElementById('dangerPhraseInput')?.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    goToDangerStep2();
+  }
+});
+document.getElementById('dangerPasswordInput')?.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){
+    e.preventDefault();
+    executeWipeMedia();
+  }
+});
+document.getElementById('dangerPasswordToggle')?.addEventListener('click',()=>{
+  const pwd=document.getElementById('dangerPasswordInput');
+  pwd.type=pwd.type==='password'?'text':'password';
+});
+
+const dangerModalEl=document.getElementById('dangerModal');
+dangerModalEl?.addEventListener('click',e=>{if(e.target===dangerModalEl)closeDangerModal()});
+dangerModalEl?.addEventListener('cancel',e=>{e.preventDefault();closeDangerModal()});
+async function initialize(){await load()}
+initialize().catch(err=>toast(err.message));setInterval(()=>load().catch(()=>{}),15000);setInterval(()=>{if(document.getElementById('backups')?.classList.contains('active')||state.backups?.running)loadBackups().catch(()=>{})},5000);setInterval(()=>{if(state.scan||document.getElementById('logs')?.classList.contains('active'))loadScans().catch(()=>{})},2000);
+`;
