@@ -107,15 +107,17 @@
     gap: 16px;
   }
   .brand { display: flex; align-items: center; gap: 12px; }
-  .logo-icon {
+  .brand-mark {
     width: 38px; height: 38px;
     border-radius: 11px;
     background: var(--accent-gradient);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 19px;
+    display: grid; place-items: center;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 3px 0 #0369a1, 0 6px 16px var(--accent-glow);
     flex-shrink: 0;
+    overflow: hidden;
   }
+  .brand-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .brand-mark-fallback { font-size: 19px; }
   .brand-text h1 {
     margin: 0;
     font-size: 17px;
@@ -124,6 +126,82 @@
     letter-spacing: -0.02em;
   }
   .brand-text p { margin: 0; color: var(--text-muted); font-size: 12px; font-weight: 500; }
+
+  .nav-actions {
+    display: flex;
+    gap: 9px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .nav-pills {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    background: #050609;
+    padding: 3px;
+    border-radius: 11px;
+    border: 1px solid var(--border);
+  }
+  .nav-pill {
+    padding: 7px 12px;
+    font-size: 12px;
+    font-weight: 750;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-pill.active {
+    background: var(--accent-surface);
+    color: var(--accent-hover);
+    border: 1px solid var(--accent-border);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+  }
+  .nav-pill:not(.active):hover {
+    background: var(--surface-raised);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+  .nav-pill:active {
+    transform: translateY(1.5px) !important;
+  }
+
+  .user-status-pill {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    background: #050609;
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+  .pulse-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+  }
+
+  .btn-signout {
+    background: #18181b;
+    border-color: #27272a;
+    color: #a1a1aa;
+    cursor: pointer;
+  }
+  .btn-signout:hover {
+    background: rgba(244, 63, 94, 0.14);
+    border-color: rgba(244, 63, 94, 0.38);
+    color: #fda4af;
+  }
 
   .nav-btn {
     font-size: 12px;
@@ -473,19 +551,37 @@
       align-items: stretch;
       gap: 10px;
     }
-    .top-nav-inner > div:last-child {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+    .nav-actions {
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       width: 100%;
     }
-    .top-nav-inner > div:last-child .nav-btn {
+    .nav-actions .nav-pills {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+    }
+    .nav-actions .nav-pill {
+      flex: 1 1 auto;
       justify-content: center;
       text-align: center;
-      width: 100%;
+      padding: 8px 6px;
+      font-size: 11px;
+    }
+    .nav-actions .user-status-pill {
+      flex: 1 1 auto;
+      justify-content: center;
+      min-height: 38px;
+    }
+    .nav-actions .btn-signout {
+      flex: 0 0 auto;
+      justify-content: center;
+      min-height: 38px;
+      padding: 8px 12px;
+      font-size: 12px;
     }
     .brand-text h1 { font-size: 15px; }
-    .nav-btn { padding: 7px 11px; font-size: 12px; }
 
     .media-banner {
       flex-direction: column;
@@ -554,15 +650,26 @@
 <header class="top-nav">
   <div class="top-nav-inner">
     <div class="brand">
-      <div class="logo-icon">⚡</div>
+      <div class="brand-mark">
+        <img src="/addon-icon" alt="Stremio LMS" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';">
+        <div class="brand-mark-fallback" style="display:none;">⚡</div>
+      </div>
       <div class="brand-text">
         <h1>Source Selection</h1>
         <p>Stremio Local Media Server</p>
       </div>
     </div>
-    <div>
-      <a href="/admin" class="nav-btn">⚙️ App Console</a>
-      <a href="/downloads" class="nav-btn">📊 Live Downloads</a>
+    <div class="nav-actions">
+      <div class="nav-pills">
+        <a href="/downloads" class="nav-pill">⚡ Live Downloads</a>
+        <a href="/admin" class="nav-pill">⚙️ App Console</a>
+        <span class="nav-pill active">🎯 Source Picker</span>
+      </div>
+      <div class="user-status-pill">
+        <span class="pulse-dot"></span>
+        <span class="user-name">admin</span>
+      </div>
+      <button class="nav-btn btn-signout" onclick="logout()" title="Sign out of server">🔒 Sign Out</button>
     </div>
   </div>
 </header>
@@ -1022,6 +1129,14 @@ async function startDownload(streamIndex, btnEl) {
     alert('Failed to start download: ' + (err.message || 'Network error'));
   }
 }
+
+async function logout() {
+  try {
+    await fetch('/admin/logout', { method: 'POST', credentials: 'include' });
+  } catch (e) {}
+  window.location.href = '/admin/login';
+}
+window.logout = logout;
 
 loadSources();
 </script>

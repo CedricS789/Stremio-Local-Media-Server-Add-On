@@ -373,6 +373,13 @@ export function registerAdminRoutes(
     return reply.type('text/html; charset=utf-8').header('Cache-Control', 'no-store').send(adminHtml(session.csrf));
   });
 
+  app.get('/admin/logout', async (_request, reply) => {
+    const isSecure = settings.baseUrl.startsWith('https://');
+    reply.clearCookie(COOKIE_NAME, { path: '/admin', secure: isSecure, sameSite: 'lax' });
+    reply.clearCookie(COOKIE_NAME, { path: '/', secure: isSecure, sameSite: 'lax' });
+    return reply.redirect('/admin/login');
+  });
+
   app.post('/admin/logout', async (_request, reply) => {
     const isSecure = settings.baseUrl.startsWith('https://');
     reply.clearCookie(COOKIE_NAME, { path: '/admin', secure: isSecure, sameSite: 'lax' });

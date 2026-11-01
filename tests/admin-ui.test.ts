@@ -134,26 +134,31 @@ describe('media details modal', () => {
     await flush();
 
     expect([...document.querySelectorAll('.nav-label')].map(node => node.textContent))
-      .toEqual(['Monitor', 'Media', 'Playback', 'System']);
+      .toEqual(['Hub', 'Dock', 'Media', 'System']);
     expect(document.querySelector('[data-view="dashboard"]')?.getAttribute('aria-current'))
       .toBe('page');
+
+    expect(document.querySelector('.nav-link-ext')?.getAttribute('href'))
+      .toBe('/downloads');
+    expect(document.getElementById('adminLogoutBtn'))
+      .not.toBeNull();
 
     document.querySelector<HTMLButtonElement>('[data-view="settings"]')!.click();
     const tabs = [...document.querySelectorAll<HTMLButtonElement>('[data-settings-tab]')];
     expect(tabs.map(tab => tab.textContent)).toEqual([
-      'General', 'Requests', 'Playback', 'Servers', 'Fallback', 'Security'
+      'General', 'Downloads Engine', 'Storage & Quota', 'Network & Streaming', 'Security', 'Danger Zone'
     ]);
     expect(document.querySelector<HTMLElement>('[data-settings-panel="general"]')?.hidden)
       .toBe(false);
-    expect(document.querySelector<HTMLElement>('[data-settings-panel="playback"]')?.hidden)
+    expect(document.querySelector<HTMLElement>('[data-settings-panel="downloads"]')?.hidden)
       .toBe(true);
 
-    document.querySelector<HTMLButtonElement>('[data-settings-tab="playback"]')!.click();
-    expect(document.querySelector('[data-settings-tab="playback"]')?.getAttribute('aria-selected'))
+    document.querySelector<HTMLButtonElement>('[data-settings-tab="downloads"]')!.click();
+    expect(document.querySelector('[data-settings-tab="downloads"]')?.getAttribute('aria-selected'))
       .toBe('true');
     expect(document.querySelector<HTMLElement>('[data-settings-panel="general"]')?.hidden)
       .toBe(true);
-    expect(document.querySelector<HTMLElement>('[data-settings-panel="playback"]')?.hidden)
+    expect(document.querySelector<HTMLElement>('[data-settings-panel="downloads"]')?.hidden)
       .toBe(false);
     expect(document.querySelector('[data-view="settings"]')?.getAttribute('aria-current'))
       .toBe('page');

@@ -89,15 +89,17 @@
     flex-wrap: wrap;
   }
   .brand { display: flex; align-items: center; gap: 14px; }
-  .logo-icon {
+  .brand-mark {
     width: 44px; height: 44px;
-    border-radius: 12px;
+    border-radius: 13px;
     background: var(--accent-gradient);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 22px;
+    display: grid; place-items: center;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3), 0 3px 0 #0369a1, 0 6px 18px var(--accent-glow);
     flex-shrink: 0;
+    overflow: hidden;
   }
+  .brand-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .brand-mark-fallback { font-size: 22px; }
   h1 {
     margin: 0;
     font-size: 22px;
@@ -112,6 +114,84 @@
     gap: 10px;
     align-items: center;
     flex-wrap: wrap;
+  }
+
+  .nav-pills {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+    background: #050609;
+    padding: 3px;
+    border-radius: 11px;
+    border: 1px solid var(--border);
+  }
+  .nav-pill {
+    padding: 7px 13px;
+    font-size: 12px;
+    font-weight: 750;
+    border-radius: 8px;
+    text-decoration: none;
+    color: var(--text-muted);
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .nav-pill.active {
+    background: var(--accent-surface);
+    color: var(--accent-hover);
+    border: 1px solid var(--accent-border);
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+  }
+  .nav-pill:not(.active):hover {
+    background: var(--surface-raised);
+    color: #ffffff;
+    transform: translateY(-1px);
+  }
+  .nav-pill:active {
+    transform: translateY(1.5px) !important;
+  }
+
+  .user-status-pill {
+    display: flex;
+    gap: 7px;
+    align-items: center;
+    background: #050609;
+    border: 1px solid var(--border);
+    padding: 6px 12px;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+  }
+  .pulse-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.25);
+  }
+
+  .btn-action {
+    background: #131d2e;
+    color: #7dd3fc;
+    border-color: #1e3a5f;
+  }
+  .btn-action:hover {
+    background: #1a273e;
+    border-color: #2b5284;
+    color: #ffffff;
+  }
+  .btn-signout {
+    background: #18181b;
+    border-color: #27272a;
+    color: #a1a1aa;
+  }
+  .btn-signout:hover {
+    background: rgba(244, 63, 94, 0.14);
+    border-color: rgba(244, 63, 94, 0.38);
+    color: #fda4af;
   }
 
   .btn-base {
@@ -767,19 +847,33 @@
     .brand h1 { font-size: 19px; overflow-wrap: anywhere; word-break: break-word; }
     .brand p.sub { font-size: 12px; overflow-wrap: anywhere; }
     .header-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
       width: 100%;
     }
-    .header-actions a:last-child {
-      grid-column: 1 / -1;
+    .header-actions .nav-pills {
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
     }
-    .header-actions .btn-base, .header-actions button, .header-actions a {
+    .header-actions .nav-pill {
+      flex: 1 1 50%;
       justify-content: center;
+      text-align: center;
+      padding: 9px 8px;
+    }
+    .header-actions .user-status-pill {
+      flex: 1 1 100%;
+      justify-content: center;
+      min-height: 38px;
+    }
+    .header-actions .btn-action, .header-actions .btn-signout {
+      flex: 1 1 calc(50% - 4px);
+      justify-content: center;
+      min-height: 42px;
       padding: 10px 8px;
       font-size: 12px;
-      min-height: 42px;
     }
     .stats-grid {
       grid-template-columns: 1fr 1fr;
@@ -1112,16 +1206,26 @@
 
   <div class="header">
     <div class="brand">
-      <div class="logo-icon">⚡</div>
+      <div class="brand-mark">
+        <img src="/addon-icon" alt="Stremio LMS" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';">
+        <div class="brand-mark-fallback" style="display:none;">⚡</div>
+      </div>
       <div>
         <h1>Stremio Local Media Server</h1>
         <p class="sub">Self-hosted media library, storage quota & active transfers</p>
       </div>
     </div>
     <div class="header-actions">
-      <a href="/admin" class="btn-base btn-primary" style="background:#131d2e; color:#7dd3fc; border-color:#1e3a5f;">⚙️ App Console</a>
-      <button class="btn-base btn-primary" onclick="rescanLibrary()">🔄 Rescan Library</button>
-      <button class="btn-base btn-primary" style="background:#18181b; border-color:#27272a; color:#a1a1aa;" onclick="logout()">🔒 Sign Out</button>
+      <div class="nav-pills">
+        <span class="nav-pill active">⚡ Live Downloads</span>
+        <a href="/admin" class="nav-pill">⚙️ App Console</a>
+      </div>
+      <div class="user-status-pill">
+        <span class="pulse-dot"></span>
+        <span class="user-name">admin</span>
+      </div>
+      <button class="btn-base btn-action" onclick="rescanLibrary()" title="Rescan local storage for new media files">🔄 Rescan Library</button>
+      <button class="btn-base btn-signout" onclick="logout()" title="Sign out of server">🔒 Sign Out</button>
     </div>
   </div>
 
