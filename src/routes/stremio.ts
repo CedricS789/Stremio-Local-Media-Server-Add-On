@@ -1964,18 +1964,6 @@ export function registerStremioRoutes(app, database, settings, config, requester
                 });
             }
 
-            if (files.length > 0 && localSeasonRows.length > 0) {
-                const seasonLocalBytes = localSeasonRows.reduce((acc, r) => acc + (Number(r.size) || 0), 0);
-                const armedSeason = isDeleteArmed(seasonKey);
-                streams.push({
-                    name: addonName,
-                    description: armedSeason
-                        ? `⚠️ CONFIRM DELETE Season ${parsedSeries.season}\nClick to delete now (3m)`
-                        : `🗑️ Delete Season ${parsedSeries.season} (${formatGb(seasonLocalBytes)})\n${localSeasonRows.length} eps • Click to arm`,
-                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/delete/season/${encodeURIComponent(id)}`,
-                    behaviorHints: { bingeGroup: `nuvi-flow:del:season:${id}` }
-                });
-            }
         }
 
         streams.push({

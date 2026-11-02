@@ -106,6 +106,27 @@ describe('Stremio and media HTTP endpoints', () => {
     expect(response.json().streams[0].url).toMatch(/^https:\/\/media\.example\.test\/media\//);
   });
 
+  it('does not expose a delete-all-season stream for a downloaded episode', async () => {
+    const now = Date.now();
+    built.database.sqlite.prepare(`INSERT INTO media_items (id,type,stremio_id,title,year,created_at,updated_at)
+      VALUES ('series1','series','tt7654321','Example Series',2024,?,?)`).run(now, now);
+    built.database.sqlite.prepare(`UPDATE media_files
+      SET library_type='series',relative_path='Example Series S01E01.mp4',media_item_id='series1',
+          season=1,episode_start=1,episode_end=1
+      WHERE id='file1'`).run();
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response('', { status: 404 })));
+
+    const response = await built.app.inject({
+      method: 'GET',
+      url: addonUrl('/stream/series/tt7654321:1:1.json')
+    });
+
+    expect(response.statusCode).toBe(200);
+    const streams = response.json().streams;
+    expect(streams.some((stream: { url?: string }) => stream.url?.includes('/delete/season/'))).toBe(false);
+    expect(streams.some((stream: { url?: string }) => stream.url?.includes('/delete/episode/'))).toBe(true);
+  });
+
   it('plays missing media through AIO while still queuing Radarr or Sonarr', async () => {
     built.settings.set('fallbackAddonEnabled', 'true');
     built.settings.set('fallbackAddonUseForMissing', 'true');
