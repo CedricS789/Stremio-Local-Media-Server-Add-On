@@ -325,9 +325,9 @@ export function registerAdminRoutes(
   systemDiagnostics: SystemDiagnosticsService
 ): void {
   app.get('/admin/login', async (request, reply) => {
-    let nextUrl = String((request.query as any)?.next || '/downloads').trim();
+    let nextUrl = String((request.query as any)?.next || '/admin').trim();
     if (!nextUrl.startsWith('/') || nextUrl.startsWith('/admin/login')) {
-      nextUrl = '/downloads';
+      nextUrl = '/admin';
     }
     const isSecure = settings.baseUrl.startsWith('https://');
     const authFailed = Boolean((request.query as any)?.failed);
@@ -354,9 +354,9 @@ export function registerAdminRoutes(
     const storedHash = settings.adminPasswordHash;
     const valid = typeof body?.username === 'string' && typeof body?.password === 'string'
       && body.username === settings.adminUsername && Boolean(storedHash) && await verifyPassword(body.password, storedHash!);
-    let nextUrl = String(body?.next || (request.query as any)?.next || '/downloads').trim();
+    let nextUrl = String(body?.next || (request.query as any)?.next || '/admin').trim();
     if (!nextUrl.startsWith('/') || nextUrl.startsWith('/admin/login')) {
-      nextUrl = '/downloads';
+      nextUrl = '/admin';
     }
     const isSecure = settings.baseUrl.startsWith('https://');
     if (!valid) return reply.code(401).type('text/html; charset=utf-8').send(loginHtml('The username or password is incorrect.', nextUrl));
@@ -369,7 +369,10 @@ export function registerAdminRoutes(
 
   app.get('/admin', async (request, reply) => {
     const session = sessionFor(request, config);
-    if (!session) return reply.redirect('/admin/login?next=/admin');
+    if (!session) {
+      const nextUrl = request.raw.url && request.raw.url.startsWith('/admin') ? request.raw.url : '/admin';
+      return reply.redirect('/admin/login?next=' + encodeURIComponent(nextUrl));
+    }
     return reply.type('text/html; charset=utf-8').header('Cache-Control', 'no-store').send(adminHtml(session.csrf));
   });
 

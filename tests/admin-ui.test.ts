@@ -134,12 +134,12 @@ describe('media details modal', () => {
     await flush();
 
     expect([...document.querySelectorAll('.nav-label')].map(node => node.textContent))
-      .toEqual(['Hub', 'Dock', 'Media', 'System']);
+      .toEqual(['Dock', 'Media', 'System']);
     expect(document.querySelector('[data-view="dashboard"]')?.getAttribute('aria-current'))
       .toBe('page');
 
-    expect(document.querySelector('.nav-link-ext')?.getAttribute('href'))
-      .toBe('/downloads');
+    expect(document.querySelector('[data-view="downloads"]')?.textContent)
+      .toBe('Downloads');
     expect(document.getElementById('adminLogoutBtn'))
       .not.toBeNull();
 

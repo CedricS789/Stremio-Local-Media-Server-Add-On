@@ -9,39 +9,190 @@ export const adminCss = `
 .scan-current{margin:-8px 0 20px;padding:18px 19px;border:1px solid var(--line);border-radius:var(--radius);background:var(--panel)}.scan-current.active{border-color:rgba(14,165,233,0.4)}.scan-current-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.scan-current-title{font-size:15px;font-weight:800;color:#ffffff}.scan-current-meta{margin-top:5px;color:var(--muted);font-size:12px}.scan-progress-track{height:9px;margin-top:16px;overflow:hidden;border-radius:999px;background:#050609;border:1px solid var(--line)}.scan-progress-bar{height:100%;min-width:0;border-radius:inherit;background:linear-gradient(90deg,var(--brand2),var(--brand));transition:width .2s ease}.scan-progress-track.indeterminate .scan-progress-bar{width:34%;animation:scan-progress 1.2s ease-in-out infinite}@keyframes scan-progress{0%{transform:translateX(-110%)}100%{transform:translateX(310%)}}.scan-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-top:14px}.scan-metric{padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:#050609}.scan-metric span{display:block;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.07em}.scan-metric strong{display:block;margin-top:4px;font-size:15px;font-weight:800;color:#ffffff}.scan-history{display:grid;gap:10px}.scan-history-row{display:grid;grid-template-columns:minmax(150px,.8fr) auto minmax(260px,1.6fr);gap:14px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}.scan-history-row:last-child{border-bottom:0}.scan-history-main{min-width:0}.scan-history-title{font-size:13px;font-weight:750;color:#ffffff}.scan-history-meta{margin-top:4px;color:var(--dim);font-size:12px;overflow-wrap:anywhere}
 .backup-note{margin-top:18px}.backup-table .btn{text-decoration:none;display:inline-flex;align-items:center;justify-content:center}.backup-running{border-color:#285c56}
 .modal{border:0;padding:0;background:transparent;color:var(--text);width:min(900px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);margin:auto;overflow:hidden}.modal::backdrop{background:#000000d9;backdrop-filter:blur(6px)}.modal-card{width:100%;max-width:100%;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);display:grid;grid-template-rows:auto minmax(0,1fr) auto;min-width:0;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,0.85)}.modal-header,.modal-footer{position:sticky;z-index:2;background:#0d0f15;min-width:0}.modal-header{top:0;padding:15px 19px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:16px}.modal-heading{min-width:0}.modal-heading .eyebrow{margin-bottom:4px}.modal-heading h3{font-size:17px;line-height:1.3;font-weight:800;color:#ffffff;margin:0;overflow-wrap:anywhere;word-break:break-word}.modal-close{flex:0 0 auto}.modal-body{padding:20px;min-width:0;max-width:100%;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-gutter:stable}.modal-footer,.form-actions{padding:14px 19px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap}.modal-footer{bottom:0}.modal-footer:empty{display:none}.modal-loading{display:grid;place-items:center;min-height:260px;color:var(--muted)}.modal-loading span{display:inline-flex;align-items:center;gap:10px}.modal-loading span::before{content:"";width:16px;height:16px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--brand2);animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.details-section{min-width:0}.details-section+.details-section{margin-top:25px;padding-top:24px;border-top:1px solid var(--line)}.section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px;min-width:0}.section-head>div{min-width:0}.section-head h4{font-size:14px;font-weight:800;color:#ffffff;margin:0}.section-head p{font-size:12px;color:var(--muted);margin:4px 0 0;line-height:1.5;overflow-wrap:anywhere}.info-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}.info-grid>*{min-width:0}.info-item{background:#050609;border:1px solid var(--line);border-radius:11px;padding:12px;min-width:0}.info-item.full{grid-column:1/-1}.info-label{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;margin-bottom:6px}.info-value{display:block;min-width:0;max-width:100%;font-size:13px;line-height:1.55;color:#ffffff;overflow-wrap:anywhere;word-break:break-word}.path-row{display:flex;align-items:flex-start;gap:10px;min-width:0}.path-row .info-value{flex:1 1 auto}.copy-btn{flex:0 0 auto}.notice{border:1px solid var(--line);background:#050609;border-radius:11px;padding:12px 14px;font-size:13px;line-height:1.5;color:#e2e8f0;overflow-wrap:anywhere}.notice.error{border-color:rgba(244,63,94,0.4);background:#1a070c;color:#fecdd3}.notice.warn{border-color:rgba(245,158,11,0.4);background:#181206;color:#fde68a}.notice[hidden]{display:none}.match-card{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:14px;align-items:center;min-width:0;padding:14px;background:#050609;border:1px solid var(--line);border-radius:13px}.match-card>*{min-width:0}.match-card .poster{width:72px;height:102px}.match-content{min-width:0}.match-title{font-size:15px;font-weight:750;color:#ffffff;line-height:1.35;overflow-wrap:anywhere}.match-meta{display:flex;gap:7px;align-items:center;flex-wrap:wrap;color:var(--muted);font-size:11px;margin-top:7px}.match-description{margin:9px 0 0;color:var(--muted);font-size:13px;line-height:1.55;overflow-wrap:anywhere;word-break:break-word}.match-search{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:end;min-width:0;margin-top:14px}.match-search .field{min-width:0}.match-search .btn{min-height:42px}.search-status{min-height:20px;margin:9px 0 0;color:var(--muted);font-size:12px}.search-results{display:grid;gap:10px;min-width:0;margin-top:8px}.search-result{display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:13px;align-items:center;min-width:0;padding:12px;background:#050609;border:1px solid var(--line);border-radius:12px}.search-result>*{min-width:0}.search-result .poster,.poster-placeholder{width:64px;height:91px;border-radius:8px}.poster-placeholder{display:grid;place-items:center;background:#0d0f15;color:var(--muted);font-size:10px;text-align:center}.result-copy{min-width:0}.result-copy .match-title{font-size:14px;color:#ffffff;font-weight:750}.result-copy .match-description{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;color:var(--muted);font-size:12px}.confidence{color:var(--brand2);font-weight:800}.technical-details{border:1px solid var(--line);border-radius:12px;overflow:hidden;min-width:0}.technical-details summary{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:13px 14px;cursor:pointer;background:#050609;color:#ffffff;font-size:13px;font-weight:700}.technical-details summary::marker{color:var(--brand2)}.technical-details summary::after{content:"Show";color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}.technical-details[open] summary::after{content:"Hide"}.technical-inner{padding:12px;min-width:0;border-top:1px solid var(--line)}.technical-actions{display:flex;justify-content:flex-end;margin-bottom:9px}.code{display:block;width:100%;max-width:100%;max-height:320px;margin:0;overflow-y:auto;overflow-x:hidden;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;background:#050609;border:1px solid var(--line);border-radius:10px;padding:12px;color:#cbd5e1;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-.nav-link-ext{display:flex;align-items:center;gap:10px;text-decoration:none;padding:10px 13px;border-radius:10px;background:linear-gradient(135deg,rgba(2,132,199,0.18),rgba(14,165,233,0.1));border:1px solid rgba(56,189,248,0.3);color:#7dd3fc;font-weight:700;font-size:13px;box-shadow:0 2px 8px rgba(14,165,233,0.15);transition:all .15s ease}
-.nav-link-ext:hover{background:linear-gradient(135deg,rgba(2,132,199,0.3),rgba(14,165,233,0.2));border-color:rgba(56,189,248,0.55);color:#ffffff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(14,165,233,0.25)}
-.nav-link-ext:active{transform:translateY(1.5px)!important}
-.nav-ext-badge{font-size:10px;padding:2px 6px;border-radius:10px;background:#0284c7;color:#ffffff;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
-.sidebar-user-card{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#050609;border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-bottom:10px}
-.user-info{display:flex;align-items:center;gap:9px;min-width:0}
-.user-avatar{font-size:16px;line-height:1}
-.user-meta{display:flex;flex-direction:column;min-width:0}
+
+.sidebar-user-card{display:flex;flex-direction:column;gap:10px;background:#050609;border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;width:100%;box-sizing:border-box}
+.user-info{display:flex;align-items:center;gap:10px;min-width:0;width:100%}
+.user-avatar{font-size:18px;line-height:1;flex-shrink:0}
+.user-meta{display:flex;flex-direction:column;min-width:0;flex:1}
 .user-name{font-weight:750;font-size:13px;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .user-role{font-size:11px;color:var(--dim);display:flex;align-items:center;gap:5px;white-space:nowrap}
-.pulse-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.25)}
-.btn-signout{background:#18181b;border:1px solid #27272a;color:#a1a1aa;padding:7px 11px;font-size:12px;font-weight:700;border-radius:8px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;text-decoration:none;transition:all .15s ease}
+.pulse-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#10b981;box-shadow:0 0 0 3px rgba(16,185,129,0.25);flex-shrink:0}
+.btn-signout{background:#18181b;border:1px solid #27272a;color:#a1a1aa;padding:8px 12px;font-size:12px;font-weight:700;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;text-decoration:none;transition:all .15s ease;width:100%;box-sizing:border-box}
 .btn-signout:hover{background:rgba(244,63,94,0.14);border-color:rgba(244,63,94,0.38);color:#fda4af;transform:translateY(-1px)}
 .btn-signout:active{transform:translateY(1.5px)!important}
+
+/* Downloads View & Components */
+.show-group{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;transition:border-color .15s ease}
+.show-group:hover{border-color:var(--line-strong)}
+.show-group-header{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:var(--panel2);cursor:pointer;user-select:none;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--line);transition:background .15s ease}
+.show-group-header:hover{background:#181c28}
+.show-group.collapsed .show-group-header{border-bottom:none}
+.show-group.collapsed .show-chevron{transform:rotate(-90deg)}
+.show-group.collapsed .show-group-body{display:none}
+.show-group-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
+.show-chevron{font-size:11px;color:var(--muted);transition:transform .2s ease;display:inline-block}
+.show-icon{font-size:16px;line-height:1}
+.show-title{font-size:14px;font-weight:800;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.show-badge{font-size:11px;font-weight:750;color:var(--muted);background:#050609;border:1px solid var(--line);padding:2px 9px;border-radius:999px;white-space:nowrap}
+.show-group-actions{display:flex;align-items:center;gap:8px}
+.show-group-body{background:var(--panel)}
+.show-group-body .file-item{border:none;border-bottom:1px solid var(--line);border-radius:0;margin-bottom:0;background:transparent;box-shadow:none}
+.show-group-body .file-item:last-child{border-bottom:none}
+.show-group-body .file-item:hover{background:rgba(255,255,255,0.03);transform:none}
+.file-item{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;transition:transform .12s ease,border-color .15s ease,background .15s ease}
+.file-item:hover{background:var(--panel2);border-color:var(--line-strong);transform:translateY(-1px)}
+.file-check{cursor:pointer;width:18px;height:18px;accent-color:var(--brand2);flex-shrink:0}
+.file-main{flex:1;min-width:0}
+.file-title-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px}
+.file-title{font-weight:750;font-size:13px;color:#f1f5f9;letter-spacing:-.01em}
+.badge-ep{background:rgba(14,165,233,0.14);color:#7dd3fc;border:1px solid rgba(56,189,248,0.38)}
+.badge-movie{background:rgba(16,185,129,0.14);color:#6ee7b7;border:1px solid rgba(16,185,129,0.38)}
+.file-meta-link{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;text-decoration:none;cursor:pointer;transition:color .15s ease}
+.file-meta-link:hover{color:var(--brand2);text-decoration:underline}
+.file-play-icon{font-size:11px;color:var(--brand);flex-shrink:0}
+.file-meta{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file-size-badge{font-size:12px;font-weight:800;color:#f1f5f9;background:#050609;padding:4px 10px;border-radius:8px;border:1px solid var(--line);white-space:nowrap}
+.file-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.btn-stremio{background:rgba(139,92,246,0.15);color:#c4b5fd;border:1px solid rgba(139,92,246,0.38);padding:6px 11px;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;gap:5px;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,0.35);white-space:nowrap;transition:all .15s ease}
+.btn-stremio:hover{background:#7c3aed;color:#fff;border-color:#8b5cf6;box-shadow:0 3px 0 #5b21b6,0 4px 12px rgba(124,58,237,0.4);transform:translateY(-1px)}
+.btn-stremio:active{transform:translateY(1.5px)!important}
+.dl-card-transfer{border:1px solid var(--line);border-radius:12px;background:var(--panel);padding:14px 18px;margin-bottom:10px}
+.dl-card-transfer .row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.dl-bar-bg{height:7px;background:#050609;border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:6px}
+.dl-bar-fill{height:100%;background:linear-gradient(90deg,#0284c7,#38bdf8);border-radius:4px;transition:width .2s ease}
+.dl-meta{font-size:12px;color:var(--muted)}
 .brand-user-mobile{display:none}
 @media(max-width:900px){.shell{grid-template-columns:1fr}.sidebar{height:auto;position:relative;border-right:0;border-bottom:1px solid var(--line);padding:15px}.brand{display:flex;justify-content:space-between;align-items:center;margin:0 4px 14px}.brand-left{display:flex;gap:12px;align-items:center}.brand-user-mobile{display:flex;gap:7px;align-items:center}.user-badge-mini{font-size:11px;font-weight:700;color:var(--muted);background:#0a0b10;border:1px solid var(--line);padding:5px 9px;border-radius:7px;display:inline-flex;align-items:center;gap:5px}.nav{display:flex;gap:5px;overflow:auto}.nav-group{display:flex;gap:5px}.nav-label{display:none}.nav button{white-space:nowrap}.nav-link-ext{white-space:nowrap;padding:7px 11px;font-size:12px}.sidebar-foot{display:none}.main{padding:24px 16px 50px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}.topbar{align-items:flex-start}.form-grid,.settings-panel{grid-template-columns:1fr}.settings-nav{display:flex;overflow-x:auto}.settings-tab{flex:0 0 auto}.field.full{grid-column:auto}}
 @media(max-width:600px){.stats{grid-template-columns:1fr 1fr}.stat{padding:14px}.stat strong{font-size:24px}.topbar{display:block}.topbar .actions{margin-top:14px}.main{padding:16px 12px 40px}.table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}.modal{width:min(900px,calc(100vw - 16px));max-width:calc(100vw - 16px)}.modal-header{padding:12px 14px}.modal-body{padding:14px}.modal-footer{padding:12px 14px}}
 .manifest-row{flex-wrap:wrap}.manifest-row .input{flex-basis:420px}
 `;
 
-export function loginHtml(error = '', nextUrl = '/downloads'): string {
-  const safeNext = String(nextUrl || '/downloads').replace(/[^\w\d_./?&=-]/g, '');
+export function loginHtml(error = '', nextUrl = '/admin'): string {
+  const safeNext = String(nextUrl || '/admin').replace(/[^\w\d_./?&=-]/g, '');
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Sign in · Stremio Local Media Server</title><style>${adminCss}</style></head><body><main class="login-wrap"><section class="login"><div class="brand-mark"><img src="/addon-icon" alt="Stremio Local Media Server"></div><h1>Welcome back</h1><p class="muted">Sign in to access your Stremio Local Media Server.</p>${error ? `<p class="error">${error}</p>` : ''}<form method="post" action="/admin/login"><input type="hidden" name="next" value="${safeNext}"><div class="field"><label for="loginUsername">Username</label><input id="loginUsername" class="input" name="username" autocomplete="username" autofocus required></div><div class="field"><label for="loginPassword">Password</label><div style="position:relative;display:flex;align-items:center;"><input id="loginPassword" class="input" name="password" type="password" autocomplete="current-password" required style="width:100%;padding-right:42px;"><button type="button" id="loginPasswordToggle" style="position:absolute;right:10px;background:none;border:none;color:var(--dim);cursor:pointer;padding:4px;font-size:14px;" title="Show/hide password" onclick="const p=document.getElementById('loginPassword');p.type=p.type==='password'?'text':'password';">👁️</button></div></div><button class="btn primary" type="submit">Sign in</button></form><p class="tmdb">This product uses the TMDB API but is not endorsed or certified by TMDB.</p></section></main></body></html>`;
 }
 
 export function adminHtml(csrf: string): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="${csrf}"><title>Stremio Local Media Server</title><style>${adminCss}</style></head><body>
-  <div class="shell"><aside class="sidebar"><div class="brand"><div class="brand-left"><div class="brand-mark"><img id="sidebarBrandIcon" src="/addon-icon" alt="Stremio Local Media Server"></div><div><h1 id="brandName">Stremio Local Media Server</h1><p>Self-hosted media & downloader</p></div></div><div class="brand-user-mobile"><span class="user-badge-mini"><span class="pulse-dot"></span> admin</span><button class="btn small btn-signout" type="button" id="adminLogoutBtnMobile" onclick="handleLogout()" title="Sign out of server">🔒 Sign Out</button></div></div><nav class="nav" aria-label="Admin sections"><div class="nav-group"><span class="nav-label">Hub</span><a href="/downloads" class="nav-link-ext" title="Open Live Downloads & Storage Manager"><span>⚡</span><span style="flex:1;">Live Downloads</span><span class="nav-ext-badge">LIVE</span></a></div><div class="nav-group"><span class="nav-label">Dock</span><button class="active" data-view="dashboard" aria-current="page">Overview</button></div><div class="nav-group"><span class="nav-label">Media</span><button data-view="library">Library</button><button data-view="logs">Scan logs</button></div><div class="nav-group"><span class="nav-label">System</span><button data-view="settings">Settings</button><button data-view="health">System health</button><button data-view="backups">Backups</button></div></nav>
+  <div class="shell"><aside class="sidebar"><div class="brand"><div class="brand-left"><div class="brand-mark"><img id="sidebarBrandIcon" src="/addon-icon" alt="Stremio Local Media Server"></div><div><h1 id="brandName">Stremio Local Media Server</h1><p>Self-hosted media & downloader</p></div></div><div class="brand-user-mobile"><span class="user-badge-mini"><span class="pulse-dot"></span> admin</span><button class="btn small btn-signout" type="button" id="adminLogoutBtnMobile" onclick="handleLogout()" title="Sign out of server">🔒 Sign Out</button></div></div><nav class="nav" aria-label="Admin sections"><div class="nav-group"><span class="nav-label">Dock</span><button class="active" data-view="dashboard" aria-current="page">Overview</button></div><div class="nav-group"><span class="nav-label">Media</span><button data-view="library">Library</button><button data-view="downloads">Downloads</button><button data-view="logs">Scan logs</button></div><div class="nav-group"><span class="nav-label">System</span><button data-view="settings">Settings</button><button data-view="health">System health</button><button data-view="backups">Backups</button></div></nav>
 <div class="sidebar-foot"><div class="sidebar-user-card"><div class="user-info"><span class="user-avatar">👤</span><div class="user-meta"><span class="user-name">admin</span><span class="user-role"><span class="pulse-dot"></span> Administrator</span></div></div><button type="button" class="btn small btn-signout" id="adminLogoutBtn" onclick="handleLogout()" title="Sign out of server"><span>🔒</span> Sign Out</button></div><div class="server-state"><div><span class="pulse"></span><span id="serverState">Server online</span></div><span class="server-version" id="buildVersion">Version loading…</span></div></div></aside>
 <main class="main"><section id="dashboard" class="view active"><div class="topbar"><div><div class="eyebrow">Dock Control</div><h2>Stremio Local Media Server Overview</h2><div class="muted" id="lastScan">Loading scan status…</div></div>
-<div class="actions"><a class="btn primary" href="/downloads" style="text-decoration:none;display:inline-flex;align-items:center;gap:6px;">⚡ Downloads & Storage</a><button class="btn" data-scan="changed">Scan changes</button><button class="btn" data-scan="full">Full rescan</button></div></div><div class="stats" id="stats"></div><div class="grid"><div class="card"><div class="card-head"><h3>Recently added</h3><button class="btn small" data-view-go="library">View library</button></div><div class="list" id="recentList"></div></div><div class="card"><div class="card-head"><h3>Downloads & Storage Manager</h3><a class="btn small" href="/downloads" style="text-decoration:none;">Open dashboard</a></div><div style="padding:18px 20px;"><p style="margin:0 0 16px 0;color:var(--muted);font-size:13px;line-height:1.6;">Manage downloaded movies and TV series, track your allocated storage quota, choose stream quality directly from Stremio, or trigger instant file cleanup.</p><div style="display:flex;gap:10px;flex-wrap:wrap;"><a class="btn primary" href="/downloads" style="text-decoration:none;">⚡ Open Live Downloads Dashboard</a></div></div></div></div></section>
+<div class="actions"><button class="btn primary" type="button" data-view-go="downloads" style="display:inline-flex;align-items:center;gap:6px;">📥 Downloads & Storage</button><button class="btn" data-scan="changed">Scan changes</button><button class="btn" data-scan="full">Full rescan</button></div></div><div class="stats" id="stats"></div><div class="grid"><div class="card"><div class="card-head"><h3>Recently added</h3><button class="btn small" data-view-go="library">View library</button></div><div class="list" id="recentList"></div></div><div class="card"><div class="card-head"><h3>Downloads & Storage Manager</h3><button class="btn small" type="button" data-view-go="downloads">View downloads</button></div><div style="padding:18px 20px;"><p style="margin:0 0 16px 0;color:var(--muted);font-size:13px;line-height:1.6;">Manage downloaded movies and TV series, track your allocated storage quota, choose stream quality directly from Stremio, or trigger instant file cleanup.</p><div style="display:flex;gap:10px;flex-wrap:wrap;"><button class="btn primary" type="button" data-view-go="downloads">📥 Open Downloads & Storage</button></div></div></div></div></section>
   <section id="health" class="view"><div class="topbar"><div><div class="eyebrow">Operational readiness</div><h2>System health</h2><p class="muted">On-demand, sanitized checks for the services and storage Stremio Local Media Server depends on.</p></div><div class="actions"><button class="btn" id="copyDiagnostics" type="button" data-copy="diagnosticsJson" data-copy-label="Diagnostics copied" disabled>Copy diagnostics</button><button class="btn primary" type="button" data-refresh-health>Run checks</button></div></div><div class="health-banner" id="healthSummary" aria-live="polite"><div><div class="health-banner-title">Checks have not run yet</div><div class="health-banner-meta">Open this page or run the checks manually.</div></div></div><div class="health-checks" id="healthChecks"></div><section class="outcome-section" aria-labelledby="healthDiagnosticsHeading"><div class="section-head"><div><h3 id="healthDiagnosticsHeading">Sanitized diagnostic bundle</h3><p>Useful for troubleshooting without paths, URLs, credentials, tokens, or raw device identities.</p></div></div><div class="card"><div class="card-body"><div class="health-outcome-summary" id="healthOutcomeSummary">No diagnostic snapshot has loaded.</div><details class="technical-details health-diagnostics"><summary>Diagnostic JSON</summary><div class="technical-inner"><pre class="code" id="diagnosticsJson">Run system checks to create a diagnostic bundle.</pre></div></details></div></div></section></section>
   <section id="backups" class="view"><div class="topbar"><div><div class="eyebrow">Data protection</div><h2>Database backups</h2><p class="muted">Live, integrity-checked SQLite snapshots with bounded automatic retention.</p></div><div class="actions"><button class="btn" type="button" data-refresh-backups>Refresh</button><button class="btn primary" type="button" data-create-backup>Create backup</button></div></div><div class="health-banner" id="backupSummary" aria-live="polite"><div><div class="health-banner-title">Backups have not loaded yet</div><div class="health-banner-meta">Open this page to inspect verified recovery points.</div></div></div><div class="stats activity-operations" id="backupStats" aria-label="Backup status"></div><div class="card table-wrap backup-table"><table class="table"><thead><tr><th>Created</th><th>Trigger</th><th>Size</th><th>Integrity</th><th></th></tr></thead><tbody id="backupRows"></tbody></table></div><div class="notice backup-note">Restores are intentionally offline: stop Stremio Local Media Server, preserve the current database, replace it with a downloaded snapshot, remove stale <code>-wal</code>/<code>-shm</code> companions, then restart and run System Health.</div></section>
+  <section id="downloads" class="view">
+    <div class="topbar">
+      <div>
+        <div class="eyebrow">Transfers & Disk Storage</div>
+        <h2>Downloads & Storage</h2>
+        <p class="muted">Live background downloads, storage quota allocation, and downloaded media management.</p>
+      </div>
+      <div class="actions">
+        <button class="btn" type="button" id="dlRescanBtn" onclick="dlRescanLibrary()">🔄 Rescan Storage</button>
+      </div>
+    </div>
+
+    <!-- STATS GRID -->
+    <div class="stats" id="dlStatsGrid">
+      <div class="stat">
+        <span>Media Storage Used</span>
+        <strong id="dlStatUsed">0 GB</strong>
+        <div style="height:5px;background:#050609;border:1px solid var(--line);border-radius:3px;margin:10px 0 6px;overflow:hidden;">
+          <div id="dlMiniBarFill" style="height:100%;width:0%;background:var(--brand);transition:width .2s;"></div>
+        </div>
+        <div class="muted" id="dlStatSubUsed" style="font-size:11px;">Loading media storage...</div>
+      </div>
+      <div class="stat">
+        <span>Allocated Quota Remaining</span>
+        <strong id="dlStatFree">0 GB Free</strong>
+        <div class="muted" id="dlStatSubDrive" style="font-size:11px;margin-top:10px;">Allocated quota</div>
+      </div>
+      <div class="stat">
+        <span>Downloaded Content</span>
+        <strong id="dlStatFiles">0 Files</strong>
+        <div class="muted" id="dlStatSubBreakdown" style="font-size:11px;margin-top:10px;">0 Movies · 0 Series</div>
+      </div>
+      <div class="stat">
+        <span>Background Transfers</span>
+        <strong id="dlStatActive">0 Transfers</strong>
+        <div class="muted" id="dlStatSubSpeed" style="font-size:11px;margin-top:10px;">No active background transfers</div>
+      </div>
+    </div>
+
+    <!-- STORAGE QUOTA ALLOCATION CARD -->
+    <div class="card" style="margin-bottom:24px;">
+      <div class="card-head">
+        <h3>Storage Quota Allocation</h3>
+        <span class="badge" id="dlStorageBadge">0 GB / 100 GB</span>
+      </div>
+      <div style="padding:20px;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:9px;font-size:13px;font-weight:700;">
+          <span id="dlStorageCardVal">0 GB of 100 GB used (0%)</span>
+          <span id="dlStorageRemainingVal" class="muted">100 GB available</span>
+        </div>
+        <div style="height:10px;background:#050609;border:1px solid var(--line);border-radius:6px;overflow:hidden;">
+          <div id="dlStorageBarFill" style="height:100%;width:0%;background:linear-gradient(90deg,#0284c7,#38bdf8);border-radius:5px;transition:width .3s;"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:9px;font-size:11px;color:var(--dim);font-weight:750;">
+          <span>0 GB</span>
+          <span id="dlTick25">25 GB</span>
+          <span id="dlTick50">50 GB</span>
+          <span id="dlTick80">80 GB</span>
+          <span id="dlTick100" style="color:var(--brand2);">100 GB (Limit)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVE DOWNLOADS SECTION -->
+    <div id="dlActiveSection" style="display:none;margin-bottom:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <h3 style="font-size:15px;font-weight:800;color:#fff;margin:0;display:flex;align-items:center;gap:8px;">
+          <span class="pulse"></span> Active Background Downloads
+        </h3>
+        <button class="btn danger small" onclick="dlCancelAll()">Cancel All Transfers</button>
+      </div>
+      <div id="dlActiveList" style="display:grid;gap:10px;"></div>
+    </div>
+
+    <!-- DOWNLOADED FILES SECTION -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:12px;">
+      <div style="display:flex;gap:6px;align-items:center;" id="dlPillsContainer">
+        <button type="button" class="btn small primary" id="dlPillSeries" onclick="dlSetFilter('type:series')">📺 TV Series <span class="badge" id="dlBadgeSeries" style="margin-left:4px;padding:1px 6px;">0</span></button>
+        <button type="button" class="btn small" id="dlPillMovies" onclick="dlSetFilter('type:movie')">🎬 Movies <span class="badge" id="dlBadgeMovies" style="margin-left:4px;padding:1px 6px;">0</span></button>
+      </div>
+    </div>
+
+    <div class="toolbar" style="margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <input type="text" id="dlSearchInput" class="input" placeholder="Filter by show, episode, or filename..." oninput="dlOnSearchChange()" style="flex:1 1 260px;max-width:none;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="dlSortSelect" class="select" onchange="dlOnSortChange()" style="width:auto;min-width:160px;" aria-label="Sort downloaded files">
+          <option value="size">Sort by: Size</option>
+          <option value="date">Sort by: Date Added</option>
+          <option value="title">Sort by: Title</option>
+          <option value="episode">Sort by: Episode</option>
+        </select>
+        <button type="button" id="dlSortDirBtn" class="btn" onclick="dlToggleSortDirection()" title="Sort order">
+          <span id="dlSortDirIcon">↓</span>
+          <span id="dlSortDirLabel">Desc</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- BATCH ACTIONS BAR -->
+    <div id="dlBatchBar" class="card" style="display:none;padding:12px 18px;margin-bottom:16px;align-items:center;justify-content:space-between;background:rgba(14,165,233,0.08);border-color:rgba(56,189,248,0.38);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <input type="checkbox" id="dlMasterCheck" onchange="dlToggleSelectAll()" style="width:17px;height:17px;accent-color:var(--brand2);cursor:pointer;">
+        <span id="dlSelectedSummary" style="font-weight:750;color:#e0f2fe;font-size:13px;">0 selected</span>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn small" onclick="dlClearSelection()">Clear Selection</button>
+        <button class="btn danger small" onclick="dlDeleteSelected()">🗑️ Delete Selected</button>
+      </div>
+    </div>
+
+    <!-- FILES / SHOWS LIST -->
+    <div id="dlFilesList" style="display:grid;gap:12px;"></div>
+  </section>
   <section id="library" class="view"><div class="topbar"><div><div class="eyebrow">All local files</div><h2>Library</h2></div></div><div class="toolbar"><label class="sr-only" for="librarySearch">Filter library</label><input id="librarySearch" class="input" placeholder="Filter by title or filename"><label class="sr-only" for="libraryType">Filter by media type</label><select id="libraryType" class="select" style="max-width:160px"><option value="">All types</option><option value="movie">Movies</option><option value="series">TV</option></select></div><div class="card table-wrap"><table class="table"><thead><tr><th>Title</th><th>Type</th><th>File</th><th>Quality</th><th>Duration</th><th>Status</th><th></th></tr></thead><tbody id="libraryRows"></tbody></table></div></section>
   <section id="logs" class="view"><div class="topbar"><div><div class="eyebrow">Scanner activity</div><h2>Scan logs</h2><p class="muted">Live, cancellable library discovery and media inspection with durable terminal history.</p></div><div class="actions"><button class="btn" type="button" data-scan="changed">Scan changes</button><button class="btn primary" type="button" data-scan="full">Full rescan</button><button class="btn danger" type="button" data-cancel-scan hidden>Cancel scan</button></div></div><div class="scan-current" id="scanCurrent" aria-live="polite"></div><div class="card scan-history" id="scanLogs"></div></section>
   <section id="settings" class="view"><div class="topbar"><div><div class="eyebrow">Runtime configuration</div><h2>Settings</h2><p class="muted">Configuration is grouped into clear sections. All sections save together.</p></div></div><form class="card" id="settingsForm"><div class="card-body form-grid">
@@ -272,6 +423,61 @@ export function adminHtml(csrf: string): string {
       </footer>
     </div>
   </dialog>
+  <dialog class="modal" id="dlDeleteModal" role="dialog" aria-modal="true" aria-labelledby="dlDeleteModalTitle">
+    <div class="modal-card" style="width:min(480px, calc(100vw - 32px)); border-color:rgba(244,63,94,0.4); box-shadow:0 30px 80px rgba(0,0,0,0.95), 0 0 30px rgba(244,63,94,0.15);">
+      <header class="modal-header" style="background:#13080c; border-bottom:1px solid rgba(244,63,94,0.3);">
+        <div class="modal-heading">
+          <div class="eyebrow" style="color:var(--danger); font-weight:800;">CONFIRM DELETION</div>
+          <h3 id="dlDeleteModalTitle" style="color:#ffffff; font-size:17px;">Delete Media</h3>
+        </div>
+        <button class="btn small modal-close" type="button" onclick="dlCloseDeleteModal()" aria-label="Close dialog">✕</button>
+      </header>
+      <div class="modal-body" style="padding:20px;">
+        <div id="dlStep1">
+          <div style="background:#141721; border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+            <div id="dlModalTargetName" style="color:#ffffff; font-weight:750; font-size:13px; word-break:break-word; margin-bottom:4px;">Target</div>
+            <div id="dlModalTargetMeta" class="muted" style="font-size:12px;">1 file · 0 MB</div>
+          </div>
+          <div style="background:#1a070c; border:1px solid rgba(244,63,94,0.3); border-radius:10px; padding:12px 14px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start;">
+            <span style="font-size:18px; line-height:1;">⚠️</span>
+            <div style="font-size:12px; color:#fecdd3; line-height:1.5;">
+              This will permanently delete the selected media from server disk storage. <strong>This cannot be undone.</strong>
+            </div>
+          </div>
+          <div id="dlPhraseGroup" class="field" style="margin-bottom:0; display:none;">
+            <label for="dlPhraseInput" style="display:block; color:#fda4af; font-size:12px; font-weight:750; margin-bottom:6px;">
+              Type <code style="background:#260a12; color:#fecdd3; padding:2px 6px; border-radius:4px; border:1px solid #6e2430; font-family:monospace; font-weight:800;">DELETE</code> to proceed:
+            </label>
+            <input id="dlPhraseInput" class="input" style="width:100%; font-family:monospace; font-size:13px; background:#050609; border-color:#4a151e; color:#ffffff;" placeholder="DELETE" autocomplete="off" oninput="dlCheckPhraseMatch()">
+          </div>
+        </div>
+        <div id="dlStep2" style="display:none;">
+          <div style="background:#10141f; border:1px solid #1f2b42; border-radius:10px; padding:12px 14px; margin-bottom:14px;">
+            <div style="color:var(--muted); font-size:11px; text-transform:uppercase; font-weight:800; letter-spacing:0.08em; margin-bottom:4px;">Security Verification</div>
+            <div style="color:#ffffff; font-size:13px; font-weight:600;" id="dlStep2Summary">Enter administrator password:</div>
+          </div>
+          <div class="field" style="margin-bottom:0;">
+            <label for="dlPasswordInput" style="display:block; color:#cbd5e1; font-size:12px; font-weight:750; margin-bottom:6px;">
+              Administrator Password
+            </label>
+            <div style="position:relative; display:flex; align-items:center;">
+              <input id="dlPasswordInput" class="input" type="password" style="width:100%; padding-right:42px; background:#050609; border-color:var(--line); color:#ffffff;" placeholder="Enter admin password" autocomplete="current-password" onkeydown="if(event.key==='Enter') dlExecuteDeletion()">
+              <button type="button" id="dlPasswordToggle" style="position:absolute; right:10px; background:none; border:none; color:var(--dim); cursor:pointer; padding:4px; font-size:14px;" title="Show/hide password" onclick="const p=document.getElementById('dlPasswordInput');p.type=p.type==='password'?'text':'password';">👁️</button>
+            </div>
+          </div>
+        </div>
+        <div id="dlModalError" class="notice error" style="margin-top:14px; display:none;"></div>
+      </div>
+      <footer class="modal-footer" style="background:#0d0f15; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+        <button class="btn" type="button" onclick="dlCloseDeleteModal()" id="dlModalCancelBtn">Cancel</button>
+        <div style="display:flex; gap:8px;">
+          <button class="btn" type="button" onclick="dlGoToStep1()" id="dlModalBackBtn" style="display:none;">← Back</button>
+          <button class="btn danger" type="button" onclick="dlGoToStep2()" id="dlModalNextBtn" style="font-weight:750;">Next: Enter Password →</button>
+          <button class="btn danger" type="button" onclick="dlExecuteDeletion()" id="dlModalConfirmBtn" style="display:none; font-weight:800;">🗑️ Permanently Delete</button>
+        </div>
+      </footer>
+    </div>
+  </dialog>
   <dialog class="modal" id="confirmModal" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle">
     <div class="modal-card" style="width:min(460px, calc(100vw - 32px));">
       <header class="modal-header">
@@ -365,7 +571,22 @@ async function loadScans(){const request=++scanRequest,data=await api('/admin/ap
 async function startScan(button){const mode=button.dataset.scan==='full'?'full':'changed';button.disabled=true;try{const data=await api('/admin/api/scan',{method:'POST',body:JSON.stringify({mode})});state.scan=data.scan||state.scan;state.health=null;renderScanOperations();toast(mode==='full'?'Full rescan started':'Changed-file scan started');await loadScans()}catch(err){toast(err.message||'Scan could not start');await loadScans().catch(()=>{})}finally{renderScanOperations()}}
 async function cancelScan(button){if(!await showConfirm({title:'Cancel Library Scan',eyebrow:'Scan Control',message:'Cancel the active library scan? Completed file updates are kept, but removal reconciliation will not run.',confirmText:'Stop Scan',danger:true}))return;button.disabled=true;button.textContent='Stopping…';try{const data=await api('/admin/api/scan/cancel',{method:'POST'});state.scan=data.scan||state.scan;state.health=null;renderScanOperations();toast('Scan cancellation requested');await loadScans()}catch(err){toast(err.message||'Scan could not be cancelled');await loadScans().catch(()=>{})}finally{renderScanOperations()}}
 function activateSettingsPanel(id,{focus=false}={}){const tabs=[...document.querySelectorAll('[data-settings-tab]')],panels=[...document.querySelectorAll('[data-settings-panel]')],selected=panels.find(panel=>panel.dataset.settingsPanel===id)||panels[0];if(!selected)return;panels.forEach(panel=>{panel.hidden=panel!==selected});tabs.forEach(tab=>{const active=tab.dataset.settingsTab===selected.dataset.settingsPanel;tab.classList.toggle('active',active);tab.setAttribute('aria-selected',String(active));tab.tabIndex=active?0:-1;if(active&&focus)tab.focus()})}
-function switchView(id){document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));document.querySelectorAll('.nav button').forEach(b=>{const active=b.dataset.view===id;b.classList.toggle('active',active);if(active)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});if(id==='health')loadHealth().catch(err=>toast(err.message));if(id==='backups')loadBackups().catch(err=>toast(err.message));if(id==='logs')loadScans().catch(err=>toast(err.message));window.scrollTo({top:0,behavior:'smooth'})}
+function switchView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===id));
+  document.querySelectorAll('.nav button').forEach(b=>{
+    const active=b.dataset.view===id;
+    b.classList.toggle('active',active);
+    if(active)b.setAttribute('aria-current','page');
+    else b.removeAttribute('aria-current');
+  });
+  if(id==='health')loadHealth().catch(err=>toast(err.message));
+  if(id==='backups')loadBackups().catch(err=>toast(err.message));
+  if(id==='logs')loadScans().catch(err=>toast(err.message));
+  if(id==='downloads')dlStartPolling();
+  else dlStopPolling();
+  try{history.replaceState(null,'',id==='dashboard'?'/admin':'/admin?view='+id);}catch(e){}
+  window.scrollTo({top:0,behavior:'smooth'});
+}
 function poster(url,alt){return url?'<img class="poster" src="'+esc(url)+'" alt="'+esc(alt)+' poster">':'<div class="poster-placeholder" aria-hidden="true">No poster</div>'}
 function setModalError(message){const node=document.getElementById('modalError');if(!node)return;node.textContent=message||'';node.hidden=!message;if(message)node.scrollIntoView({block:'nearest'})}
 function syncBusyControls(){fileModal.querySelectorAll('button,input').forEach(node=>{if(node.dataset.close!==undefined||node.closest('.modal-body')||node.closest('.modal-footer'))node.disabled=modalState.busy});fileModal.setAttribute('aria-busy',String(modalState.busy))}
@@ -563,6 +784,669 @@ window.handleLogout=handleLogout;
 document.getElementById('adminLogoutBtn')?.addEventListener('click',handleLogout);
 document.getElementById('adminLogoutBtnMobile')?.addEventListener('click',handleLogout);
 
-async function initialize(){await load()}
+
+// ==========================================
+// DOWNLOADS ENGINE & STORAGE MANAGER
+// ==========================================
+let dlData = { items: [], activeSeasons: [], localFiles: [], stats: {} };
+let dlSelectedIds = new Set();
+let dlActiveFilter = 'type:series';
+let dlSearchQuery = '';
+let dlSortField = 'size';
+let dlSortDir = 'desc';
+let dlCollapsedShows = new Set();
+let dlCurrentDeleteTarget = null;
+let dlPollTimer = null;
+
+function fmtGb(bytes) {
+  if (bytes == null || isNaN(bytes)) return '0 GB';
+  const n = Number(bytes);
+  if (n === 0) return '0 GB';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+  if (n < 1024 * 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + ' MB';
+  return (n / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+}
+
+function formatDate(ts) {
+  if (!ts) return '';
+  const d = new Date(Number(ts));
+  return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function dlGetStremioUrl(f) {
+  const sid = f.stremio_id || f.imdb_id;
+  if (!sid) {
+    const term = f.title || (f.relative_path ? f.relative_path.split('/')[0] : '');
+    return term ? 'stremio:///search?search=' + encodeURIComponent(term) : 'stremio://';
+  }
+  const cleanId = String(sid).replace(/^zpm:/, '');
+  if (f.type === 'movie') {
+    return 'stremio:///detail/movie/' + encodeURIComponent(cleanId) + '/' + encodeURIComponent(cleanId) + '?autoPlay=true';
+  } else if (f.type === 'series') {
+    const s = f.season || 1;
+    const ep = f.episode_start || 1;
+    const videoId = cleanId + ':' + s + ':' + ep;
+    return 'stremio:///detail/series/' + encodeURIComponent(cleanId) + '/' + encodeURIComponent(videoId) + '?autoPlay=true';
+  }
+  return 'stremio:///detail/' + encodeURIComponent(f.type || 'series') + '/' + encodeURIComponent(cleanId) + '?autoPlay=true';
+}
+
+async function dlLoad() {
+  try {
+    const r = await fetch('/downloads/status', { credentials: 'include' });
+    if (r.status === 401) {
+      window.location.href = '/admin/login?next=/admin?view=downloads';
+      return;
+    }
+    if (!r.ok) return;
+    dlData = await r.json();
+    dlRender();
+  } catch (e) {}
+}
+
+function dlStartPolling() {
+  dlLoad();
+  if (!dlPollTimer) dlPollTimer = setInterval(dlLoad, 3000);
+}
+
+function dlStopPolling() {
+  if (dlPollTimer) {
+    clearInterval(dlPollTimer);
+    dlPollTimer = null;
+  }
+}
+
+function dlRender() {
+  dlRenderStats();
+  dlRenderActive();
+  dlRenderPills();
+  dlRenderBatchBar();
+  dlRenderFiles();
+}
+
+function dlRenderStats() {
+  const stats = dlData.stats || {};
+  const limitBytes = stats.allocatedLimitBytes || (100 * 1024 * 1024 * 1024);
+  const usedBytes = Number(stats.totalMediaBytes) || 0;
+  const remainingBytes = Math.max(0, limitBytes - usedBytes);
+  const pct = Math.min(100, (usedBytes / limitBytes) * 100);
+  const pctStr = pct.toFixed(1) + '%';
+  const limitGbStr = fmtGb(limitBytes);
+  const usedGbStr = fmtGb(usedBytes);
+  const freeGbStr = fmtGb(remainingBytes);
+
+  const statUsedEl = document.getElementById('dlStatUsed');
+  const statSubUsedEl = document.getElementById('dlStatSubUsed');
+  const miniBarFill = document.getElementById('dlMiniBarFill');
+  if (statUsedEl) statUsedEl.textContent = usedGbStr;
+  if (statSubUsedEl) statSubUsedEl.textContent = pctStr + ' of ' + limitGbStr + ' limit (' + (stats.totalFiles || 0) + ' files)';
+  if (miniBarFill) {
+    miniBarFill.style.width = pctStr;
+    miniBarFill.style.background = pct >= 100 ? 'var(--danger)' : (pct >= 80 ? 'var(--warn)' : 'var(--brand)');
+  }
+
+  const statFreeEl = document.getElementById('dlStatFree');
+  const statSubDriveEl = document.getElementById('dlStatSubDrive');
+  const disk = stats.disk || {};
+  if (statFreeEl) {
+    statFreeEl.textContent = freeGbStr + ' Free';
+    if (usedBytes >= limitBytes) {
+      statFreeEl.style.color = 'var(--danger)';
+      if (statSubDriveEl) statSubDriveEl.textContent = '⚠️ Storage quota full! Host free: ' + fmtGb(disk.freeBytes);
+    } else if (pct >= 80) {
+      statFreeEl.style.color = 'var(--warn)';
+      if (statSubDriveEl) statSubDriveEl.textContent = '⚠️ Storage quota at ' + pctStr + '. Host free: ' + fmtGb(disk.freeBytes);
+    } else {
+      statFreeEl.style.color = '#ffffff';
+      if (statSubDriveEl) statSubDriveEl.textContent = disk.freeBytes ? 'Host free: ' + fmtGb(disk.freeBytes) : 'Allocated quota';
+    }
+  }
+
+  const statFilesEl = document.getElementById('dlStatFiles');
+  const statSubBreakdownEl = document.getElementById('dlStatSubBreakdown');
+  if (statFilesEl) statFilesEl.textContent = (stats.totalFiles || 0) + ' Files';
+  if (statSubBreakdownEl) statSubBreakdownEl.textContent = (stats.moviesCount || 0) + ' Movies · ' + (stats.seriesCount || 0) + ' Episodes';
+
+  const items = dlData.items || [];
+  const activeCount = items.filter(i => i.status !== 'queued').length;
+  const queuedCount = items.filter(i => i.status === 'queued').length;
+  let totalSpeed = 0;
+  for (const item of items) {
+    if (item.speedMbps) totalSpeed += Number(item.speedMbps) || 0;
+  }
+  const statActiveEl = document.getElementById('dlStatActive');
+  const statSubSpeedEl = document.getElementById('dlStatSubSpeed');
+  if (statActiveEl) statActiveEl.textContent = items.length + ' Transfers';
+  if (statSubSpeedEl) statSubSpeedEl.textContent = items.length === 0 ? 'No active background transfers' : (activeCount + ' active (' + totalSpeed.toFixed(1) + ' MB/s)' + (queuedCount ? ' · ' + queuedCount + ' queued' : ''));
+
+  const storageBadge = document.getElementById('dlStorageBadge');
+  const storageCardVal = document.getElementById('dlStorageCardVal');
+  const storageRemainingVal = document.getElementById('dlStorageRemainingVal');
+  const storageBarFill = document.getElementById('dlStorageBarFill');
+  if (storageBadge) storageBadge.textContent = usedGbStr + ' / ' + limitGbStr;
+  if (storageCardVal) storageCardVal.textContent = usedGbStr + ' of ' + limitGbStr + ' used (' + pctStr + ')';
+  if (storageRemainingVal) storageRemainingVal.textContent = freeGbStr + ' available';
+  if (storageBarFill) {
+    storageBarFill.style.width = pctStr;
+    storageBarFill.style.background = pct >= 100 ? 'var(--danger)' : (pct >= 80 ? 'linear-gradient(90deg, #f59e0b, #fbbf24)' : 'linear-gradient(90deg, #0284c7, #38bdf8)');
+  }
+
+  const limitGbNum = Math.round(limitBytes / (1024 ** 3));
+  if (limitGbNum > 0) {
+    const t25 = document.getElementById('dlTick25');
+    const t50 = document.getElementById('dlTick50');
+    const t80 = document.getElementById('dlTick80');
+    const t100 = document.getElementById('dlTick100');
+    if (t25) t25.textContent = Math.round(limitGbNum * 0.25) + ' GB';
+    if (t50) t50.textContent = Math.round(limitGbNum * 0.50) + ' GB';
+    if (t80) t80.textContent = Math.round(limitGbNum * 0.80) + ' GB';
+    if (t100) t100.textContent = limitGbNum + ' GB (Limit)';
+  }
+}
+
+function dlRenderActive() {
+  const sec = document.getElementById('dlActiveSection');
+  const list = document.getElementById('dlActiveList');
+  const items = dlData.items || [];
+  const activeSeasons = dlData.activeSeasons || [];
+  if (items.length === 0 && activeSeasons.length === 0) {
+    if (sec) sec.style.display = 'none';
+    return;
+  }
+  if (sec) sec.style.display = 'block';
+
+  let seasonHtml = activeSeasons.map(s => {
+    return '<div class="dl-card-transfer" style="border-color:rgba(56,189,248,0.4);background:linear-gradient(180deg,#091a24,#0d0d0d);">' +
+      '<div class="row">' +
+        '<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 auto;overflow:hidden;">' +
+          '<span class="badge" style="background:rgba(56,189,248,0.2);color:#38bdf8;border-color:rgba(56,189,248,0.4);">📺 Season Batch</span>' +
+          '<strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;font-size:13px;color:#fff;">' + esc(s.title) + '</strong>' +
+        '</div>' +
+        '<button class="btn danger small" onclick="dlCancel(\'' + esc(s.key) + '\')">Cancel Season</button>' +
+      '</div>' +
+      '<div class="dl-meta" style="color:#38bdf8;margin-top:4px;">Downloading episodes in parallel</div>' +
+    '</div>';
+  }).join('');
+
+  let itemHtml = items.map(d => {
+    if (d.status === 'queued') {
+      return '<div class="dl-card-transfer" style="border-color:rgba(245,158,11,0.4);background:linear-gradient(180deg,#18140c,#0d0d0d);">' +
+        '<div class="row">' +
+          '<div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1 1 auto;overflow:hidden;">' +
+            '<span class="badge warn">⏳ Queued (#' + (d.queuePosition || 1) + ')</span>' +
+            '<strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;font-size:13px;color:#fff;">' + esc(d.filename) + '</strong>' +
+          '</div>' +
+          '<button class="btn danger small" onclick="dlCancel(\'' + esc(d.key) + '\')">Remove</button>' +
+        '</div>' +
+        '<div class="dl-meta" style="color:#fbbf24;margin-top:4px;">Waiting for active download slot · ' + (d.totalBytes > 0 ? fmtGb(d.totalBytes) : 'size pending') + '</div>' +
+      '</div>';
+    }
+    return '<div class="dl-card-transfer">' +
+      '<div class="row">' +
+        '<div style="min-width:0;flex:1 1 auto;overflow:hidden;"><strong style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;font-size:13px;color:#fff;">' + esc(d.filename) + '</strong></div>' +
+        '<button class="btn danger small" onclick="dlCancel(\'' + esc(d.key) + '\')">Cancel</button>' +
+      '</div>' +
+      '<div class="dl-bar-bg"><div class="dl-bar-fill" style="width:' + d.percent + '%"></div></div>' +
+      '<div class="dl-meta">' + d.percent + '% · ' + fmtGb(d.downloadedBytes) + ' / ' + fmtGb(d.totalBytes) + ' · ' + (d.speedMbps || 0) + ' MB/s</div>' +
+    '</div>';
+  }).join('');
+
+  if (list) list.innerHTML = seasonHtml + itemHtml;
+}
+
+function dlRenderPills() {
+  const stats = dlData.stats || {};
+  const badgeSeries = document.getElementById('dlBadgeSeries');
+  const badgeMovies = document.getElementById('dlBadgeMovies');
+  if (badgeSeries) badgeSeries.textContent = stats.seriesCount || 0;
+  if (badgeMovies) badgeMovies.textContent = stats.moviesCount || 0;
+
+  const pillSeries = document.getElementById('dlPillSeries');
+  const pillMovies = document.getElementById('dlPillMovies');
+  if (pillSeries && pillMovies) {
+    if (dlActiveFilter === 'type:series') {
+      pillSeries.className = 'btn small primary';
+      pillMovies.className = 'btn small';
+    } else {
+      pillSeries.className = 'btn small';
+      pillMovies.className = 'btn small primary';
+    }
+  }
+}
+
+function dlRenderBatchBar() {
+  const bar = document.getElementById('dlBatchBar');
+  const count = dlSelectedIds.size;
+  if (!bar) return;
+  if (count === 0) {
+    bar.style.display = 'none';
+    return;
+  }
+  bar.style.display = 'flex';
+  const selBytes = (dlData.localFiles || [])
+    .filter(f => dlSelectedIds.has(f.id))
+    .reduce((acc, f) => acc + (Number(f.size) || 0), 0);
+  const sumEl = document.getElementById('dlSelectedSummary');
+  if (sumEl) sumEl.textContent = count + ' file' + (count === 1 ? '' : 's') + ' selected (' + fmtGb(selBytes) + ')';
+}
+
+function dlGetFilteredFiles() {
+  let list = dlData.localFiles || [];
+  if (dlActiveFilter === 'type:movie') list = list.filter(f => f.type === 'movie');
+  else if (dlActiveFilter === 'type:series') list = list.filter(f => f.type === 'series');
+
+  if (dlSearchQuery) {
+    list = list.filter(f => {
+      const text = ((f.title || '') + ' ' + (f.relative_path || '') + ' ' + (f.quality || '')).toLowerCase();
+      return text.includes(dlSearchQuery);
+    });
+  }
+
+  list = list.slice().sort((a, b) => {
+    if (dlSortField === 'size') {
+      const diff = (Number(b.size) || 0) - (Number(a.size) || 0);
+      return dlSortDir === 'asc' ? -diff : diff;
+    }
+    if (dlSortField === 'date') {
+      const diff = (Number(b.added_at) || 0) - (Number(a.added_at) || 0);
+      return dlSortDir === 'asc' ? -diff : diff;
+    }
+    if (dlSortField === 'title') {
+      const ta = (a.title || a.relative_path || '').toLowerCase();
+      const tb = (b.title || b.relative_path || '').toLowerCase();
+      const cmp = ta.localeCompare(tb);
+      return dlSortDir === 'asc' ? cmp : -cmp;
+    }
+    if (dlSortField === 'episode') {
+      const epA = ((Number(a.season) || 0) * 10000) + (Number(a.episode_start != null ? a.episode_start : a.episode) || 0);
+      const epB = ((Number(b.season) || 0) * 10000) + (Number(b.episode_start != null ? b.episode_start : b.episode) || 0);
+      if (epA !== epB) return dlSortDir === 'asc' ? epA - epB : epB - epA;
+      return (a.relative_path || '').localeCompare(b.relative_path || '');
+    }
+    return 0;
+  });
+
+  return list;
+}
+
+function dlRenderFileItem(f) {
+  const isChecked = dlSelectedIds.has(f.id);
+  const isMovie = f.type === 'movie';
+  const stremioUrl = dlGetStremioUrl(f);
+  const epLabel = isMovie ? 'Movie' : (f.season ? 'S' + String(f.season).padStart(2, '0') + 'E' + String(f.episode_start).padStart(2, '0') : '');
+  const epBadge = epLabel
+    ? '<a href="' + esc(stremioUrl) + '" class="badge ' + (isMovie ? 'badge-movie' : 'badge-ep') + '" style="text-decoration:none;" title="Open in Stremio">' + esc(epLabel) + '</a>'
+    : '';
+  const filename = f.relative_path ? f.relative_path.split('/').pop() : 'Unknown file';
+  const rawQuality = f.quality ? String(f.quality).trim() : '';
+  const quality = rawQuality ? (/p$/i.test(rawQuality) ? rawQuality.toLowerCase() : rawQuality + 'p') : '';
+  const dateStr = f.added_at ? 'Downloaded ' + formatDate(f.added_at) : '';
+  const metaContent = '<span class="file-play-icon">▶</span> ' + esc(filename) + (quality ? ' · ' + esc(quality) : '') + (dateStr ? ' · ' + esc(dateStr) : '');
+  const metaHtml = '<a href="' + esc(stremioUrl) + '" class="file-meta-link" title="Open in Stremio: ' + esc(filename) + '">' + metaContent + '</a>';
+  const openBtn = '<a href="' + esc(stremioUrl) + '" class="btn-stremio" title="Open directly in Stremio">▶ Stremio</a>';
+
+  return '<div class="file-item">' +
+    '<input type="checkbox" class="file-check" ' + (isChecked ? 'checked' : '') + ' onchange="dlToggleSelect(\'' + esc(f.id) + '\')">' +
+    '<div class="file-main">' +
+      '<div class="file-title-row">' +
+        '<span class="file-title">' + esc(filename) + '</span>' +
+        epBadge +
+      '</div>' +
+      metaHtml +
+    '</div>' +
+    '<div class="file-size-badge">' + fmtGb(f.size) + '</div>' +
+    '<div class="file-actions">' +
+      openBtn +
+      '<button class="btn danger small" onclick="dlOpenDeleteModal(\'file\', { id:\'' + esc(f.id) + '\', name:\'' + esc(filename) + '\', size:' + (Number(f.size) || 0) + ' })">🗑️ Delete</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function dlRenderFiles() {
+  const container = document.getElementById('dlFilesList');
+  if (!container) return;
+  const filtered = dlGetFilteredFiles();
+
+  if (filtered.length === 0) {
+    container.innerHTML = '<div class="card"><div class="empty">No downloaded media matches the current filter or search query.</div></div>';
+    return;
+  }
+
+  if (dlActiveFilter === 'type:series') {
+    const groupsMap = new Map();
+    for (let i = 0; i < filtered.length; i++) {
+      const f = filtered[i];
+      const showTitle = f.title || (f.relative_path ? f.relative_path.split('/')[0] : 'Unknown Show');
+      if (!groupsMap.has(showTitle)) {
+        groupsMap.set(showTitle, { title: showTitle, files: [], totalBytes: 0 });
+      }
+      const g = groupsMap.get(showTitle);
+      g.files.push(f);
+      g.totalBytes += (Number(f.size) || 0);
+    }
+
+    let groupsList = Array.from(groupsMap.values());
+    if (dlSortField === 'size') {
+      groupsList.sort((a, b) => dlSortDir === 'asc' ? a.totalBytes - b.totalBytes : b.totalBytes - a.totalBytes);
+    } else if (dlSortField === 'title' || dlSortField === 'episode') {
+      groupsList.sort((a, b) => dlSortDir === 'asc' ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title));
+    }
+
+    let html = '';
+    for (const group of groupsList) {
+      const isCollapsed = dlCollapsedShows.has(group.title);
+      html += '<div class="show-group ' + (isCollapsed ? 'collapsed' : '') + '">' +
+        '<div class="show-group-header" onclick="dlToggleShowGroup(\'' + esc(group.title) + '\')">' +
+          '<div class="show-group-left">' +
+            '<span class="show-chevron">▼</span>' +
+            '<span class="show-icon">📺</span>' +
+            '<span class="show-title">' + esc(group.title) + '</span>' +
+            '<span class="show-badge">' + group.files.length + ' ep' + (group.files.length === 1 ? '' : 's') + ' · ' + fmtGb(group.totalBytes) + '</span>' +
+          '</div>' +
+          '<div class="show-group-actions" onclick="event.stopPropagation()">' +
+            '<button class="btn danger small" onclick="dlOpenDeleteModal(\'show\', { title:\'' + esc(group.title) + '\', count:' + group.files.length + ', bytes:' + group.totalBytes + ' })">🗑️ Delete Show</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="show-group-body">' +
+          group.files.map(f => dlRenderFileItem(f)).join('') +
+        '</div>' +
+      '</div>';
+    }
+    container.innerHTML = html;
+    return;
+  }
+
+  // Movies list
+  container.innerHTML = filtered.map(f => dlRenderFileItem(f)).join('');
+}
+
+function dlToggleShowGroup(title) {
+  if (dlCollapsedShows.has(title)) dlCollapsedShows.delete(title);
+  else dlCollapsedShows.add(title);
+  dlRenderFiles();
+}
+
+function dlSetFilter(filter) {
+  dlActiveFilter = filter;
+  dlSelectedIds.clear();
+  dlRender();
+}
+
+function dlOnSearchChange() {
+  const input = document.getElementById('dlSearchInput');
+  dlSearchQuery = input ? input.value.trim().toLowerCase() : '';
+  dlRenderFiles();
+}
+
+function dlOnSortChange() {
+  const sel = document.getElementById('dlSortSelect');
+  if (sel) dlSortField = sel.value || 'size';
+  dlRenderFiles();
+}
+
+function dlToggleSortDirection() {
+  dlSortDir = dlSortDir === 'asc' ? 'desc' : 'asc';
+  const icon = document.getElementById('dlSortDirIcon');
+  const label = document.getElementById('dlSortDirLabel');
+  if (icon) icon.textContent = dlSortDir === 'asc' ? '↑' : '↓';
+  if (label) label.textContent = dlSortDir === 'asc' ? 'Asc' : 'Desc';
+  dlRenderFiles();
+}
+
+function dlToggleSelect(id) {
+  if (dlSelectedIds.has(id)) dlSelectedIds.delete(id);
+  else dlSelectedIds.add(id);
+  dlRenderBatchBar();
+}
+
+function dlToggleSelectAll() {
+  const filtered = dlGetFilteredFiles();
+  const allSelected = filtered.length > 0 && filtered.every(f => dlSelectedIds.has(f.id));
+  if (allSelected) {
+    filtered.forEach(f => dlSelectedIds.delete(f.id));
+  } else {
+    filtered.forEach(f => dlSelectedIds.add(f.id));
+  }
+  dlRender();
+}
+
+function dlClearSelection() {
+  dlSelectedIds.clear();
+  dlRenderBatchBar();
+  dlRenderFiles();
+}
+
+async function dlRescanLibrary() {
+  const btn = document.getElementById('dlRescanBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '🔄 Rescanning...'; }
+  try {
+    await fetch('/downloads/rescan', { method: 'POST', credentials: 'include' });
+    toast('Library rescan started');
+    await dlLoad();
+  } catch (e) {
+    toast('Rescan failed');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '🔄 Rescan Storage'; }
+  }
+}
+
+async function dlCancel(key) {
+  if (!await showConfirm({ title: 'Cancel Download', eyebrow: 'Transfers', message: 'Cancel active background transfer for: ' + key + '?', confirmText: 'Cancel Transfer', danger: true })) return;
+  try {
+    await fetch('/downloads/cancel?key=' + encodeURIComponent(key), { method: 'POST', credentials: 'include' });
+    toast('Download cancelled');
+    await dlLoad();
+  } catch (e) {
+    toast('Could not cancel download');
+  }
+}
+
+async function dlCancelAll() {
+  if (!await showConfirm({ title: 'Cancel All Downloads', eyebrow: 'Transfers', message: 'Cancel ALL active background transfers across the server?', confirmText: 'Cancel All', danger: true })) return;
+  try {
+    await fetch('/downloads/cancel?all=true', { method: 'POST', credentials: 'include' });
+    toast('All downloads cancelled');
+    await dlLoad();
+  } catch (e) {
+    toast('Could not cancel downloads');
+  }
+}
+
+function dlDeleteSelected() {
+  if (dlSelectedIds.size === 0) return;
+  dlOpenDeleteModal('batch', { count: dlSelectedIds.size });
+}
+
+function dlOpenDeleteModal(type, meta) {
+  dlCurrentDeleteTarget = { type, meta };
+  const modal = document.getElementById('dlDeleteModal');
+  const step1 = document.getElementById('dlStep1');
+  const step2 = document.getElementById('dlStep2');
+  const targetNameEl = document.getElementById('dlModalTargetName');
+  const targetMetaEl = document.getElementById('dlModalTargetMeta');
+  const phraseGroup = document.getElementById('dlPhraseGroup');
+  const phraseInput = document.getElementById('dlPhraseInput');
+  const passwordInput = document.getElementById('dlPasswordInput');
+  const nextBtn = document.getElementById('dlModalNextBtn');
+  const confirmBtn = document.getElementById('dlModalConfirmBtn');
+  const backBtn = document.getElementById('dlModalBackBtn');
+  const errorEl = document.getElementById('dlModalError');
+
+  if (step1) step1.style.display = 'block';
+  if (step2) step2.style.display = 'none';
+  if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+  if (phraseInput) phraseInput.value = '';
+  if (passwordInput) passwordInput.value = '';
+  if (confirmBtn) confirmBtn.style.display = 'none';
+  if (backBtn) backBtn.style.display = 'none';
+  if (nextBtn) nextBtn.style.display = 'inline-flex';
+
+  const requiresPhrase = (type === 'show') || (type === 'batch' && (meta.count || 0) > 3);
+  if (phraseGroup) phraseGroup.style.display = requiresPhrase ? 'block' : 'none';
+  if (nextBtn) nextBtn.disabled = requiresPhrase;
+
+  if (type === 'file') {
+    if (targetNameEl) targetNameEl.textContent = meta.name || 'Selected File';
+    if (targetMetaEl) targetMetaEl.textContent = '1 file · ' + fmtGb(meta.size);
+  } else if (type === 'show') {
+    if (targetNameEl) targetNameEl.textContent = meta.title || 'Selected TV Show';
+    if (targetMetaEl) targetMetaEl.textContent = (meta.count || 0) + ' episodes · ' + fmtGb(meta.bytes);
+  } else if (type === 'batch') {
+    const selFiles = (dlData.localFiles || []).filter(f => dlSelectedIds.has(f.id));
+    const totalBytes = selFiles.reduce((acc, f) => acc + (Number(f.size) || 0), 0);
+    if (targetNameEl) targetNameEl.textContent = selFiles.length + ' selected files';
+    if (targetMetaEl) targetMetaEl.textContent = selFiles.length + ' files · ' + fmtGb(totalBytes);
+  }
+
+  modal.showModal();
+  if (requiresPhrase && phraseInput) setTimeout(() => phraseInput.focus(), 60);
+  else if (nextBtn) setTimeout(() => nextBtn.focus(), 60);
+}
+
+function dlCheckPhraseMatch() {
+  const phraseInput = document.getElementById('dlPhraseInput');
+  const nextBtn = document.getElementById('dlModalNextBtn');
+  const isMatch = phraseInput && phraseInput.value.trim() === 'DELETE';
+  if (nextBtn) nextBtn.disabled = !isMatch;
+  return isMatch;
+}
+
+function dlGoToStep2() {
+  const requiresPhrase = dlCurrentDeleteTarget && ((dlCurrentDeleteTarget.type === 'show') || (dlCurrentDeleteTarget.type === 'batch' && (dlCurrentDeleteTarget.meta.count || 0) > 3));
+  if (requiresPhrase && !dlCheckPhraseMatch()) return;
+
+  const step1 = document.getElementById('dlStep1');
+  const step2 = document.getElementById('dlStep2');
+  const nextBtn = document.getElementById('dlModalNextBtn');
+  const confirmBtn = document.getElementById('dlModalConfirmBtn');
+  const backBtn = document.getElementById('dlModalBackBtn');
+  const passwordInput = document.getElementById('dlPasswordInput');
+  const errorEl = document.getElementById('dlModalError');
+
+  if (step1) step1.style.display = 'none';
+  if (step2) step2.style.display = 'block';
+  if (nextBtn) nextBtn.style.display = 'none';
+  if (confirmBtn) { confirmBtn.style.display = 'inline-flex'; confirmBtn.disabled = false; }
+  if (backBtn) backBtn.style.display = 'inline-flex';
+  if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+  if (passwordInput) setTimeout(() => passwordInput.focus(), 60);
+}
+
+function dlGoToStep1() {
+  const step1 = document.getElementById('dlStep1');
+  const step2 = document.getElementById('dlStep2');
+  const nextBtn = document.getElementById('dlModalNextBtn');
+  const confirmBtn = document.getElementById('dlModalConfirmBtn');
+  const backBtn = document.getElementById('dlModalBackBtn');
+  const errorEl = document.getElementById('dlModalError');
+
+  if (step1) step1.style.display = 'block';
+  if (step2) step2.style.display = 'none';
+  if (nextBtn) nextBtn.style.display = 'inline-flex';
+  if (confirmBtn) confirmBtn.style.display = 'none';
+  if (backBtn) backBtn.style.display = 'none';
+  if (errorEl) { errorEl.style.display = 'none'; errorEl.textContent = ''; }
+}
+
+function dlCloseDeleteModal() {
+  const modal = document.getElementById('dlDeleteModal');
+  if (modal) modal.close();
+  dlCurrentDeleteTarget = null;
+}
+
+async function dlExecuteDeletion() {
+  if (!dlCurrentDeleteTarget) return;
+  const passwordInput = document.getElementById('dlPasswordInput');
+  const password = passwordInput ? passwordInput.value.trim() : '';
+  const errorEl = document.getElementById('dlModalError');
+  const confirmBtn = document.getElementById('dlModalConfirmBtn');
+  const backBtn = document.getElementById('dlModalBackBtn');
+
+  if (!password) {
+    if (errorEl) { errorEl.textContent = 'Please enter your administrator password.'; errorEl.style.display = 'block'; }
+    if (passwordInput) passwordInput.focus();
+    return;
+  }
+
+  if (errorEl) errorEl.style.display = 'none';
+  if (confirmBtn) { confirmBtn.disabled = true; confirmBtn.textContent = '⏳ Deleting...'; }
+  if (backBtn) backBtn.disabled = true;
+
+  try {
+    let res;
+    if (dlCurrentDeleteTarget.type === 'file') {
+      res = await fetch('/downloads/delete-file', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+        body: JSON.stringify({ id: dlCurrentDeleteTarget.meta.id, password })
+      });
+    } else if (dlCurrentDeleteTarget.type === 'batch') {
+      res = await fetch('/downloads/delete-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+        body: JSON.stringify({ ids: Array.from(dlSelectedIds), password })
+      });
+      if (res && res.ok) dlSelectedIds.clear();
+    } else if (dlCurrentDeleteTarget.type === 'show') {
+      res = await fetch('/downloads/delete-show', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+        body: JSON.stringify({ title: dlCurrentDeleteTarget.meta.title, password })
+      });
+    }
+
+    if (!res || !res.ok) {
+      const data = await res?.json().catch(() => ({})) || {};
+      if (errorEl) {
+        errorEl.textContent = data.error || 'Failed: Incorrect administrator password.';
+        errorEl.style.display = 'block';
+      }
+      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '🗑️ Permanently Delete'; }
+      if (backBtn) backBtn.disabled = false;
+      if (passwordInput) passwordInput.select();
+      return;
+    }
+
+    dlCloseDeleteModal();
+    toast('Media deleted successfully');
+    await dlLoad();
+  } catch (err) {
+    if (errorEl) {
+      errorEl.textContent = 'A network or server error occurred.';
+      errorEl.style.display = 'block';
+    }
+    if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '🗑️ Permanently Delete'; }
+    if (backBtn) backBtn.disabled = false;
+  }
+}
+
+window.dlSetFilter = dlSetFilter;
+window.dlOnSearchChange = dlOnSearchChange;
+window.dlOnSortChange = dlOnSortChange;
+window.dlToggleSortDirection = dlToggleSortDirection;
+window.dlToggleShowGroup = dlToggleShowGroup;
+window.dlToggleSelect = dlToggleSelect;
+window.dlToggleSelectAll = dlToggleSelectAll;
+window.dlClearSelection = dlClearSelection;
+window.dlRescanLibrary = dlRescanLibrary;
+window.dlCancel = dlCancel;
+window.dlCancelAll = dlCancelAll;
+window.dlOpenDeleteModal = dlOpenDeleteModal;
+window.dlCloseDeleteModal = dlCloseDeleteModal;
+window.dlGoToStep2 = dlGoToStep2;
+window.dlGoToStep1 = dlGoToStep1;
+window.dlCheckPhraseMatch = dlCheckPhraseMatch;
+window.dlExecuteDeletion = dlExecuteDeletion;
+
+async function initialize(){
+  await load();
+  try{
+    const urlParams=new URLSearchParams(window.location.search);
+    const initialView=urlParams.get('view')||window.location.hash.replace('#','')||'dashboard';
+    if(initialView&&initialView!=='dashboard'){
+      switchView(initialView);
+    }
+  }catch(e){}
+}
 initialize().catch(err=>toast(err.message));setInterval(()=>load().catch(()=>{}),15000);setInterval(()=>{if(document.getElementById('backups')?.classList.contains('active')||state.backups?.running)loadBackups().catch(()=>{})},5000);setInterval(()=>{if(state.scan||document.getElementById('logs')?.classList.contains('active'))loadScans().catch(()=>{})},2000);
 `;

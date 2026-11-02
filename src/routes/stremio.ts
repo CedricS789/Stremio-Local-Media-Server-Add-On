@@ -782,15 +782,6 @@ function headerValue(request, name) {
 
 export function registerStremioRoutes(app, database, settings, config, requester, fallbackAddon, networkProfiles, deviceCapabilities) {
     sharedSettings = settings;
-    // Add the local download manager to the existing admin navigation.
-    app.addHook('onSend', async (request, reply, payload) => {
-        if (request.url.split('?')[0] === '/admin' && typeof payload === 'string' && payload.includes('data-view="library">Library</button>')) {
-            reply.removeHeader('content-length');
-            return payload.replace('<button data-view="library">Library</button>', '<button data-view="library">Library</button><a href="/downloads" style="display:block;padding:11px 13px;border-radius:10px;color:var(--muted);text-decoration:none">Downloads</a>');
-        }
-        return payload;
-    });
-
     app.get('/', async (_request, reply) => reply.redirect('/admin'));
     app.get('/admin/', async (_request, reply) => reply.redirect('/admin'));
     const prefix = '/addon/:accessToken';
@@ -1059,18 +1050,10 @@ export function registerStremioRoutes(app, database, settings, config, requester
     });
 
     app.get('/downloads', async (request, reply) => {
-        if (!checkDownloadsAuth(request, reply)) {
-            const isSecure = settings.baseUrl.startsWith('https://');
-            reply.clearCookie('nuviflow_admin', { path: '/', secure: isSecure, sameSite: 'lax' });
-            reply.clearCookie('nuviflow_admin', { path: '/admin', secure: isSecure, sameSite: 'lax' });
-            return reply.header('Cache-Control', 'no-store').redirect('/admin/login?next=/downloads&failed=1');
-        }
-        const htmlPath = path.join('/app/cards', 'downloads.html');
-        if (fs.existsSync(htmlPath)) {
-            const html = fs.readFileSync(htmlPath, 'utf-8');
-            return reply.header('Content-Type', 'text/html; charset=utf-8').header('Cache-Control', 'no-store').send(html);
-        }
-        return reply.code(404).send('Downloads dashboard not found');
+        const queryStr = request.raw.url && request.raw.url.includes('?')
+            ? '&' + request.raw.url.split('?')[1]
+            : '';
+        return reply.redirect('/admin?view=downloads' + queryStr);
     });
 
     app.get('/downloads/choose', async (request, reply) => {

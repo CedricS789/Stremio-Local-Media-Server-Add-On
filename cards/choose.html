@@ -661,8 +661,8 @@
     </div>
     <div class="nav-actions">
       <div class="nav-pills">
-        <a href="/downloads" class="nav-pill">⚡ Live Downloads</a>
-        <a href="/admin" class="nav-pill">⚙️ App Console</a>
+        <a href="/admin?view=downloads" class="nav-pill">📥 Downloads</a>
+        <a href="/admin" class="nav-pill">⚙️ App Dashboard</a>
         <span class="nav-pill active">🎯 Source Picker</span>
       </div>
       <div class="user-status-pill">
@@ -1121,7 +1121,7 @@ async function startDownload(streamIndex, btnEl) {
     }
     showToast('Download started! Redirecting to live dashboard...');
     setTimeout(() => {
-      window.location.href = '/downloads';
+      window.location.href = '/admin?view=downloads';
     }, 1200);
   } catch (err) {
     btnEl.disabled = false;
