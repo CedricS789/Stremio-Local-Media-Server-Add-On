@@ -68,11 +68,13 @@ export const mediaFiles = sqliteTable('media_files', {
   error: text('error'),
   addedAt: integer('added_at').notNull(),
   updatedAt: integer('updated_at').notNull(),
-  lastSeenAt: integer('last_seen_at').notNull()
+  lastSeenAt: integer('last_seen_at').notNull(),
+  watchedAt: integer('watched_at')
 }, (table) => [
   uniqueIndex('media_files_path_uq').on(table.absolutePath),
   index('media_files_item_idx').on(table.mediaItemId),
-  index('media_files_status_idx').on(table.status)
+  index('media_files_status_idx').on(table.status),
+  index('media_files_watched_idx').on(table.watchedAt)
 ]);
 
 export const siloFileMappings = sqliteTable('silo_file_mappings', {

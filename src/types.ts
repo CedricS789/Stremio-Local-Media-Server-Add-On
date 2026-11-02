@@ -36,6 +36,7 @@ export interface MediaFileRow {
   added_at: number;
   updated_at: number;
   last_seen_at: number;
+  watched_at?: number | null;
 }
 
 export interface MediaItemRow {

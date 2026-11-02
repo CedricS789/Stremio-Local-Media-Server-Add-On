@@ -981,13 +981,13 @@ export function registerStremioRoutes(app, database, settings, config, requester
         const localFiles = database.sqlite.prepare(`
             SELECT 
                 mf.id, mf.relative_path, mf.size, mf.season, mf.episode_start, mf.episode_end,
-                mf.added_at, mf.quality, mf.source,
+                mf.added_at, mf.watched_at, mf.quality, mf.source,
                 mi.id as item_id, mi.stremio_id, mi.imdb_id, mi.type, COALESCE(mi.display_title, mi.title) as title, mi.poster, mi.year
             FROM media_files mf
             LEFT JOIN media_items mi ON mi.id = mf.media_item_id
             WHERE mf.status='matched'
             ORDER BY mf.added_at DESC
-        `).all();
+        `).all() as any[];
 
         const showsMap = new Map();
         let totalMediaBytes = 0;
@@ -997,6 +997,10 @@ export function registerStremioRoutes(app, database, settings, config, requester
         for (const file of localFiles) {
             const size = Number(file.size) || 0;
             totalMediaBytes += size;
+            file.is_watched = Boolean(file.watched_at && Number(file.watched_at) > 0);
+            file.is_safeguard = false;
+            file.is_cleanable_watched = false;
+
             const title = file.title || (file.relative_path ? file.relative_path.split('/')[0] : 'Unknown');
             const type = file.type || 'other';
             if (type === 'movie') moviesCount++;
@@ -1009,12 +1013,79 @@ export function registerStremioRoutes(app, database, settings, config, requester
                     poster: file.poster || null,
                     fileCount: 0,
                     totalBytes: 0,
-                    year: file.year || null
+                    year: file.year || null,
+                    watchedCount: 0,
+                    cleanableWatchedCount: 0,
+                    cleanableWatchedBytes: 0,
+                    safeguardEpisode: null,
+                    cleanableEpisodeIds: [],
+                    _episodes: []
                 });
             }
             const s = showsMap.get(title);
             s.fileCount += 1;
             s.totalBytes += size;
+            if (type === 'series') {
+                s._episodes.push(file);
+            }
+        }
+
+        let totalWatchedEpisodes = 0;
+        let totalCleanableEpisodes = 0;
+        let totalCleanableBytes = 0;
+
+        for (const s of showsMap.values()) {
+            if (s.type === 'series' && s._episodes && s._episodes.length > 0) {
+                s._episodes.sort((a: any, b: any) => {
+                    const epA = ((Number(a.season) || 0) * 10000) + (Number(a.episode_start != null ? a.episode_start : 0));
+                    const epB = ((Number(b.season) || 0) * 10000) + (Number(b.episode_start != null ? b.episode_start : 0));
+                    if (epA !== epB) return epA - epB;
+                    return (Number(a.added_at) || 0) - (Number(b.added_at) || 0);
+                });
+
+                const watchedList = s._episodes.filter((ep: any) => ep.is_watched);
+                const X = watchedList.length;
+                s.watchedCount = X;
+                totalWatchedEpisodes += X;
+
+                if (X >= 2) {
+                    const cleanable = watchedList.slice(0, X - 1);
+                    const safeguard = watchedList[X - 1];
+
+                    s.cleanableWatchedCount = cleanable.length;
+                    s.cleanableWatchedBytes = cleanable.reduce((sum: number, ep: any) => sum + (Number(ep.size) || 0), 0);
+                    s.cleanableEpisodeIds = cleanable.map((ep: any) => ep.id);
+                    s.safeguardEpisode = {
+                        id: safeguard.id,
+                        season: safeguard.season,
+                        episode: safeguard.episode_start,
+                        relativePath: safeguard.relative_path,
+                        watchedAt: safeguard.watched_at
+                    };
+
+                    for (const ep of cleanable) {
+                        ep.is_cleanable_watched = true;
+                    }
+                    safeguard.is_safeguard = true;
+
+                    totalCleanableEpisodes += s.cleanableWatchedCount;
+                    totalCleanableBytes += s.cleanableWatchedBytes;
+                } else if (X === 1) {
+                    const safeguard = watchedList[0];
+                    safeguard.is_safeguard = true;
+                    s.cleanableWatchedCount = 0;
+                    s.cleanableWatchedBytes = 0;
+                    s.cleanableEpisodeIds = [];
+                    s.safeguardEpisode = {
+                        id: safeguard.id,
+                        season: safeguard.season,
+                        episode: safeguard.episode_start,
+                        relativePath: safeguard.relative_path,
+                        watchedAt: safeguard.watched_at
+                    };
+                }
+            }
+            delete s._episodes;
         }
 
         const shows = [...showsMap.values()].sort((a, b) => b.totalBytes - a.totalBytes);
@@ -1043,6 +1114,9 @@ export function registerStremioRoutes(app, database, settings, config, requester
                 moviesCount,
                 seriesCount,
                 uniqueShowsCount: shows.length,
+                totalWatchedEpisodes,
+                totalCleanableEpisodes,
+                totalCleanableBytes,
                 allocatedLimitBytes: Math.round(Number(settings.mediaSoftLimitGb || process.env.MEDIA_SOFT_LIMIT_GB || 100) * (1024 ** 3)),
                 disk
             }
@@ -1469,6 +1543,116 @@ export function registerStremioRoutes(app, database, settings, config, requester
         if (!checkDownloadsAuth(request, reply)) return reply.code(401).send({ error: 'Authentication required' });
         await triggerRescan();
         return reply.send({ ok: true });
+    });
+
+    app.post('/downloads/toggle-watched', async (request, reply) => {
+        if (!checkDownloadsAuth(request, reply)) return reply.code(401).send({ error: 'Authentication required' });
+        const body = (request.body || {}) as any;
+        const id = String(body.id || (request.query as any)?.id || '').trim();
+        if (!id) return reply.code(400).send({ error: 'Missing file id' });
+
+        const row = database.sqlite.prepare('SELECT id, watched_at FROM media_files WHERE id=?').get(id) as { id: string; watched_at: number | null } | undefined;
+        if (!row) return reply.code(404).send({ error: 'Media file not found' });
+
+        let nextWatchedAt: number | null;
+        if (typeof body.watched === 'boolean') {
+            nextWatchedAt = body.watched ? (row.watched_at || Date.now()) : null;
+        } else {
+            nextWatchedAt = row.watched_at ? null : Date.now();
+        }
+
+        database.sqlite.prepare('UPDATE media_files SET watched_at=? WHERE id=?').run(nextWatchedAt, id);
+        return reply.send({
+            ok: true,
+            id,
+            is_watched: nextWatchedAt !== null,
+            watched_at: nextWatchedAt
+        });
+    });
+
+    app.post('/downloads/clean-watched', async (request, reply) => {
+        if (!checkDownloadsAuth(request, reply)) return reply.code(401).send({ error: 'Authentication required' });
+        const body = (request.body || {}) as any;
+        const password = String(body.password || (request.query as any)?.password || '');
+        if (!(await verifyAdminPassword(password))) {
+            return reply.code(403).send({ error: 'Incorrect administrator password' });
+        }
+        const title = String(body.title || (request.query as any)?.title || '').trim();
+
+        const allRows = database.sqlite.prepare(`
+            SELECT mf.*, COALESCE(mi.display_title, mi.title) as show_title
+            FROM media_files mf
+            LEFT JOIN media_items mi ON mi.id = mf.media_item_id
+            WHERE mf.status='matched' AND mf.library_type='series'
+        `).all() as any[];
+
+        const showMap = new Map<string, any[]>();
+        for (const row of allRows) {
+            const rowShow = row.show_title || (row.relative_path ? row.relative_path.split('/')[0] : 'Unknown');
+            if (title && title !== 'all' && rowShow !== title && !row.relative_path.startsWith(title + '/')) {
+                continue;
+            }
+            if (!showMap.has(rowShow)) {
+                showMap.set(rowShow, []);
+            }
+            showMap.get(rowShow)!.push(row);
+        }
+
+        const toDelete: any[] = [];
+        const preservedSafeguards: any[] = [];
+
+        for (const [showName, files] of showMap.entries()) {
+            files.sort((a, b) => {
+                const epA = ((Number(a.season) || 0) * 10000) + (Number(a.episode_start != null ? a.episode_start : 0));
+                const epB = ((Number(b.season) || 0) * 10000) + (Number(b.episode_start != null ? b.episode_start : 0));
+                if (epA !== epB) return epA - epB;
+                return (Number(a.added_at) || 0) - (Number(b.added_at) || 0);
+            });
+
+            const watched = files.filter(f => f.watched_at != null && Number(f.watched_at) > 0);
+            const X = watched.length;
+            if (X >= 2) {
+                const cleanable = watched.slice(0, X - 1);
+                const safeguard = watched[X - 1];
+                toDelete.push(...cleanable);
+                preservedSafeguards.push({
+                    show: showName,
+                    id: safeguard.id,
+                    season: safeguard.season,
+                    episode: safeguard.episode_start,
+                    relativePath: safeguard.relative_path
+                });
+            } else if (X === 1) {
+                const safeguard = watched[0];
+                preservedSafeguards.push({
+                    show: showName,
+                    id: safeguard.id,
+                    season: safeguard.season,
+                    episode: safeguard.episode_start,
+                    relativePath: safeguard.relative_path
+                });
+            }
+        }
+
+        if (toDelete.length === 0) {
+            return reply.code(400).send({
+                error: 'No watched episodes eligible for deletion. Safeguard requires at least 2 watched episodes to delete the first X-1.'
+            });
+        }
+
+        let deletedBytes = 0;
+        for (const file of toDelete) {
+            deletedBytes += Number(file.size) || 0;
+            deleteLocalFileRecord(database, file);
+        }
+
+        await triggerRescan();
+        return reply.send({
+            ok: true,
+            deletedCount: toDelete.length,
+            deletedBytes,
+            preservedSafeguards
+        });
     });
     const secureRoute = {
         config: { rateLimit: { max: 300, timeWindow: '1 minute' } },

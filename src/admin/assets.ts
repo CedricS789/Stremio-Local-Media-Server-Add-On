@@ -160,6 +160,11 @@ export function adminHtml(csrf: string): string {
         <button type="button" class="btn small primary" id="dlPillSeries" onclick="dlSetFilter('type:series')">📺 TV Series <span class="badge" id="dlBadgeSeries" style="margin-left:4px;padding:1px 6px;">0</span></button>
         <button type="button" class="btn small" id="dlPillMovies" onclick="dlSetFilter('type:movie')">🎬 Movies <span class="badge" id="dlBadgeMovies" style="margin-left:4px;padding:1px 6px;">0</span></button>
       </div>
+      <div id="dlGlobalCleanWatchedContainer" style="display:none;">
+        <button type="button" class="btn small" id="dlGlobalCleanWatchedBtn" onclick="dlOpenCleanWatchedModal('all')" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:#fbbf24;font-weight:700;display:inline-flex;align-items:center;gap:6px;">
+          🧹 Clean Watched (<span id="dlGlobalCleanWatchedCount">0</span> across shows)
+        </button>
+      </div>
     </div>
 
     <div class="toolbar" style="margin-bottom:16px;flex-wrap:wrap;gap:10px;">
@@ -424,10 +429,10 @@ export function adminHtml(csrf: string): string {
     </div>
   </dialog>
   <dialog class="modal" id="dlDeleteModal" role="dialog" aria-modal="true" aria-labelledby="dlDeleteModalTitle">
-    <div class="modal-card" style="width:min(480px, calc(100vw - 32px)); border-color:rgba(244,63,94,0.4); box-shadow:0 30px 80px rgba(0,0,0,0.95), 0 0 30px rgba(244,63,94,0.15);">
-      <header class="modal-header" style="background:#13080c; border-bottom:1px solid rgba(244,63,94,0.3);">
+    <div class="modal-card" id="dlModalCard" style="width:min(480px, calc(100vw - 32px)); border-color:rgba(244,63,94,0.4); box-shadow:0 30px 80px rgba(0,0,0,0.95), 0 0 30px rgba(244,63,94,0.15);">
+      <header class="modal-header" id="dlModalHeader" style="background:#13080c; border-bottom:1px solid rgba(244,63,94,0.3);">
         <div class="modal-heading">
-          <div class="eyebrow" style="color:var(--danger); font-weight:800;">CONFIRM DELETION</div>
+          <div class="eyebrow" id="dlModalEyebrow" style="color:var(--danger); font-weight:800;">CONFIRM DELETION</div>
           <h3 id="dlDeleteModalTitle" style="color:#ffffff; font-size:17px;">Delete Media</h3>
         </div>
         <button class="btn small modal-close" type="button" onclick="dlCloseDeleteModal()" aria-label="Close dialog">✕</button>
@@ -438,9 +443,20 @@ export function adminHtml(csrf: string): string {
             <div id="dlModalTargetName" style="color:#ffffff; font-weight:750; font-size:13px; word-break:break-word; margin-bottom:4px;">Target</div>
             <div id="dlModalTargetMeta" class="muted" style="font-size:12px;">1 file · 0 MB</div>
           </div>
-          <div style="background:#1a070c; border:1px solid rgba(244,63,94,0.3); border-radius:10px; padding:12px 14px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start;">
+          <div id="dlModalSafeguardBox" style="background:#051a12; border:1px solid rgba(16,185,129,0.4); border-radius:10px; padding:12px 14px; margin-bottom:14px; display:none;">
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+              <span style="font-size:18px; line-height:1;">🛡️</span>
+              <div style="font-size:12px; color:#a7f3d0; line-height:1.5;">
+                <strong style="color:#34d399; font-size:12px;">Safeguard Active:</strong>
+                <div id="dlModalSafeguardText" style="margin-top:2px;">The latest watched episode will be kept safe and will NOT be deleted.</div>
+              </div>
+            </div>
+          </div>
+          <div id="dlModalFileList" style="background:#090b10; border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-bottom:14px; max-height:140px; overflow-y:auto; font-size:12px; color:#94a3b8; display:none;">
+          </div>
+          <div id="dlModalWarningBox" style="background:#1a070c; border:1px solid rgba(244,63,94,0.3); border-radius:10px; padding:12px 14px; margin-bottom:14px; display:flex; gap:10px; align-items:flex-start;">
             <span style="font-size:18px; line-height:1;">⚠️</span>
-            <div style="font-size:12px; color:#fecdd3; line-height:1.5;">
+            <div id="dlModalWarningText" style="font-size:12px; color:#fecdd3; line-height:1.5;">
               This will permanently delete the selected media from server disk storage. <strong>This cannot be undone.</strong>
             </div>
           </div>
@@ -1012,6 +1028,17 @@ function dlRenderPills() {
       pillMovies.className = 'btn small primary';
     }
   }
+
+  const globalCleanContainer = document.getElementById('dlGlobalCleanWatchedContainer');
+  const globalCleanCount = document.getElementById('dlGlobalCleanWatchedCount');
+  if (globalCleanContainer && globalCleanCount) {
+    if ((stats.totalCleanableEpisodes || 0) > 0) {
+      globalCleanContainer.style.display = 'block';
+      globalCleanCount.textContent = stats.totalCleanableEpisodes + ' ep · ' + fmtGb(stats.totalCleanableBytes);
+    } else {
+      globalCleanContainer.style.display = 'none';
+    }
+  }
 }
 
 function dlRenderBatchBar() {
@@ -1077,6 +1104,20 @@ function dlRenderFileItem(f) {
   const epBadge = epLabel
     ? '<a href="' + esc(stremioUrl) + '" class="badge ' + (isMovie ? 'badge-movie' : 'badge-ep') + '" style="text-decoration:none;" title="Open in Stremio">' + esc(epLabel) + '</a>'
     : '';
+
+  let watchedBadge = '';
+  if (!isMovie && f.season) {
+    if (f.is_safeguard) {
+      watchedBadge = '<span class="badge" style="background:rgba(16,185,129,0.2);border:1px solid rgba(16,185,129,0.45);color:#6ee7b7;font-size:11px;font-weight:700;" title="Latest watched episode. Protected by safeguard and will NOT be deleted.">🛡️ Latest Watched (Protected)</span>';
+    } else if (f.is_cleanable_watched) {
+      watchedBadge = '<span class="badge" style="background:rgba(244,63,94,0.18);border:1px solid rgba(244,63,94,0.38);color:#fda4af;font-size:11px;" title="Watched episode (eligible for X-1 deletion)">👁️ Watched</span>';
+    } else if (f.is_watched) {
+      watchedBadge = '<span class="badge" style="background:rgba(56,189,248,0.18);border:1px solid rgba(56,189,248,0.35);color:#38bdf8;font-size:11px;" title="Watched episode">👁️ Watched</span>';
+    } else {
+      watchedBadge = '<span class="badge" style="background:rgba(148,163,184,0.08);border:1px solid rgba(148,163,184,0.18);color:#94a3b8;font-size:11px;" title="Unwatched episode">Unwatched</span>';
+    }
+  }
+
   const filename = f.relative_path ? f.relative_path.split('/').pop() : 'Unknown file';
   const rawQuality = f.quality ? String(f.quality).trim() : '';
   const quality = rawQuality ? (/p$/i.test(rawQuality) ? rawQuality.toLowerCase() : rawQuality + 'p') : '';
@@ -1085,18 +1126,27 @@ function dlRenderFileItem(f) {
   const metaHtml = '<a href="' + esc(stremioUrl) + '" class="file-meta-link" title="Open in Stremio: ' + esc(filename) + '">' + metaContent + '</a>';
   const openBtn = '<a href="' + esc(stremioUrl) + '" class="btn-stremio" title="Open directly in Stremio">▶ Stremio</a>';
 
+  const watchBtn = !isMovie ? (
+    '<button class="btn small" type="button" onclick="dlToggleWatched(\'' + esc(f.id) + '\', event)" ' +
+    'style="background:transparent;border:1px solid ' + (f.is_watched ? 'rgba(56,189,248,0.4)' : 'var(--line)') + ';color:' + (f.is_watched ? '#38bdf8' : 'var(--muted)') + ';padding:3px 7px;font-size:11px;font-weight:600;" ' +
+    'title="' + (f.is_watched ? 'Click to mark as unwatched' : 'Click to mark as watched') + '">' +
+    (f.is_watched ? '✓ Watched' : '👁️ Mark Watched') + '</button>'
+  ) : '';
+
   return '<div class="file-item">' +
     '<input type="checkbox" class="file-check" ' + (isChecked ? 'checked' : '') + ' onchange="dlToggleSelect(\'' + esc(f.id) + '\')">' +
     '<div class="file-main">' +
-      '<div class="file-title-row">' +
+      '<div class="file-title-row" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">' +
         '<span class="file-title">' + esc(filename) + '</span>' +
         epBadge +
+        watchedBadge +
       '</div>' +
       metaHtml +
     '</div>' +
     '<div class="file-size-badge">' + fmtGb(f.size) + '</div>' +
     '<div class="file-actions">' +
       openBtn +
+      watchBtn +
       '<button class="btn danger small" onclick="dlOpenDeleteModal(\'file\', { id:\'' + esc(f.id) + '\', name:\'' + esc(filename) + '\', size:' + (Number(f.size) || 0) + ' })">🗑️ Delete</button>' +
     '</div>' +
   '</div>';
@@ -1135,6 +1185,17 @@ function dlRenderFiles() {
     let html = '';
     for (const group of groupsList) {
       const isCollapsed = dlCollapsedShows.has(group.title);
+      const serverShow = (dlData.shows || []).find(s => s.title === group.title) || {};
+      const cleanableCount = serverShow.cleanableWatchedCount || 0;
+      const cleanableBytes = serverShow.cleanableWatchedBytes || 0;
+      const watchedCount = serverShow.watchedCount || 0;
+
+      const cleanBtn = cleanableCount > 0
+        ? '<button class="btn small" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:#fbbf24;font-weight:650;display:inline-flex;align-items:center;gap:5px;" onclick="dlOpenCleanWatchedModal(\'' + esc(group.title) + '\')">🧹 Clean Watched (' + cleanableCount + ' ep · ' + fmtGb(cleanableBytes) + ')</button>'
+        : (watchedCount === 1
+          ? '<span class="badge" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#34d399;font-size:11px;display:inline-flex;align-items:center;gap:4px;" title="1 episode watched. Safeguard active: preserved and protected.">🛡️ 1 Watched (Safeguarded)</span>'
+          : '');
+
       html += '<div class="show-group ' + (isCollapsed ? 'collapsed' : '') + '">' +
         '<div class="show-group-header" onclick="dlToggleShowGroup(\'' + esc(group.title) + '\')">' +
           '<div class="show-group-left">' +
@@ -1144,6 +1205,7 @@ function dlRenderFiles() {
             '<span class="show-badge">' + group.files.length + ' ep' + (group.files.length === 1 ? '' : 's') + ' · ' + fmtGb(group.totalBytes) + '</span>' +
           '</div>' +
           '<div class="show-group-actions" onclick="event.stopPropagation()">' +
+            cleanBtn +
             '<button class="btn danger small" onclick="dlOpenDeleteModal(\'show\', { title:\'' + esc(group.title) + '\', count:' + group.files.length + ', bytes:' + group.totalBytes + ' })">🗑️ Delete Show</button>' +
           '</div>' +
         '</div>' +
@@ -1271,6 +1333,14 @@ function dlOpenDeleteModal(type, meta) {
   const confirmBtn = document.getElementById('dlModalConfirmBtn');
   const backBtn = document.getElementById('dlModalBackBtn');
   const errorEl = document.getElementById('dlModalError');
+  const safeguardBox = document.getElementById('dlModalSafeguardBox');
+  const safeguardText = document.getElementById('dlModalSafeguardText');
+  const fileListBox = document.getElementById('dlModalFileList');
+  const warningText = document.getElementById('dlModalWarningText');
+  const modalTitle = document.getElementById('dlDeleteModalTitle');
+  const modalEyebrow = document.getElementById('dlModalEyebrow');
+  const modalHeader = document.getElementById('dlModalHeader');
+  const modalCard = document.getElementById('dlModalCard');
 
   if (step1) step1.style.display = 'block';
   if (step2) step2.style.display = 'none';
@@ -1285,17 +1355,63 @@ function dlOpenDeleteModal(type, meta) {
   if (phraseGroup) phraseGroup.style.display = requiresPhrase ? 'block' : 'none';
   if (nextBtn) nextBtn.disabled = requiresPhrase;
 
-  if (type === 'file') {
-    if (targetNameEl) targetNameEl.textContent = meta.name || 'Selected File';
-    if (targetMetaEl) targetMetaEl.textContent = '1 file · ' + fmtGb(meta.size);
-  } else if (type === 'show') {
-    if (targetNameEl) targetNameEl.textContent = meta.title || 'Selected TV Show';
-    if (targetMetaEl) targetMetaEl.textContent = (meta.count || 0) + ' episodes · ' + fmtGb(meta.bytes);
-  } else if (type === 'batch') {
-    const selFiles = (dlData.localFiles || []).filter(f => dlSelectedIds.has(f.id));
-    const totalBytes = selFiles.reduce((acc, f) => acc + (Number(f.size) || 0), 0);
-    if (targetNameEl) targetNameEl.textContent = selFiles.length + ' selected files';
-    if (targetMetaEl) targetMetaEl.textContent = selFiles.length + ' files · ' + fmtGb(totalBytes);
+  if (type === 'clean-watched') {
+    if (modalEyebrow) { modalEyebrow.textContent = 'SAFEGUARD CLEANUP (X-1)'; modalEyebrow.style.color = '#fbbf24'; }
+    if (modalTitle) modalTitle.textContent = '🧹 Clean Watched Episodes';
+    if (modalHeader) { modalHeader.style.background = '#1a1407'; modalHeader.style.borderBottomColor = 'rgba(245,158,11,0.3)'; }
+    if (modalCard) { modalCard.style.borderColor = 'rgba(245,158,11,0.4)'; modalCard.style.boxShadow = '0 30px 80px rgba(0,0,0,0.95), 0 0 30px rgba(245,158,11,0.15)'; }
+
+    if (targetNameEl) targetNameEl.textContent = meta.title === 'all' ? 'All TV Series' : meta.title;
+    if (targetMetaEl) targetMetaEl.textContent = meta.cleanableCount + ' episode' + (meta.cleanableCount === 1 ? '' : 's') + ' to delete · ' + fmtGb(meta.cleanableBytes) + ' space freed';
+
+    if (safeguardBox) safeguardBox.style.display = 'block';
+    if (safeguardText) {
+      const sf = meta.safeguard;
+      const sfName = sf ? ('S' + String(sf.season || 1).padStart(2,'0') + 'E' + String(sf.episode || 1).padStart(2,'0')) : 'Latest watched episode';
+      safeguardText.textContent = 'Episode ' + sfName + ' will be kept safe and will NOT be deleted. All unwatched episodes are also safe.';
+    }
+
+    if (fileListBox && meta.files && meta.files.length > 0) {
+      fileListBox.style.display = 'block';
+      fileListBox.innerHTML = '<div style="font-weight:700;margin-bottom:6px;color:#cbd5e1;">First ' + meta.cleanableCount + ' watched episode' + (meta.cleanableCount === 1 ? '' : 's') + ' to delete:</div>' +
+        meta.files.map(f => {
+          const ep = f.season ? ('S' + String(f.season).padStart(2,'0') + 'E' + String(f.episode_start).padStart(2,'0')) : '';
+          const name = f.relative_path ? f.relative_path.split('/').pop() : '';
+          return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.06);">' +
+            '<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-right:8px;">' + (ep ? '<strong style="color:#fbbf24;">' + ep + '</strong> ' : '') + esc(name) + '</span>' +
+            '<span style="flex-shrink:0;color:var(--muted);">' + fmtGb(f.size) + '</span>' +
+          '</div>';
+        }).join('');
+    } else if (fileListBox) {
+      fileListBox.style.display = 'none';
+    }
+
+    if (warningText) {
+      warningText.innerHTML = 'This deletes the first <strong>' + meta.cleanableCount + '</strong> watched episode(s) to free up storage space. The latest watched episode is safeguarded.';
+    }
+  } else {
+    if (modalEyebrow) { modalEyebrow.textContent = 'CONFIRM DELETION'; modalEyebrow.style.color = 'var(--danger)'; }
+    if (modalTitle) modalTitle.textContent = 'Delete Media';
+    if (modalHeader) { modalHeader.style.background = '#13080c'; modalHeader.style.borderBottomColor = 'rgba(244,63,94,0.3)'; }
+    if (modalCard) { modalCard.style.borderColor = 'rgba(244,63,94,0.4)'; modalCard.style.boxShadow = '0 30px 80px rgba(0,0,0,0.95), 0 0 30px rgba(244,63,94,0.15)'; }
+    if (safeguardBox) safeguardBox.style.display = 'none';
+    if (fileListBox) fileListBox.style.display = 'none';
+    if (warningText) {
+      warningText.innerHTML = 'This will permanently delete the selected media from server disk storage. <strong>This cannot be undone.</strong>';
+    }
+
+    if (type === 'file') {
+      if (targetNameEl) targetNameEl.textContent = meta.name || 'Selected File';
+      if (targetMetaEl) targetMetaEl.textContent = '1 file · ' + fmtGb(meta.size);
+    } else if (type === 'show') {
+      if (targetNameEl) targetNameEl.textContent = meta.title || 'Selected TV Show';
+      if (targetMetaEl) targetMetaEl.textContent = (meta.count || 0) + ' episodes · ' + fmtGb(meta.bytes);
+    } else if (type === 'batch') {
+      const selFiles = (dlData.localFiles || []).filter(f => dlSelectedIds.has(f.id));
+      const totalBytes = selFiles.reduce((acc, f) => acc + (Number(f.size) || 0), 0);
+      if (targetNameEl) targetNameEl.textContent = selFiles.length + ' selected files';
+      if (targetMetaEl) targetMetaEl.textContent = selFiles.length + ' files · ' + fmtGb(totalBytes);
+    }
   }
 
   modal.showModal();
@@ -1322,6 +1438,25 @@ function dlGoToStep2() {
   const backBtn = document.getElementById('dlModalBackBtn');
   const passwordInput = document.getElementById('dlPasswordInput');
   const errorEl = document.getElementById('dlModalError');
+  const step2Summary = document.getElementById('dlStep2Summary');
+
+  if (dlCurrentDeleteTarget && dlCurrentDeleteTarget.type === 'clean-watched') {
+    if (step2Summary) step2Summary.textContent = 'Enter administrator password to delete ' + (dlCurrentDeleteTarget.meta.cleanableCount || 0) + ' watched episodes:';
+    if (confirmBtn) {
+      confirmBtn.textContent = '🧹 Delete ' + (dlCurrentDeleteTarget.meta.cleanableCount || 0) + ' Watched Episodes';
+      confirmBtn.className = 'btn warning';
+      confirmBtn.style.background = 'linear-gradient(180deg, #d97706, #b45309)';
+      confirmBtn.style.borderColor = '#f59e0b';
+    }
+  } else {
+    if (step2Summary) step2Summary.textContent = 'Enter administrator password:';
+    if (confirmBtn) {
+      confirmBtn.textContent = '🗑️ Permanently Delete';
+      confirmBtn.className = 'btn danger';
+      confirmBtn.style.background = '';
+      confirmBtn.style.borderColor = '';
+    }
+  }
 
   if (step1) step1.style.display = 'none';
   if (step2) step2.style.display = 'block';
@@ -1393,6 +1528,12 @@ async function dlExecuteDeletion() {
         headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
         body: JSON.stringify({ title: dlCurrentDeleteTarget.meta.title, password })
       });
+    } else if (dlCurrentDeleteTarget.type === 'clean-watched') {
+      res = await fetch('/downloads/clean-watched', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+        body: JSON.stringify({ title: dlCurrentDeleteTarget.meta.title, password })
+      });
     }
 
     if (!res || !res.ok) {
@@ -1401,14 +1542,26 @@ async function dlExecuteDeletion() {
         errorEl.textContent = data.error || 'Failed: Incorrect administrator password.';
         errorEl.style.display = 'block';
       }
-      if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '🗑️ Permanently Delete'; }
+      if (confirmBtn) {
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = dlCurrentDeleteTarget.type === 'clean-watched'
+          ? ('🧹 Delete ' + (dlCurrentDeleteTarget.meta.cleanableCount || 0) + ' Watched Episodes')
+          : '🗑️ Permanently Delete';
+      }
       if (backBtn) backBtn.disabled = false;
       if (passwordInput) passwordInput.select();
       return;
     }
 
+    const data = await res.json().catch(() => ({}));
     dlCloseDeleteModal();
-    toast('Media deleted successfully');
+    if (dlCurrentDeleteTarget.type === 'clean-watched') {
+      const sf = dlCurrentDeleteTarget.meta.safeguard;
+      const sfText = sf ? ('S' + String(sf.season || 1).padStart(2,'0') + 'E' + String(sf.episode || 1).padStart(2,'0')) : 'latest watched episode';
+      toast('Cleaned ' + (data.deletedCount || 0) + ' watched episodes (' + fmtGb(data.deletedBytes) + ')! Protected safeguard ' + sfText + ' preserved.');
+    } else {
+      toast('Media deleted successfully');
+    }
     await dlLoad();
   } catch (err) {
     if (errorEl) {
@@ -1417,6 +1570,59 @@ async function dlExecuteDeletion() {
     }
     if (confirmBtn) { confirmBtn.disabled = false; confirmBtn.textContent = '🗑️ Permanently Delete'; }
     if (backBtn) backBtn.disabled = false;
+  }
+}
+
+function dlOpenCleanWatchedModal(title) {
+  let cleanableCount = 0;
+  let cleanableBytes = 0;
+  let safeguard = null;
+  let cleanableFiles = [];
+
+  if (title === 'all') {
+    cleanableCount = dlData.stats?.totalCleanableEpisodes || 0;
+    cleanableBytes = dlData.stats?.totalCleanableBytes || 0;
+    cleanableFiles = (dlData.localFiles || []).filter(f => f.is_cleanable_watched);
+    safeguard = (dlData.shows || []).find(s => s.safeguardEpisode)?.safeguardEpisode || null;
+  } else {
+    const show = (dlData.shows || []).find(s => s.title === title);
+    if (!show || (show.cleanableWatchedCount || 0) < 1) {
+      toast('No cleanable watched episodes for this show');
+      return;
+    }
+    cleanableCount = show.cleanableWatchedCount;
+    cleanableBytes = show.cleanableWatchedBytes;
+    safeguard = show.safeguardEpisode;
+    cleanableFiles = (dlData.localFiles || []).filter(f => (show.cleanableEpisodeIds || []).includes(f.id));
+  }
+
+  dlOpenDeleteModal('clean-watched', {
+    title,
+    cleanableCount,
+    cleanableBytes,
+    safeguard,
+    files: cleanableFiles
+  });
+}
+
+async function dlToggleWatched(id, ev) {
+  if (ev) ev.stopPropagation();
+  try {
+    const res = await fetch('/downloads/toggle-watched', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-csrf-token': csrf },
+      body: JSON.stringify({ id })
+    });
+    if (res.ok) {
+      const data = await res.json();
+      toast(data.is_watched ? 'Marked episode as watched' : 'Marked episode as unwatched');
+      await dlLoad();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      toast(data.error || 'Failed to update watched status');
+    }
+  } catch (e) {
+    toast('Network error updating watched status');
   }
 }
 
@@ -1437,6 +1643,8 @@ window.dlGoToStep2 = dlGoToStep2;
 window.dlGoToStep1 = dlGoToStep1;
 window.dlCheckPhraseMatch = dlCheckPhraseMatch;
 window.dlExecuteDeletion = dlExecuteDeletion;
+window.dlOpenCleanWatchedModal = dlOpenCleanWatchedModal;
+window.dlToggleWatched = dlToggleWatched;
 
 async function initialize(){
   await load();

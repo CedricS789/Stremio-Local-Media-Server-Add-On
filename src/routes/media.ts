@@ -105,6 +105,7 @@ function authorize(request: FastifyRequest, database: AppDatabase, config: AppCo
   if (!tokenRow.last_used_at || tokenRow.last_used_at < Date.now() - 60 * 60 * 1000) {
     database.sqlite.prepare('UPDATE stream_tokens SET last_used_at=? WHERE jti=?').run(Date.now(), payload.jti);
   }
+  database.sqlite.prepare('UPDATE media_files SET watched_at=? WHERE id=?').run(Date.now(), payload.fileId);
   const file = database.sqlite.prepare("SELECT * FROM media_files WHERE id=? AND status='matched'").get(payload.fileId) as MediaFileRow | undefined;
   return file ? { file, token: payload } : null;
 }

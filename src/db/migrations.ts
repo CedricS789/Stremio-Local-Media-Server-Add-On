@@ -253,5 +253,19 @@ export const migrations = [
   );
 
   CREATE INDEX IF NOT EXISTS playback_server_mappings_scope_status_idx
-    ON playback_server_mappings(provider, server_key, status);`
+    ON playback_server_mappings(provider, server_key, status);`,
+  `ALTER TABLE media_files ADD COLUMN watched_at INTEGER;
+  UPDATE media_files
+  SET watched_at = (
+    SELECT MAX(last_used_at)
+    FROM stream_tokens
+    WHERE stream_tokens.media_file_id = media_files.id
+      AND stream_tokens.last_used_at IS NOT NULL
+  )
+  WHERE id IN (
+    SELECT media_file_id
+    FROM stream_tokens
+    WHERE last_used_at IS NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS media_files_watched_idx ON media_files(watched_at);`
 ] as const;
