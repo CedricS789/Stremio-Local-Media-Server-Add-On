@@ -171,14 +171,14 @@ export function adminHtml(csrf: string): string {
       <input type="text" id="dlSearchInput" class="input" placeholder="Filter by show, episode, or filename..." oninput="dlOnSearchChange()" style="flex:1 1 260px;max-width:none;">
       <div style="display:flex;gap:8px;align-items:center;">
         <select id="dlSortSelect" class="select" onchange="dlOnSortChange()" style="width:auto;min-width:160px;" aria-label="Sort downloaded files">
-          <option value="size">Sort by: Size</option>
-          <option value="date">Sort by: Date Added</option>
-          <option value="title">Sort by: Title</option>
           <option value="episode">Sort by: Episode</option>
+          <option value="title">Sort by: Title</option>
+          <option value="date">Sort by: Date Added</option>
+          <option value="size">Sort by: Size</option>
         </select>
         <button type="button" id="dlSortDirBtn" class="btn" onclick="dlToggleSortDirection()" title="Sort order">
-          <span id="dlSortDirIcon">↓</span>
-          <span id="dlSortDirLabel">Desc</span>
+          <span id="dlSortDirIcon">↑</span>
+          <span id="dlSortDirLabel">Asc</span>
         </button>
       </div>
     </div>
@@ -808,8 +808,19 @@ let dlData = { items: [], activeSeasons: [], localFiles: [], stats: {} };
 let dlSelectedIds = new Set();
 let dlActiveFilter = 'type:series';
 let dlSearchQuery = '';
-let dlSortField = 'size';
-let dlSortDir = 'desc';
+const DL_VALID_SORT_FIELDS = ['episode', 'title', 'date', 'size'];
+let dlSortField = 'episode';
+let dlSortDir = 'asc';
+try {
+  const savedSortField = localStorage.getItem('dl_sort_field');
+  if (savedSortField && DL_VALID_SORT_FIELDS.includes(savedSortField)) {
+    dlSortField = savedSortField;
+  }
+  const savedSortDir = localStorage.getItem('dl_sort_dir');
+  if (savedSortDir === 'asc' || savedSortDir === 'desc') {
+    dlSortDir = savedSortDir;
+  }
+} catch (e) {}
 let dlCollapsedShows = new Set();
 let dlCurrentDeleteTarget = null;
 let dlPollTimer = null;
@@ -873,6 +884,7 @@ function dlStopPolling() {
 }
 
 function dlRender() {
+  dlSyncSortControls();
   dlRenderStats();
   dlRenderActive();
   dlRenderPills();
@@ -1180,6 +1192,12 @@ function dlRenderFiles() {
       groupsList.sort((a, b) => dlSortDir === 'asc' ? a.totalBytes - b.totalBytes : b.totalBytes - a.totalBytes);
     } else if (dlSortField === 'title' || dlSortField === 'episode') {
       groupsList.sort((a, b) => dlSortDir === 'asc' ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title));
+    } else if (dlSortField === 'date') {
+      groupsList.sort((a, b) => {
+        const dateA = Math.max(...a.files.map(f => Number(f.added_at) || 0));
+        const dateB = Math.max(...b.files.map(f => Number(f.added_at) || 0));
+        return dlSortDir === 'asc' ? dateA - dateB : dateB - dateA;
+      });
     }
 
     let html = '';
@@ -1240,18 +1258,29 @@ function dlOnSearchChange() {
   dlRenderFiles();
 }
 
+function dlSyncSortControls() {
+  const sel = document.getElementById('dlSortSelect');
+  if (sel && sel.value !== dlSortField) sel.value = dlSortField;
+  const icon = document.getElementById('dlSortDirIcon');
+  const label = document.getElementById('dlSortDirLabel');
+  if (icon) icon.textContent = dlSortDir === 'asc' ? '↑' : '↓';
+  if (label) label.textContent = dlSortDir === 'asc' ? 'Asc' : 'Desc';
+}
+
 function dlOnSortChange() {
   const sel = document.getElementById('dlSortSelect');
-  if (sel) dlSortField = sel.value || 'size';
+  if (sel && DL_VALID_SORT_FIELDS.includes(sel.value)) {
+    dlSortField = sel.value;
+    try { localStorage.setItem('dl_sort_field', dlSortField); } catch (e) {}
+  }
+  dlSyncSortControls();
   dlRenderFiles();
 }
 
 function dlToggleSortDirection() {
   dlSortDir = dlSortDir === 'asc' ? 'desc' : 'asc';
-  const icon = document.getElementById('dlSortDirIcon');
-  const label = document.getElementById('dlSortDirLabel');
-  if (icon) icon.textContent = dlSortDir === 'asc' ? '↑' : '↓';
-  if (label) label.textContent = dlSortDir === 'asc' ? 'Asc' : 'Desc';
+  try { localStorage.setItem('dl_sort_dir', dlSortDir); } catch (e) {}
+  dlSyncSortControls();
   dlRenderFiles();
 }
 
