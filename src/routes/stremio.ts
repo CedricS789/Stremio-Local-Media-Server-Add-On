@@ -2025,9 +2025,18 @@ export function registerStremioRoutes(app, database, settings, config, requester
             }
         }
 
+        const quota = getStorageQuotaInfo();
+        const freeGbNum = quota.remainingQuotaBytes / (1024 ** 3);
+        const usedGbNum = quota.usedBytes / (1024 ** 3);
+        const limitGbNum = quota.allocatedLimitBytes / (1024 ** 3);
+        const freeStr = freeGbNum < 10 ? freeGbNum.toFixed(1) : Math.round(freeGbNum);
+        const usedStr = usedGbNum < 10 ? usedGbNum.toFixed(1) : Math.round(usedGbNum);
+        const limitStr = Math.round(limitGbNum);
+        const quotaSummary = `${usedStr} / ${limitStr} GB • ${freeStr} GB free`;
+
         streams.push({
             name: addonName,
-            description: '📁 Open Downloads\nDownloads & Storage',
+            description: `📁 Open Downloads\n${quotaSummary}`,
             externalUrl: `${settings.baseUrl}/downloads?token=${encodeURIComponent(accessToken)}`,
             behaviorHints: { bingeGroup: 'nuvi-flow:open:downloads' }
         });
