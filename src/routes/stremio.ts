@@ -717,6 +717,40 @@ function deleteLocalFileRecord(database, fileRow) {
     }
 }
 
+function getCleanableWatchedForSeries(database: any, seriesId: string) {
+    const showEpisodes = database.sqlite.prepare(`
+        SELECT mf.*, COALESCE(mi.display_title, mi.title) as show_title
+        FROM media_files mf
+        JOIN media_items mi ON mi.id = mf.media_item_id
+        WHERE mi.type='series' AND (mi.stremio_id=? OR ('tmdb:' || mi.tmdb_id)=? OR mi.id=?) AND mf.status='matched'
+    `).all(seriesId, seriesId, seriesId) as any[];
+
+    showEpisodes.sort((a: any, b: any) => {
+        const epA = ((Number(a.season) || 0) * 10000) + (Number(a.episode_start != null ? a.episode_start : 0));
+        const epB = ((Number(b.season) || 0) * 10000) + (Number(b.episode_start != null ? b.episode_start : 0));
+        if (epA !== epB) return epA - epB;
+        return (Number(a.added_at) || 0) - (Number(b.added_at) || 0);
+    });
+
+    const watched = showEpisodes.filter((f: any) => f.watched_at != null && Number(f.watched_at) > 0);
+    const X = watched.length;
+    const cleanable = X >= 2 ? watched.slice(0, X - 1) : [];
+    const safeguard = X >= 1 ? watched[X - 1] : null;
+    const cleanableBytes = cleanable.reduce((acc: number, f: any) => acc + (Number(f.size) || 0), 0);
+    const totalWatchedBytes = watched.reduce((acc: number, f: any) => acc + (Number(f.size) || 0), 0);
+
+    return {
+        allEpisodes: showEpisodes,
+        watched,
+        cleanable,
+        safeguard,
+        cleanableBytes,
+        totalWatchedBytes,
+        X
+    };
+}
+
+
 function sendCardMp4(request, reply, cardName) {
     const cardPath = path.join('/app/cards', cardName);
     if (fs.existsSync(cardPath)) {
@@ -1964,16 +1998,29 @@ export function registerStremioRoutes(app, database, settings, config, requester
                 });
             }
 
-            if (files.length > 0 && localSeasonRows.length > 0) {
-                const seasonLocalBytes = localSeasonRows.reduce((acc, r) => acc + (Number(r.size) || 0), 0);
-                const armedSeason = isDeleteArmed(seasonKey);
+            const watchedInfo = getCleanableWatchedForSeries(database, parsedSeries.itemId);
+            const watchedDelKey = `watched:${parsedSeries.itemId}`;
+            const isArmedWatched = isDeleteArmed(watchedDelKey);
+
+            if (watchedInfo.X >= 2) {
+                const sf = watchedInfo.safeguard;
+                const sfStr = sf ? `S${String(sf.season || 1).padStart(2, '0')}E${String(sf.episode_start || 1).padStart(2, '0')}` : 'latest';
                 streams.push({
                     name: addonName,
-                    description: armedSeason
-                        ? `⚠️ CONFIRM DELETE Season ${parsedSeries.season}\nClick to delete now (3m)`
-                        : `🗑️ Delete Season ${parsedSeries.season} (${formatGb(seasonLocalBytes)})\n${localSeasonRows.length} eps • Click to arm`,
-                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/delete/season/${encodeURIComponent(id)}`,
-                    behaviorHints: { bingeGroup: `nuvi-flow:del:season:${id}` }
+                    description: isArmedWatched
+                        ? `⚠️ CONFIRM DELETE ${watchedInfo.cleanable.length} Watched (${formatGb(watchedInfo.cleanableBytes)})\nClick to delete now (3m)`
+                        : `🗑️ Delete Watched (${formatGb(watchedInfo.cleanableBytes)})\n${watchedInfo.cleanable.length} eps (X-1) • Keeps ${sfStr} safe`,
+                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/delete/watched/${encodeURIComponent(id)}`,
+                    behaviorHints: { bingeGroup: `nuvi-flow:del:watched:${id}` }
+                });
+            } else if (watchedInfo.X === 1) {
+                const sf = watchedInfo.safeguard;
+                const sfStr = sf ? `S${String(sf.season || 1).padStart(2, '0')}E${String(sf.episode_start || 1).padStart(2, '0')}` : 'latest';
+                streams.push({
+                    name: addonName,
+                    description: `🛡️ 1 Watched (${sfStr})\nProtected by safeguard (X-1)`,
+                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/delete/watched/${encodeURIComponent(id)}`,
+                    behaviorHints: { bingeGroup: `nuvi-flow:del:watched:${id}` }
                 });
             }
         }
@@ -2056,6 +2103,26 @@ export function registerStremioRoutes(app, database, settings, config, requester
             for (const row of rows) {
                 deleteLocalFileRecord(database, row);
             }
+            return sendCardMp4(request, reply, 'deleted.mp4');
+        }
+        if (mode === 'watched') {
+            const parsed = episodeId(id);
+            if (!parsed)
+                return sendCardMp4(request, reply, 'deleted.mp4');
+            const watchedInfo = getCleanableWatchedForSeries(database, parsed.itemId);
+            if (watchedInfo.cleanable.length === 0) {
+                return sendCardMp4(request, reply, 'cancelled.mp4');
+            }
+            const delKey = `watched:${parsed.itemId}`;
+            if (!isDeleteArmed(delKey)) {
+                pendingDeletes.set(delKey, Date.now());
+                return sendCardMp4(request, reply, 'confirm-delete.mp4');
+            }
+            pendingDeletes.delete(delKey);
+            for (const file of watchedInfo.cleanable) {
+                deleteLocalFileRecord(database, file);
+            }
+            await triggerRescan();
             return sendCardMp4(request, reply, 'deleted.mp4');
         }
         if (mode === 'season') {
