@@ -57,6 +57,9 @@ export class SettingsService {
   get autoRescanOnDownload(): boolean {
     return this.boolean('autoRescanOnDownload', true);
   }
+  get enableLibraryEditing(): boolean {
+    return this.boolean('enableLibraryEditing', false);
+  }
   get downloadTimeoutSeconds(): number {
     return this.number('downloadTimeoutSeconds', 60, 15);
   }
@@ -378,6 +381,7 @@ export class SettingsService {
       maxConcurrentDownloads: this.maxConcurrentDownloads,
       maxDownloadSpeedMBps: this.maxDownloadSpeedMBps,
       autoRescanOnDownload: this.autoRescanOnDownload,
+      enableLibraryEditing: this.enableLibraryEditing,
       downloadTimeoutSeconds: this.downloadTimeoutSeconds,
       lanBaseUrl: this.lanBaseUrl,
 

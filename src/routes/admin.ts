@@ -694,6 +694,9 @@ export function registerAdminRoutes(
   });
 
   app.post('/admin/api/files/:id/match', { preHandler: requireAdmin(config, true) }, async (request, reply) => {
+    if (!settings.enableLibraryEditing) {
+      return reply.code(403).send({ error: 'Library editing is locked. Enable library editing in Settings to modify matches or overrides.' });
+    }
     const { id } = request.params as { id: string };
     const body = request.body as { type?: MediaType; provider?: MetadataSearchResult['provider']; id?: string; tmdbId?: number };
     const file = database.sqlite.prepare('SELECT * FROM media_files WHERE id=?').get(id) as MediaFileRow | undefined;
@@ -719,6 +722,9 @@ export function registerAdminRoutes(
   });
 
   app.post('/admin/api/files/:id/unmatch', { preHandler: requireAdmin(config, true) }, async (request, reply) => {
+    if (!settings.enableLibraryEditing) {
+      return reply.code(403).send({ error: 'Library editing is locked. Enable library editing in Settings to modify matches or overrides.' });
+    }
     const { id } = request.params as { id: string };
     const file = database.sqlite.prepare('SELECT media_item_id,status FROM media_files WHERE id=?').get(id) as { media_item_id: string | null; status: string } | undefined;
     if (!file) return reply.code(404).send({ error: 'File not found' });
@@ -728,12 +734,18 @@ export function registerAdminRoutes(
   });
 
   app.post('/admin/api/files/:id/ignore', { preHandler: requireAdmin(config, true) }, async (request, reply) => {
+    if (!settings.enableLibraryEditing) {
+      return reply.code(403).send({ error: 'Library editing is locked. Enable library editing in Settings to modify matches or overrides.' });
+    }
     const { id } = request.params as { id: string };
     const result = database.sqlite.prepare(`UPDATE media_files SET media_item_id=NULL,status='ignored',confidence=NULL,manual_override=1,error=NULL,updated_at=? WHERE id=?`).run(Date.now(), id);
     return result.changes ? reply.send({ ok: true, file: fileDetail(database, id) }) : reply.code(404).send({ error: 'File not found' });
   });
 
   app.patch('/admin/api/items/:id', { preHandler: requireAdmin(config, true) }, async (request, reply) => {
+    if (!settings.enableLibraryEditing) {
+      return reply.code(403).send({ error: 'Library editing is locked. Enable library editing in Settings to modify matches or overrides.' });
+    }
     const { id } = request.params as { id: string };
     const body = request.body as { displayTitle?: string; poster?: string; background?: string };
     const item = database.sqlite.prepare('SELECT * FROM media_items WHERE id=?').get(id) as MediaItemRow | undefined;
@@ -1216,6 +1228,7 @@ export function registerAdminRoutes(
     // Boolean settings.
     for (const key of [
       'autoRescanOnDownload',
+      'enableLibraryEditing',
       'autoRequestEnabled',
       'radarrEnabled',
       'sonarrEnabled',

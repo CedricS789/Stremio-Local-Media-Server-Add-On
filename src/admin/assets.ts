@@ -198,7 +198,49 @@ export function adminHtml(csrf: string): string {
     <!-- FILES / SHOWS LIST -->
     <div id="dlFilesList" style="display:grid;gap:12px;"></div>
   </section>
-  <section id="library" class="view"><div class="topbar"><div><div class="eyebrow">All local files</div><h2>Library</h2></div></div><div class="toolbar"><label class="sr-only" for="librarySearch">Filter library</label><input id="librarySearch" class="input" placeholder="Filter by title or filename"><label class="sr-only" for="libraryType">Filter by media type</label><select id="libraryType" class="select" style="max-width:160px"><option value="">All types</option><option value="movie">Movies</option><option value="series">TV</option></select></div><div class="card table-wrap"><table class="table"><thead><tr><th>Title</th><th>Type</th><th>File</th><th>Quality</th><th>Duration</th><th>Status</th><th></th></tr></thead><tbody id="libraryRows"></tbody></table></div></section>
+  <section id="library" class="view">
+    <div class="topbar"><div><div class="eyebrow">All local files</div><h2>Library</h2></div></div>
+    <div class="toolbar" style="flex-wrap:wrap;gap:10px;">
+      <label class="sr-only" for="librarySearch">Filter library</label>
+      <input id="librarySearch" class="input" placeholder="Filter by title or filename" style="flex:1 1 220px;max-width:none;">
+      <label class="sr-only" for="libraryType">Filter by media type</label>
+      <select id="libraryType" class="select" style="max-width:140px">
+        <option value="">All types</option>
+        <option value="movie">Movies</option>
+        <option value="series">TV</option>
+      </select>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <select id="librarySortSelect" class="select" onchange="libOnSortChange()" style="width:auto;min-width:160px;" aria-label="Sort library files">
+          <option value="episode">Sort by: Episode</option>
+          <option value="title">Sort by: Title</option>
+          <option value="date">Sort by: Date Added</option>
+          <option value="size">Sort by: Size</option>
+          <option value="duration">Sort by: Duration</option>
+          <option value="status">Sort by: Status</option>
+        </select>
+        <button type="button" id="librarySortDirBtn" class="btn" onclick="libToggleSortDirection()" title="Sort order">
+          <span id="librarySortDirIcon">↑</span>
+          <span id="librarySortDirLabel">Asc</span>
+        </button>
+      </div>
+    </div>
+    <div class="card table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="cursor:pointer;user-select:none;" onclick="libSetSortColumn('title')" title="Click to sort by Title">Title <span id="libThIconTitle"></span></th>
+            <th style="cursor:pointer;user-select:none;" onclick="libSetSortColumn('type')" title="Click to sort by Type">Type <span id="libThIconType"></span></th>
+            <th style="cursor:pointer;user-select:none;" onclick="libSetSortColumn('episode')" title="Click to sort by Episode / Path">File <span id="libThIconEpisode"></span></th>
+            <th>Quality</th>
+            <th style="cursor:pointer;user-select:none;" onclick="libSetSortColumn('duration')" title="Click to sort by Duration">Duration <span id="libThIconDuration"></span></th>
+            <th style="cursor:pointer;user-select:none;" onclick="libSetSortColumn('status')" title="Click to sort by Status">Status <span id="libThIconStatus"></span></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="libraryRows"></tbody>
+      </table>
+    </div>
+  </section>
   <section id="logs" class="view"><div class="topbar"><div><div class="eyebrow">Scanner activity</div><h2>Scan logs</h2><p class="muted">Live, cancellable library discovery and media inspection with durable terminal history.</p></div><div class="actions"><button class="btn" type="button" data-scan="changed">Scan changes</button><button class="btn primary" type="button" data-scan="full">Full rescan</button><button class="btn danger" type="button" data-cancel-scan hidden>Cancel scan</button></div></div><div class="scan-current" id="scanCurrent" aria-live="polite"></div><div class="card scan-history" id="scanLogs"></div></section>
   <section id="settings" class="view"><div class="topbar"><div><div class="eyebrow">Runtime configuration</div><h2>Settings</h2><p class="muted">Configuration is grouped into clear sections. All sections save together.</p></div></div><form class="card" id="settingsForm"><div class="card-body form-grid">
 
@@ -265,6 +307,18 @@ export function adminHtml(csrf: string): string {
   <label for="tmdbApiKey">TMDB API key (optional)</label>
   <input id="tmdbApiKey" class="input" name="tmdbApiKey" type="password" placeholder="Optional — automatic metadata works via Cinemeta">
   <p class="help" id="tmdbStatus"></p>
+</div>
+<div class="settings-section">
+  <h3>Library Protection & Metadata</h3>
+  <p>Protect library items against accidental match removals, TMDB re-assignments, or override edits.</p>
+</div>
+<div class="field full">
+  <label for="enableLibraryEditing">Allow Library Editing</label>
+  <select id="enableLibraryEditing" class="select" name="enableLibraryEditing">
+    <option value="false">Disabled (Locked — prevents accidental metadata modifications)</option>
+    <option value="true">Enabled (Allows changing matches, searching TMDB, and editing overrides)</option>
+  </select>
+  <p class="help">When disabled (default), the media details dialog in Library is strictly read-only to prevent accidental clicks. Enable this only when you want to modify metadata matches or display overrides.</p>
 </div>
 </section>
 
@@ -575,9 +629,141 @@ function renderBackups(){const data=state.backups,summary=document.getElementByI
 function scanStatusBadge(status){const cls=status==='completed'||status==='idle'?'good':status==='failed'||status==='interrupted'?'danger':'warn',label=String(status||'unknown').replaceAll('_',' ');return '<span class="badge '+cls+'">'+esc(label)+'</span>'}
 function formatScanElapsed(milliseconds){const seconds=Math.max(0,Math.floor(Number(milliseconds)||0)/1000),minutes=Math.floor(seconds/60),remaining=Math.floor(seconds%60);return minutes?minutes+'m '+remaining+'s':remaining+'s'}
 function renderScanOperations(){const current=state.scan,box=document.getElementById('scanCurrent'),history=document.getElementById('scanLogs'),last=document.getElementById('lastScan'),cancel=document.querySelector('[data-cancel-scan]');document.querySelectorAll('[data-scan]').forEach(button=>{button.disabled=Boolean(current)});if(cancel){cancel.hidden=!current;cancel.disabled=!current||Boolean(current.cancelRequested);cancel.textContent=current?.cancelRequested?'Stopping…':'Cancel scan'}if(box){if(current){const phase=String(current.phase||'working').replaceAll('_',' '),percent=current.progressPercent==null?null:Math.max(0,Math.min(100,Number(current.progressPercent)||0)),progressClass=percent==null?'scan-progress-track indeterminate':'scan-progress-track';box.className='scan-current active';box.innerHTML='<div class="scan-current-head"><div><div class="scan-current-title">'+esc(current.status==='cancelling'?'Stopping scan safely…':String(current.mode||'changed')+' scan · '+phase)+'</div><div class="scan-current-meta">Started '+esc(new Date(current.startedAt).toLocaleString())+' · elapsed '+esc(formatScanElapsed(current.elapsedMs))+'</div></div>'+scanStatusBadge(current.status)+'</div><div class="'+progressClass+'" role="progressbar" aria-label="Scan progress" aria-valuemin="0" aria-valuemax="100"'+(percent==null?'':' aria-valuenow="'+esc(percent)+'"')+'><div class="scan-progress-bar" style="'+(percent==null?'':'width:'+esc(percent)+'%')+'"></div></div><div class="scan-metrics"><div class="scan-metric"><span>Discovered</span><strong>'+esc(current.discovered||0)+'</strong></div><div class="scan-metric"><span>Examined</span><strong>'+esc(current.examined||0)+'</strong></div><div class="scan-metric"><span>Changed</span><strong>'+esc(current.processed||0)+'</strong></div><div class="scan-metric"><span>Matched</span><strong>'+esc(current.matched||0)+'</strong></div><div class="scan-metric"><span>Errors</span><strong>'+esc(current.errors||0)+'</strong></div></div>'}else{box.className='scan-current';box.innerHTML='<div class="scan-current-head"><div><div class="scan-current-title">Scanner idle</div><div class="scan-current-meta">Start a changed-file scan or a full media reinspection.</div></div>'+scanStatusBadge('idle')+'</div>'}}if(history){history.innerHTML=(state.logs||[]).map(run=>{const elapsed=run.finishedAt?formatScanElapsed(Number(run.finishedAt)-Number(run.startedAt)):'No finish time',details=run.discovered+' found · '+run.processed+' changed · '+run.matched+' matched · '+run.unmatched+' unmatched · '+run.errors+' errors';return '<div class="scan-history-row"><div class="scan-history-main"><div class="scan-history-title">'+esc(new Date(run.startedAt).toLocaleString())+'</div><div class="scan-history-meta">'+esc(String(run.mode||'unknown')+' scan · '+elapsed)+'</div></div>'+scanStatusBadge(run.status)+'<div class="scan-history-main"><div class="scan-history-title">'+esc(details)+'</div>'+(run.message?'<div class="scan-history-meta">'+esc(run.message)+'</div>':'')+'</div></div>'}).join('')||'<div class="empty">No scans have run yet.</div></div>'}if(last){const latest=(state.logs||[])[0];last.textContent=current?'Scan in progress · '+String(current.phase||'working').replaceAll('_',' '):latest?'Last scan '+new Date(latest.startedAt).toLocaleString()+' · '+latest.status:'No scans have run yet'}}
-function renderLibrary(){const term=(document.getElementById('librarySearch').value||'').toLowerCase(),type=document.getElementById('libraryType').value;const rows=state.files.filter(f=>(!type||f.libraryType===type)&&(!term||(f.parsedTitle||'').toLowerCase().includes(term)||f.relativePath.toLowerCase().includes(term)));document.getElementById('libraryRows').innerHTML=rows.map(f=>'<tr><td><strong>'+esc(f.displayTitle||f.parsedTitle||'Unknown')+'</strong></td><td>'+esc(f.libraryType)+'</td><td>'+esc(f.relativePath)+'</td><td>'+esc(f.quality||f.height&&f.height+'p'||'—')+'</td><td>'+duration(f.durationSeconds)+'</td><td>'+statusBadge(f)+'</td><td><button class="btn small" type="button" data-file="'+esc(f.id)+'">Open</button></td></tr>').join('')||'<tr><td colspan="7"><div class="empty">No files match this filter.</div></td></tr>'}
+const LIB_VALID_SORT_FIELDS = ['episode', 'title', 'date', 'size', 'duration', 'status', 'type'];
+let libSortField = 'episode';
+let libSortDir = 'asc';
+try {
+  const savedLibField = localStorage.getItem('library_sort_field');
+  if (savedLibField && LIB_VALID_SORT_FIELDS.includes(savedLibField)) {
+    libSortField = savedLibField;
+  }
+  const savedLibDir = localStorage.getItem('library_sort_dir');
+  if (savedLibDir === 'asc' || savedLibDir === 'desc') {
+    libSortDir = savedLibDir;
+  }
+} catch (e) {}
+
+function libSyncSortControls() {
+  const sel = document.getElementById('librarySortSelect');
+  if (sel && sel.value !== libSortField) sel.value = libSortField;
+  const icon = document.getElementById('librarySortDirIcon');
+  const label = document.getElementById('librarySortDirLabel');
+  if (icon) icon.textContent = libSortDir === 'asc' ? '↑' : '↓';
+  if (label) label.textContent = libSortDir === 'asc' ? 'Asc' : 'Desc';
+
+  const fields = ['title', 'type', 'episode', 'duration', 'status'];
+  for (const f of fields) {
+    const el = document.getElementById('libThIcon' + f.charAt(0).toUpperCase() + f.slice(1));
+    if (el) el.textContent = libSortField === f ? (libSortDir === 'asc' ? ' ↑' : ' ↓') : '';
+  }
+}
+
+function libOnSortChange() {
+  const sel = document.getElementById('librarySortSelect');
+  if (sel && LIB_VALID_SORT_FIELDS.includes(sel.value)) {
+    libSortField = sel.value;
+    try { localStorage.setItem('library_sort_field', libSortField); } catch (e) {}
+  }
+  libSyncSortControls();
+  renderLibrary();
+}
+
+function libToggleSortDirection() {
+  libSortDir = libSortDir === 'asc' ? 'desc' : 'asc';
+  try { localStorage.setItem('library_sort_dir', libSortDir); } catch (e) {}
+  libSyncSortControls();
+  renderLibrary();
+}
+
+function libSetSortColumn(col) {
+  if (libSortField === col) {
+    libSortDir = libSortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    libSortField = col;
+    libSortDir = (col === 'date' || col === 'size' || col === 'duration') ? 'desc' : 'asc';
+  }
+  try {
+    localStorage.setItem('library_sort_field', libSortField);
+    localStorage.setItem('library_sort_dir', libSortDir);
+  } catch (e) {}
+  libSyncSortControls();
+  renderLibrary();
+}
+
+window.libOnSortChange = libOnSortChange;
+window.libToggleSortDirection = libToggleSortDirection;
+window.libSetSortColumn = libSetSortColumn;
+
+function renderLibrary(){
+  libSyncSortControls();
+  const searchInput = document.getElementById('librarySearch');
+  const term = (searchInput ? searchInput.value : '').toLowerCase();
+  const typeSelect = document.getElementById('libraryType');
+  const type = typeSelect ? typeSelect.value : '';
+
+  let rows = (state.files || []).filter(f =>
+    (!type || f.libraryType === type) &&
+    (!term || (f.displayTitle || '').toLowerCase().includes(term) || (f.parsedTitle || '').toLowerCase().includes(term) || (f.relativePath || '').toLowerCase().includes(term))
+  );
+
+  rows.sort((a, b) => {
+    if (libSortField === 'episode') {
+      const epA = ((Number(a.season) || 0) * 10000) + (Number(a.episodeStart != null ? a.episodeStart : a.episode) || 0);
+      const epB = ((Number(b.season) || 0) * 10000) + (Number(b.episodeStart != null ? b.episodeStart : b.episode) || 0);
+      if (epA !== epB) return libSortDir === 'asc' ? epA - epB : epB - epA;
+      const nameA = (a.displayTitle || a.parsedTitle || a.relativePath || '').toLowerCase();
+      const nameB = (b.displayTitle || b.parsedTitle || b.relativePath || '').toLowerCase();
+      return nameA.localeCompare(nameB);
+    }
+    if (libSortField === 'title') {
+      const ta = (a.displayTitle || a.parsedTitle || a.relativePath || '').toLowerCase();
+      const tb = (b.displayTitle || b.parsedTitle || b.relativePath || '').toLowerCase();
+      const cmp = ta.localeCompare(tb);
+      return libSortDir === 'asc' ? cmp : -cmp;
+    }
+    if (libSortField === 'date') {
+      const diff = (Number(b.addedAt) || 0) - (Number(a.addedAt) || 0);
+      return libSortDir === 'asc' ? -diff : diff;
+    }
+    if (libSortField === 'size') {
+      const diff = (Number(b.size) || 0) - (Number(a.size) || 0);
+      return libSortDir === 'asc' ? -diff : diff;
+    }
+    if (libSortField === 'duration') {
+      const diff = (Number(b.durationSeconds) || 0) - (Number(a.durationSeconds) || 0);
+      return libSortDir === 'asc' ? -diff : diff;
+    }
+    if (libSortField === 'status') {
+      const sa = (a.status || '').toLowerCase();
+      const sb = (b.status || '').toLowerCase();
+      const cmp = sa.localeCompare(sb);
+      return libSortDir === 'asc' ? cmp : -cmp;
+    }
+    if (libSortField === 'type') {
+      const ta = (a.libraryType || '').toLowerCase();
+      const tb = (b.libraryType || '').toLowerCase();
+      const cmp = ta.localeCompare(tb);
+      return libSortDir === 'asc' ? cmp : -cmp;
+    }
+    return 0;
+  });
+
+  const tbody = document.getElementById('libraryRows');
+  if (!tbody) return;
+  tbody.innerHTML = rows.map(f =>
+    '<tr>' +
+      '<td><strong>' + esc(f.displayTitle || f.parsedTitle || 'Unknown') + '</strong></td>' +
+      '<td>' + esc(f.libraryType) + '</td>' +
+      '<td>' + esc(f.relativePath) + '</td>' +
+      '<td>' + esc(f.quality || (f.height ? f.height + 'p' : '—')) + '</td>' +
+      '<td>' + duration(f.durationSeconds) + '</td>' +
+      '<td>' + statusBadge(f) + '</td>' +
+      '<td><button class="btn small" type="button" data-file="' + esc(f.id) + '">Open</button></td>' +
+    '</tr>'
+  ).join('') || '<tr><td colspan="7"><div class="empty">No files match this filter.</div></td></tr>';
+}
 function setSelectValue(select,value,label){if(!select)return;const stringValue=String(value??'');if(stringValue&&!Array.from(select.options).some(option=>option.value===stringValue)){const option=document.createElement('option');option.value=stringValue;option.textContent=label||stringValue;select.appendChild(option)}select.value=stringValue}
-function fillSettings(force=false){if(settingsDirty&&!force)return;const form=document.getElementById('settingsForm'),s=state.settings;for(const name of ['addonName','baseUrl','mediaSoftLimitGb','lanBaseUrl','moviesPath','tvPath','scanIntervalMinutes','minimumFileSizeMb','streamTokenExpiryHours','longLivedStreamTokens','adminUsername','maxConcurrentDownloads','maxDownloadSpeedMBps','downloadTimeoutSeconds','autoRescanOnDownload'])if(form.elements[name])form.elements[name].value=String(s[name]??'');document.getElementById('tmdbStatus').textContent=s.metadataProvider||'Automatic metadata is active.';refreshBranding();syncManifestUrl()}
+function fillSettings(force=false){if(settingsDirty&&!force)return;const form=document.getElementById('settingsForm'),s=state.settings;for(const name of ['addonName','baseUrl','mediaSoftLimitGb','lanBaseUrl','moviesPath','tvPath','scanIntervalMinutes','minimumFileSizeMb','streamTokenExpiryHours','longLivedStreamTokens','adminUsername','maxConcurrentDownloads','maxDownloadSpeedMBps','downloadTimeoutSeconds','autoRescanOnDownload','enableLibraryEditing'])if(form.elements[name])form.elements[name].value=String(s[name]??'');document.getElementById('tmdbStatus').textContent=s.metadataProvider||'Automatic metadata is active.';refreshBranding();syncManifestUrl()}
 async function load(){const request=++stateRequest,data=await api('/admin/api/state');if(request!==stateRequest)return;state={...state,...data};render()}
 async function loadHealth(force=false){const request=++healthRequest,summary=document.getElementById('healthSummary');if(!state.health&&summary){summary.className='health-banner';summary.innerHTML='<div><div class="health-banner-title">Running system checks…</div><div class="health-banner-meta">External checks are bounded and cached for one minute.</div></div>'}try{const data=await api('/admin/api/system-health'+(force?'?refresh=1':''));if(request!==healthRequest)return;state.health=data;renderHealth()}catch(err){if(request===healthRequest&&summary){summary.className='health-banner danger';summary.innerHTML='<div><div class="health-banner-title">System checks could not run</div><div class="health-banner-meta">'+esc(err.message||'The diagnostic request failed.')+'</div></div>'+diagnosticBadge('error')}throw err}}
 async function refreshHealth(button){const original=button.textContent;button.disabled=true;button.textContent='Checking…';try{await loadHealth(true);toast('System checks refreshed')}catch(err){toast(err.message||'System checks failed')}finally{button.disabled=false;button.textContent=original}}
@@ -598,6 +784,7 @@ function switchView(id){
   if(id==='health')loadHealth().catch(err=>toast(err.message));
   if(id==='backups')loadBackups().catch(err=>toast(err.message));
   if(id==='logs')loadScans().catch(err=>toast(err.message));
+  if(id==='library')renderLibrary();
   if(id==='downloads')dlStartPolling();
   else dlStopPolling();
   try{history.replaceState(null,'',id==='dashboard'?'/admin':'/admin?view='+id);}catch(e){}
@@ -612,9 +799,7 @@ function showModal(opener){if(!fileModal.open){const actual=opener||document.act
 function cleanupModal(){document.body.classList.remove('modal-open');modalState.searchController?.abort();modalState.searchController=null;modalState.id=null;modalState.file=null;modalState.busy=false;modalState.request++;modalState.operation++;modalBody.innerHTML='';modalActions.innerHTML='';const opener=modalState.opener,context=modalState.openerContext;modalState.opener=null;modalState.openerContext=null;let focusTarget=opener&&opener.isConnected?opener:null;if(!focusTarget&&context){const scope=context.containerId?document.getElementById(context.containerId):document;if(scope)focusTarget=[...scope.querySelectorAll('[data-file]')].find(node=>node.dataset.file===context.fileId)||null}focusTarget?.focus()}
 function closeModal(){if(modalState.busy)return;if(fileModal.open)fileModal.close();else cleanupModal()}
 function renderFooter(file){const buttons=[];if(file.status==='matched'&&file.currentMatch){buttons.push('<button class="btn primary" type="button" data-action="test" data-id="'+esc(file.id)+'">Test stream</button>')}modalActions.innerHTML=buttons.join('');syncBusyControls()}
-function renderFile(file){modalState.file=file;modalTitle.textContent=file.parsedTitle||file.relativePath;const current=file.status==='matched'&&file.currentMatch?'<div class="match-card">'+poster(file.currentMatch.poster,file.currentMatch.title)+'<div class="match-content"><div class="match-title">'+esc(file.currentMatch.title)+(file.currentMatch.year?' ('+esc(file.currentMatch.year)+')':'')+'</div><div class="match-meta"><span class="badge good">Current match</span><span>'+esc(file.libraryType==='series'?'TV series':'Movie')+'</span><span>'+esc(file.currentMatch.stremioId)+'</span></div>'+(file.currentMatch.description?'<p class="match-description">'+esc(file.currentMatch.description)+'</p>':'')+'</div><button class="btn" type="button" data-change-match>Change match</button></div>':'<div class="notice '+(file.status==='ignored'?'warn':'')+'">'+(file.status==='ignored'?'This file is ignored. Apply a TMDB match below to return it to the library.':'No metadata match is assigned yet. Search TMDB and apply the correct result.')+'</div>';
-const edit=file.status==='matched'&&file.mediaItemId?'<div class="details-section"><div class="section-head"><div><h4>Display overrides</h4><p>Optional presentation changes for this matched title.</p></div></div><div class="form-grid"><div class="field full"><label for="editTitle">Display title</label><input id="editTitle" class="input" value="'+esc(file.displayTitle||'')+'"></div><div class="field"><label for="editPoster">Poster URL</label><input id="editPoster" class="input" value="'+esc(file.poster||'')+'"></div><div class="field"><label for="editBackground">Backdrop URL</label><input id="editBackground" class="input" value="'+esc(file.background||'')+'"></div><div class="field full"><button class="btn" type="button" data-save-overrides>Save display overrides</button></div></div></div>':'';
-modalBody.innerHTML='<div id="modalError" class="notice error" role="alert" hidden></div><section class="details-section" aria-labelledby="fileInfoHeading"><div class="section-head"><div><h4 id="fileInfoHeading">File information</h4><p>Local path and catalog assignment.</p></div></div><div class="info-grid"><div class="info-item full"><span class="info-label">File</span><div class="path-row"><span class="info-value path-value" id="filePathValue">'+esc(file.relativePath)+'</span><button class="btn small copy-btn" type="button" data-copy="filePathValue" data-copy-label="Path copied">Copy path</button></div></div><div class="info-item"><span class="info-label">Status</span><span class="info-value">'+esc(file.status)+'</span></div><div class="info-item"><span class="info-label">Stremio ID</span><span class="info-value">'+esc(file.stremioId||'Not assigned')+'</span></div></div></section><section class="details-section" aria-labelledby="matchHeading"><div class="section-head"><div><h4 id="matchHeading">Metadata match</h4><p>Search TMDB to '+(file.status==='matched'?'change':'identify')+' this '+(file.libraryType==='series'?'series':'movie')+'.</p></div></div>'+current+'<div class="match-search"><div class="field"><label for="tmdbQuery">TMDB title search</label><input id="tmdbQuery" class="input" value="'+esc(file.parsedTitle||'')+'" autocomplete="off"></div><button id="tmdbSearch" class="btn primary" type="button">Search TMDB</button></div><div id="tmdbSearchStatus" class="search-status" role="status" aria-live="polite">Enter a title and search to find matches.</div><div id="tmdbResults" class="search-results"></div></section>'+edit;renderFooter(file);modalBody.scrollTop=0;syncBusyControls()}
+function renderFile(file){modalState.file=file;modalTitle.textContent=file.parsedTitle||file.relativePath;const canEdit=Boolean(state.settings?.enableLibraryEditing);const changeBtn=canEdit?'<button class="btn" type="button" data-change-match>Change match</button>':'';const current=file.status==='matched'&&file.currentMatch?'<div class="match-card">'+poster(file.currentMatch.poster,file.currentMatch.title)+'<div class="match-content"><div class="match-title">'+esc(file.currentMatch.title)+(file.currentMatch.year?' ('+esc(file.currentMatch.year)+')':'')+'</div><div class="match-meta"><span class="badge good">Current match</span><span>'+esc(file.libraryType==='series'?'TV series':'Movie')+'</span><span>'+esc(file.currentMatch.stremioId)+'</span></div>'+(file.currentMatch.description?'<p class="match-description">'+esc(file.currentMatch.description)+'</p>':'')+'</div>'+changeBtn+'</div>':'<div class="notice '+(file.status==='ignored'?'warn':'')+'">'+(file.status==='ignored'?'This file is ignored. Apply a TMDB match below to return it to the library.':'No metadata match is assigned yet. Search TMDB and apply the correct result.')+'</div>';const searchSection=canEdit?'<div class="match-search"><div class="field"><label for="tmdbQuery">TMDB title search</label><input id="tmdbQuery" class="input" value="'+esc(file.parsedTitle||'')+'" autocomplete="off"></div><button id="tmdbSearch" class="btn primary" type="button">Search TMDB</button></div><div id="tmdbSearchStatus" class="search-status" role="status" aria-live="polite">Enter a title and search to find matches.</div><div id="tmdbResults" class="search-results"></div>':'<div class="notice" style="display:flex;align-items:center;gap:12px;margin-top:14px;background:rgba(14,165,233,0.07);border:1px solid rgba(56,189,248,0.25);color:#7dd3fc;padding:12px 14px;border-radius:10px;"><span style="font-size:18px;">🔒</span><div><strong style="color:#e0f2fe;">Library Editing is Locked</strong><div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Metadata matches and overrides cannot be altered to prevent accidental changes. To edit, enable <em>Allow Library Editing</em> in Settings.</div></div></div>';const edit=file.status==='matched'&&file.mediaItemId?(canEdit?'<div class="details-section"><div class="section-head"><div><h4>Display overrides</h4><p>Optional presentation changes for this matched title.</p></div></div><div class="form-grid"><div class="field full"><label for="editTitle">Display title</label><input id="editTitle" class="input" value="'+esc(file.displayTitle||'')+'"></div><div class="field"><label for="editPoster">Poster URL</label><input id="editPoster" class="input" value="'+esc(file.poster||'')+'"></div><div class="field"><label for="editBackground">Backdrop URL</label><input id="editBackground" class="input" value="'+esc(file.background||'')+'"></div><div class="field full"><button class="btn" type="button" data-save-overrides>Save display overrides</button></div></div></div>':(file.displayTitle||file.poster||file.background?'<div class="details-section"><div class="section-head"><div><h4>Display overrides (Read-only)</h4><p>Optional presentation changes for this matched title.</p></div></div><div class="form-grid"><div class="field full"><label for="editTitle">Display title</label><input id="editTitle" class="input" value="'+esc(file.displayTitle||'')+'" readonly aria-readonly="true"></div><div class="field"><label for="editPoster">Poster URL</label><input id="editPoster" class="input" value="'+esc(file.poster||'')+'" readonly aria-readonly="true"></div><div class="field"><label for="editBackground">Backdrop URL</label><input id="editBackground" class="input" value="'+esc(file.background||'')+'" readonly aria-readonly="true"></div></div></div>':'')):'';const headingSubtitle=canEdit?'Search TMDB to '+(file.status==='matched'?'change':'identify')+' this '+(file.libraryType==='series'?'series':'movie')+'.':'Catalog assignment and current metadata match.';modalBody.innerHTML='<div id="modalError" class="notice error" role="alert" hidden></div><section class="details-section" aria-labelledby="fileInfoHeading"><div class="section-head"><div><h4 id="fileInfoHeading">File information</h4><p>Local path and catalog assignment.</p></div></div><div class="info-grid"><div class="info-item full"><span class="info-label">File</span><div class="path-row"><span class="info-value path-value" id="filePathValue">'+esc(file.relativePath)+'</span><button class="btn small copy-btn" type="button" data-copy="filePathValue" data-copy-label="Path copied">Copy path</button></div></div><div class="info-item"><span class="info-label">Status</span><span class="info-value">'+esc(file.status)+'</span></div><div class="info-item"><span class="info-label">Stremio ID</span><span class="info-value">'+esc(file.stremioId||'Not assigned')+'</span></div></div></section><section class="details-section" aria-labelledby="matchHeading"><div class="section-head"><div><h4 id="matchHeading">Metadata match</h4><p>'+headingSubtitle+'</p></div></div>'+current+searchSection+'</section>'+edit;renderFooter(file);modalBody.scrollTop=0;syncBusyControls()}
 function renderDetailError(id,message){modalTitle.textContent='Unable to load file';modalBody.innerHTML='<div class="notice error" role="alert">'+esc(message)+'</div><div style="margin-top:14px"><button class="btn" type="button" data-retry-file="'+esc(id)+'">Try again</button></div>';modalActions.innerHTML='';syncBusyControls()}
 async function fetchFile(id,{loading=false}={}){const request=++modalState.request;if(loading){modalTitle.textContent='Loading file details';modalBody.innerHTML='<div class="modal-loading"><span>Loading media details…</span></div>';modalActions.innerHTML=''}try{const data=await api('/admin/api/files/'+encodeURIComponent(id));if(request!==modalState.request||modalState.id!==id)return null;renderFile(data.file);return data.file}catch(err){if(request===modalState.request&&modalState.id===id)renderDetailError(id,err.message||'Media details could not be loaded.');return null}}
 async function openFile(id,opener){modalState.searchController?.abort();modalState.searchController=null;modalState.operation++;modalState.busy=false;modalState.id=id;modalState.file=null;showModal(opener);syncBusyControls();return fetchFile(id,{loading:true})}
