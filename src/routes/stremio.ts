@@ -2001,24 +2001,16 @@ export function registerStremioRoutes(app, database, settings, config, requester
             const watchedInfo = getCleanableWatchedForSeries(database, parsedSeries.itemId);
             const watchedDelKey = `watched:${parsedSeries.itemId}`;
             const isArmedWatched = isDeleteArmed(watchedDelKey);
+            const cleanCount = watchedInfo.cleanable.length;
 
-            if (watchedInfo.X >= 2) {
-                const sf = watchedInfo.safeguard;
-                const sfStr = sf ? `S${String(sf.season || 1).padStart(2, '0')}E${String(sf.episode_start || 1).padStart(2, '0')}` : 'latest';
+            if (cleanCount > 0) {
+                const epWord = cleanCount === 1 ? 'episode' : 'episodes';
+                const cleanSizeStr = formatGb(watchedInfo.cleanableBytes);
                 streams.push({
                     name: addonName,
                     description: isArmedWatched
-                        ? `⚠️ CONFIRM DELETE ${watchedInfo.cleanable.length} Watched (${formatGb(watchedInfo.cleanableBytes)})\nClick to delete now (3m)`
-                        : `🗑️ Delete Watched (${formatGb(watchedInfo.cleanableBytes)})\n${watchedInfo.cleanable.length} eps (X-1) • Keeps ${sfStr} safe`,
-                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/delete/watched/${encodeURIComponent(id)}`,
-                    behaviorHints: { bingeGroup: `nuvi-flow:del:watched:${id}` }
-                });
-            } else if (watchedInfo.X === 1) {
-                const sf = watchedInfo.safeguard;
-                const sfStr = sf ? `S${String(sf.season || 1).padStart(2, '0')}E${String(sf.episode_start || 1).padStart(2, '0')}` : 'latest';
-                streams.push({
-                    name: addonName,
-                    description: `🛡️ 1 Watched (${sfStr})\nProtected by safeguard (X-1)`,
+                        ? `⚠️ Confirm Delete\n${cleanCount} ${epWord} (${cleanSizeStr})\nClick to delete now (3m)`
+                        : `🗑️ Delete Previously\nWatched Episodes\n${cleanCount} ${epWord} (${cleanSizeStr})`,
                     url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/delete/watched/${encodeURIComponent(id)}`,
                     behaviorHints: { bingeGroup: `nuvi-flow:del:watched:${id}` }
                 });
