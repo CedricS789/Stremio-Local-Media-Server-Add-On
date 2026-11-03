@@ -76,13 +76,13 @@ export const adminCss = `
     max-height:none;
     border-right:0;
     border-bottom:1px solid var(--line);
-    padding:10px 14px;
+    padding:8px 12px;
   }
-  .sidebar-body{overflow-y:visible;gap:8px;padding-right:0;margin-right:0}
-  .brand{display:flex;justify-content:space-between;align-items:center;margin:0 0 8px;padding:0;min-width:0}
+  .sidebar-body{overflow-y:visible;gap:6px;padding-right:0;margin-right:0}
+  .brand{display:flex;justify-content:space-between;align-items:center;margin:0 0 6px;padding:0;min-width:0}
   .brand-left{display:flex;gap:8px;align-items:center;min-width:0;flex:1 1 auto;overflow:hidden}
   .brand-copy{min-width:0;overflow:hidden}
-  .brand-copy h1{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand-copy h1{font-size:13.5px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .brand-copy p{display:none}
   .brand-user-mobile{display:flex;gap:6px;align-items:center;flex-shrink:0}
   .user-badge-mini{font-size:11px;font-weight:700;color:var(--muted);background:#0a0b10;border:1px solid var(--line);padding:4px 8px;border-radius:7px;display:inline-flex;align-items:center;gap:5px}
@@ -90,9 +90,9 @@ export const adminCss = `
   .nav::-webkit-scrollbar{display:none}
   .nav-group{display:flex;gap:5px}
   .nav-label{display:none}
-  .nav button{white-space:nowrap;padding:7px 12px;font-size:12px;border-radius:8px;flex-shrink:0}
+  .nav button{white-space:nowrap;padding:6px 12px;font-size:11.5px;min-height:32px;border-radius:8px;flex-shrink:0}
   .sidebar-foot{display:none}
-  .main{padding:18px 14px 50px;min-width:0}
+  .main{padding:16px 12px 48px;min-width:0}
   .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .grid{grid-template-columns:1fr}
   .topbar{align-items:flex-start}
@@ -105,27 +105,51 @@ export const adminCss = `
 
 @media(max-width:600px){
   /* Base & Layout */
-  .main{padding:14px 10px 40px;min-width:0}
-  .topbar{display:block;margin-bottom:16px}
-  .topbar h2{font-size:18px;line-height:1.3;margin:4px 0 6px}
+  .main{padding:16px 12px 48px;min-width:0}
+  .topbar{display:block;margin-bottom:14px}
+  .topbar h2{font-size:18px;line-height:1.3;margin:3px 0 6px}
   .topbar p.muted{font-size:12px;line-height:1.45}
-  .topbar .actions{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;width:100%}
-  .topbar .actions .btn{flex:1 1 auto;justify-content:center;text-align:center;font-size:12px;padding:8px 12px}
+  .topbar .actions{margin-top:10px;display:flex;flex-wrap:wrap;gap:8px;width:100%}
+  .topbar .actions .btn{flex:1 1 auto;justify-content:center;text-align:center;font-size:12px;padding:8px 12px;min-height:36px}
 
-  /* Stats grid */
-  .stats{grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-  .stat{padding:12px 10px}
-  .stat span{font-size:11px}
-  .stat strong{font-size:20px}
+  /* Stats grid - balanced aspect ratios and breathing room */
+  .stats{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+  .stat{
+    padding:14px 13px;
+    min-height:76px;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    box-sizing:border-box;
+  }
+  .stat span{font-size:11px;font-weight:700;letter-spacing:.06em}
+  .stat strong{font-size:22px;margin-top:4px}
 
-  /* Library View */
+  /* Library View - clean proportions and fixed search box */
   #library .toolbar{display:flex;flex-direction:column;align-items:stretch;gap:8px}
   #library .toolbar > *{width:100% !important;max-width:100% !important}
-  #library .toolbar .input, #library .toolbar .select{width:100% !important;max-width:100% !important}
+  #librarySearch{
+    width:100% !important;
+    max-width:100% !important;
+    flex:0 0 auto !important;
+    height:40px !important;
+    min-height:40px !important;
+    max-height:40px !important;
+    box-sizing:border-box !important;
+  }
+  #libraryType{
+    width:100% !important;
+    max-width:100% !important;
+    flex:0 0 auto !important;
+    height:40px !important;
+    min-height:40px !important;
+    box-sizing:border-box !important;
+  }
   #library .toolbar > div{width:100%;display:flex;gap:6px}
-  #librarySortSelect{flex:1 1 auto;min-width:0 !important}
+  #librarySortSelect{flex:1 1 auto;min-width:0 !important;height:40px !important}
+  #librarySortDirBtn{flex:0 0 auto;height:40px !important}
 
-  /* Tables */
+  /* Tables - comfortable vertical row padding */
   .table-wrap{
     overflow-x:auto !important;
     -webkit-overflow-scrolling:touch;
@@ -135,22 +159,39 @@ export const adminCss = `
     border-radius:var(--radius);
     overscroll-behavior-x:contain;
   }
-  .table th, .table td{padding:8px 10px;font-size:12px;white-space:nowrap}
+  .table th, .table td{padding:11px 12px;font-size:12px;white-space:nowrap;line-height:1.4}
 
   /* Downloads View */
   #dlPillsContainer{width:100%;display:flex;gap:6px}
-  #dlPillSeries, #dlPillMovies{flex:1 1 0;justify-content:center;text-align:center}
+  #dlPillSeries, #dlPillMovies{flex:1 1 0;justify-content:center;text-align:center;min-height:36px}
   #dlGlobalCleanWatchedContainer{width:100%;margin-top:6px}
-  #dlGlobalCleanWatchedBtn{width:100%;justify-content:center;text-align:center}
+  #dlGlobalCleanWatchedBtn{width:100%;justify-content:center;text-align:center;min-height:36px}
 
-  /* Downloads toolbar */
+  /* Downloads stats and toolbar */
+  #dlStatsGrid .stat{
+    min-height:88px;
+    padding:14px;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    box-sizing:border-box;
+  }
   #downloads .toolbar{display:flex;flex-direction:column;align-items:stretch;gap:8px}
-  #dlSearchInput{width:100% !important;flex:1 1 100% !important;max-width:100% !important}
+  #dlSearchInput{
+    width:100% !important;
+    max-width:100% !important;
+    flex:0 0 auto !important;
+    height:40px !important;
+    min-height:40px !important;
+    max-height:40px !important;
+    box-sizing:border-box !important;
+  }
   #downloads .toolbar > div{width:100%;display:flex;gap:6px}
-  #dlSortSelect{flex:1 1 auto;min-width:0 !important}
+  #dlSortSelect{flex:1 1 auto;min-width:0 !important;height:40px !important}
+  #dlSortDirBtn{flex:0 0 auto;height:40px !important}
 
   /* Batch Actions Bar */
-  #dlBatchBar{display:none;flex-direction:column;align-items:stretch;gap:10px;padding:12px}
+  #dlBatchBar{display:none;flex-direction:column;align-items:stretch;gap:10px;padding:14px}
   #dlBatchBar .actions{width:100%;display:flex;gap:6px}
   #dlBatchBar .actions .btn{flex:1 1 auto;justify-content:center;text-align:center}
 
@@ -160,7 +201,7 @@ export const adminCss = `
     flex-direction:column;
     align-items:stretch;
     gap:10px;
-    padding:12px;
+    padding:14px;
   }
   .show-group-left{
     width:100%;
@@ -189,7 +230,7 @@ export const adminCss = `
     flex:1 1 auto;
     justify-content:center;
     text-align:center;
-    padding:7px 10px;
+    padding:8px 10px;
     font-size:12px;
   }
 
@@ -200,8 +241,8 @@ export const adminCss = `
     grid-template-areas:
       "check main size"
       "actions actions actions";
-    gap:8px 10px;
-    padding:12px;
+    gap:10px 12px;
+    padding:14px;
     align-items:center;
   }
   .file-check{
@@ -235,8 +276,10 @@ export const adminCss = `
     flex:1 1 0;
     justify-content:center;
     text-align:center;
-    padding:6px 4px;
-    font-size:11px;
+    padding:7px 5px;
+    font-size:11.5px;
+    min-height:34px;
+    box-sizing:border-box;
     white-space:nowrap;
     overflow:hidden;
     text-overflow:ellipsis;
@@ -266,7 +309,7 @@ export const adminCss = `
     flex-direction:column;
     align-items:stretch;
     gap:8px;
-    padding:12px;
+    padding:13px 14px;
     width:100%;
     box-sizing:border-box;
   }
@@ -287,6 +330,20 @@ export const adminCss = `
     word-break:break-word;
   }
 
+  /* Health view - 1-column layout for proper aspect ratio */
+  #health .health-checks{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .health-check{
+    padding:14px 16px !important;
+  }
+
+  /* Backups table minimum height */
+  .backup-table{
+    min-height:80px !important;
+  }
+
   /* Settings Manifest & Danger Zone */
   .manifest-row{
     flex-direction:column;
@@ -303,6 +360,7 @@ export const adminCss = `
     width:100%;
     justify-content:center;
     text-align:center;
+    min-height:40px;
   }
   .branding-row{
     flex-direction:column;
@@ -312,13 +370,14 @@ export const adminCss = `
 
   /* Dashboard recently added list */
   .list-row{
-    grid-template-columns:36px minmax(0,1fr) auto;
-    gap:8px;
-    padding:10px 12px;
+    grid-template-columns:40px minmax(0,1fr) auto;
+    gap:10px;
+    padding:11px 14px;
   }
   .file-icon{
-    width:36px;
-    height:36px;
+    width:40px;
+    height:40px;
+    aspect-ratio:1/1;
     font-size:11px;
   }
 
@@ -334,10 +393,10 @@ export const adminCss = `
     width:100% !important;
     max-width:100% !important;
   }
-  .modal-header{padding:12px 14px}
-  .modal-body{padding:14px;overflow-x:hidden}
+  .modal-header{padding:14px 16px}
+  .modal-body{padding:16px;overflow-x:hidden}
   .modal-footer{
-    padding:12px 14px;
+    padding:14px 16px;
     flex-direction:column;
     align-items:stretch;
     gap:8px;
@@ -368,7 +427,7 @@ export const adminCss = `
 
   .match-card, .search-result{
     display:grid;
-    grid-template-columns:64px 1fr;
+    grid-template-columns:68px 1fr;
     grid-template-areas:
       "poster content"
       "action action";
@@ -377,8 +436,10 @@ export const adminCss = `
   }
   .match-card .poster, .search-result .poster{
     grid-area:poster;
-    width:64px;
-    height:90px;
+    width:68px;
+    height:102px;
+    aspect-ratio:2/3;
+    object-fit:cover;
   }
   .match-content, .search-result > div:not(.poster){
     grid-area:content;
