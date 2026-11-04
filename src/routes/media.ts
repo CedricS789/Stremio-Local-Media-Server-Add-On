@@ -51,9 +51,9 @@ import type {
   MediaItemRow
 } from '../types.js';
 
-function contentDisposition(name: string): string {
+function contentDisposition(name: string, asAttachment = false): string {
   const safe = name.replace(/["\r\n\\/]/g, '_');
-  return `inline; filename="${safe}"`;
+  return `${asAttachment ? 'attachment' : 'inline'}; filename="${safe}"`;
 }
 
 function headerValue(
@@ -133,9 +133,10 @@ async function serveMedia(
   }
   const size = stat.size;
   const rangeResult = parseByteRange(request.headers.range, size);
+  const isDownload = (request.query as any)?.download === '1' || (request.query as any)?.download === 'true';
   reply.header('Accept-Ranges', 'bytes');
-  reply.header('Content-Type', mimeLookup(authorized.file.absolute_path) || 'application/octet-stream');
-  reply.header('Content-Disposition', contentDisposition(path.basename(authorized.file.relative_path)));
+  reply.header('Content-Type', isDownload ? 'application/octet-stream' : (mimeLookup(authorized.file.absolute_path) || 'application/octet-stream'));
+  reply.header('Content-Disposition', contentDisposition(path.basename(authorized.file.relative_path), isDownload));
   reply.header('Last-Modified', stat.mtime.toUTCString());
   reply.header('Cache-Control', 'private, no-store');
   reply.header('X-Content-Type-Options', 'nosniff');

@@ -1,8 +1,13 @@
+import fs from 'node:fs';
+import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { lookup as mimeLookup } from 'mime-types';
 import type { AppConfig } from '../config.js';
 import type { AppDatabase } from '../db/index.js';
 import { adminHtml, loginHtml } from '../admin/assets.js';
+import { parseByteRange } from '../lib/range.js';
+import { matchesAddonAccessToken } from '../lib/addon-access.js';
 import {
   detectAddonIconType,
   MAX_ADDON_ICON_BYTES,
@@ -680,6 +685,65 @@ export function registerAdminRoutes(
     const file = fileDetail(database, id);
     return file ? reply.send({ file }) : reply.code(404).send({ error: 'File not found' });
   });
+
+  app.route({
+    method: ['GET', 'HEAD'],
+    url: '/admin/api/files/:id/download',
+    config: { rateLimit: { max: 120, timeWindow: '1 minute' } },
+    handler: async (request, reply) => {
+    const session = sessionFor(request, config);
+    const token = (request.query as any)?.token || (request.headers['authorization'] || '').replace(/^Bearer\s+/i, '');
+    const hasToken = token && matchesAddonAccessToken(token, settings.addonAccessToken);
+    if (!session && !hasToken) {
+      return reply.code(401).send({ error: 'Authentication required' });
+    }
+
+    const { id } = request.params as { id: string };
+    const file = database.sqlite.prepare('SELECT * FROM media_files WHERE id=?').get(id) as MediaFileRow | undefined;
+    if (!file) return reply.code(404).send({ error: 'Media file not found' });
+
+    let stat: fs.Stats;
+    try {
+      stat = await fs.promises.stat(file.absolute_path);
+      if (!stat.isFile()) throw new Error('Not a file');
+    } catch {
+      return reply.code(404).send({ error: 'Media file is not accessible on server disk' });
+    }
+
+    const filename = path.basename(file.relative_path);
+    const safeFilename = filename.replace(/["\r\n\\/]/g, '_');
+    const size = stat.size;
+    const rangeResult = parseByteRange(request.headers.range, size);
+
+    reply.header('Accept-Ranges', 'bytes');
+    reply.header('Content-Type', mimeLookup(file.absolute_path) || 'application/octet-stream');
+    reply.header('Content-Disposition', `attachment; filename="${safeFilename}"`);
+    reply.header('Last-Modified', stat.mtime.toUTCString());
+    reply.header('Cache-Control', 'private, no-cache');
+    reply.header('X-Content-Type-Options', 'nosniff');
+
+    if (rangeResult.kind === 'invalid') {
+      return reply.code(416).header('Content-Range', `bytes */${size}`).header('Content-Length', '0').send();
+    }
+    const range = rangeResult.kind === 'valid' ? rangeResult.range : { start: 0, end: size - 1, length: size };
+    if (rangeResult.kind === 'valid') {
+      reply.code(206).header('Content-Range', `bytes ${range.start}-${range.end}/${size}`);
+    } else {
+      reply.code(200);
+    }
+    reply.header('Content-Length', String(range.length));
+
+    if (request.method === 'HEAD' || size === 0) {
+      return reply.send();
+    }
+
+    const stream = fs.createReadStream(file.absolute_path, { start: range.start, end: range.end });
+    request.raw.once('aborted', () => {
+      if (!stream.destroyed) stream.destroy();
+    });
+    return reply.send(stream);
+  }
+});
 
   app.get('/admin/api/tmdb/search', { preHandler: requireAdmin(config) }, async (request, reply) => {
     const query = request.query as { type?: string; query?: string; year?: string };

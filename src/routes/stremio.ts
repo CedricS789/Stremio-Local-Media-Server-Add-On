@@ -1688,6 +1688,19 @@ export function registerStremioRoutes(app, database, settings, config, requester
             preservedSafeguards
         });
     });
+
+    app.route({
+        method: ['GET', 'HEAD'],
+        url: '/downloads/file/:id/download',
+        handler: async (request, reply) => {
+            if (!checkDownloadsAuth(request, reply)) return reply.code(401).send({ error: 'Authentication required' });
+            const { id } = request.params as { id: string };
+            const queryStr = request.raw.url && request.raw.url.includes('?')
+                ? '?' + request.raw.url.split('?')[1]
+                : '';
+            return reply.redirect(`/admin/api/files/${encodeURIComponent(id)}/download${queryStr}`);
+        }
+    });
     const secureRoute = {
         config: { rateLimit: { max: 300, timeWindow: '1 minute' } },
         preHandler: async (request, reply) => {
