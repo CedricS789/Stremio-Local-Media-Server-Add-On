@@ -7,6 +7,7 @@ import { createFallbackMediaToken, createStreamToken, createSessionToken, verify
 import { catalogPreview, fullMeta, streamDescription, streamName, streamTitle, streamResolution, streamSourceLabel, videoCodecLabel } from '../stremio/builders.js';
 import { matchesAddonAccessToken } from '../lib/addon-access.js';
 import { buildInfo } from '../lib/build-info.js';
+import { isLanRequest } from '../lib/network.js';
 import { deriveDeviceIdentity } from '../services/playback/device-identity.js';
 import { planSiloPlayback } from '../services/playback/playback-policy.js';
 
@@ -1135,6 +1136,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
         } catch { /* ignore statfs */ }
 
         return reply.header('Cache-Control', 'no-store').send({
+            isLan: isLanRequest(request, settings, settings.allowTailscaleDownloads),
             activeDownloads: items.length,
             activeSeasons,
             lastDownloadTriggeredAt,
@@ -1696,6 +1698,11 @@ export function registerStremioRoutes(app, database, settings, config, requester
             if (!checkDownloadsAuth(request, reply)) return reply.code(401).send({ error: 'Authentication required' });
             if (!settings.enableDeviceDownloads) {
                 return reply.code(403).send({ error: 'Direct device downloads are disabled in Settings.' });
+            }
+            if (settings.restrictDeviceDownloadsToLan && !isLanRequest(request, settings, settings.allowTailscaleDownloads)) {
+                return reply.code(403).send({
+                    error: 'Device downloads are restricted to your local network (LAN). Please connect to your home Wi-Fi or LAN to save media files directly.'
+                });
             }
             const { id } = request.params as { id: string };
             const queryStr = request.raw.url && request.raw.url.includes('?')

@@ -63,6 +63,12 @@ export class SettingsService {
   get enableDeviceDownloads(): boolean {
     return this.boolean('enableDeviceDownloads', true);
   }
+  get restrictDeviceDownloadsToLan(): boolean {
+    return this.boolean('restrictDeviceDownloadsToLan', true);
+  }
+  get allowTailscaleDownloads(): boolean {
+    return this.boolean('allowTailscaleDownloads', false);
+  }
   get downloadTimeoutSeconds(): number {
     return this.number('downloadTimeoutSeconds', 60, 15);
   }
@@ -386,6 +392,8 @@ export class SettingsService {
       autoRescanOnDownload: this.autoRescanOnDownload,
       enableLibraryEditing: this.enableLibraryEditing,
       enableDeviceDownloads: this.enableDeviceDownloads,
+      restrictDeviceDownloadsToLan: this.restrictDeviceDownloadsToLan,
+      allowTailscaleDownloads: this.allowTailscaleDownloads,
       downloadTimeoutSeconds: this.downloadTimeoutSeconds,
       lanBaseUrl: this.lanBaseUrl,
 

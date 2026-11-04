@@ -8,6 +8,7 @@ import type { AppDatabase } from '../db/index.js';
 import { adminHtml, loginHtml } from '../admin/assets.js';
 import { parseByteRange } from '../lib/range.js';
 import { matchesAddonAccessToken } from '../lib/addon-access.js';
+import { isLanRequest } from '../lib/network.js';
 import {
   detectAddonIconType,
   MAX_ADDON_ICON_BYTES,
@@ -394,7 +395,7 @@ export function registerAdminRoutes(
     return reply.clearCookie(COOKIE_NAME, { path: '/', secure: isSecure, sameSite: 'lax' }).send({ ok: true });
   });
 
-  app.get('/admin/api/state', { preHandler: requireAdmin(config) }, async (_request, reply) => {
+  app.get('/admin/api/state', { preHandler: requireAdmin(config) }, async (request, reply) => {
     const files = database.sqlite.prepare(`${adminFileSelect} ORDER BY mf.added_at DESC LIMIT 5000`).all() as AdminMediaFileRow[];
     const counts = {
       movies: (database.sqlite.prepare(`SELECT COUNT(DISTINCT media_item_id) count FROM media_files WHERE library_type='movie' AND status NOT IN ('ignored','error') AND media_item_id IS NOT NULL`).get() as any).count,
@@ -412,6 +413,7 @@ export function registerAdminRoutes(
       recent: publicFiles.slice(0, 12),
       logs,
       settings: settings.publicView(),
+      isLan: isLanRequest(request, settings, settings.allowTailscaleDownloads),
       build: buildInfo(),
       scanning: scanner.isRunning(),
       scan: scanner.snapshot()
@@ -700,6 +702,12 @@ export function registerAdminRoutes(
 
     if (!settings.enableDeviceDownloads) {
       return reply.code(403).send({ error: 'Direct device downloads are disabled in Settings.' });
+    }
+
+    if (settings.restrictDeviceDownloadsToLan && !isLanRequest(request, settings, settings.allowTailscaleDownloads)) {
+      return reply.code(403).send({
+        error: 'Device downloads are restricted to your local network (LAN). Please connect to your home Wi-Fi or LAN to save media files directly.'
+      });
     }
 
     const { id } = request.params as { id: string };
@@ -1298,6 +1306,8 @@ export function registerAdminRoutes(
       'autoRescanOnDownload',
       'enableLibraryEditing',
       'enableDeviceDownloads',
+      'restrictDeviceDownloadsToLan',
+      'allowTailscaleDownloads',
       'autoRequestEnabled',
       'radarrEnabled',
       'sonarrEnabled',

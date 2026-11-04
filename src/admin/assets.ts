@@ -786,6 +786,14 @@ export function adminHtml(csrf: string): string {
   </select>
   <p class="help">When enabled, users can save media files stored on the home server directly to their local laptop, tablet, or phone for offline use (e.g. trips without internet). This streams directly from the home server disk, not from AIOStreams or remote providers.</p>
 </div>
+<div class="field full">
+  <label for="restrictDeviceDownloadsToLan">Restrict Device Downloads to Local Network (LAN)</label>
+  <select id="restrictDeviceDownloadsToLan" class="select" name="restrictDeviceDownloadsToLan">
+    <option value="true">Strict LAN Only (Recommended — Blocks downloads over public internet & Cloudflare Tunnel)</option>
+    <option value="false">Allow Remote Downloads (Permits saving files over the internet / Cloudflare Tunnel)</option>
+  </select>
+  <p class="help">When enabled, media files can only be saved to devices connected to your local home network (LAN). Downloads attempted over the public internet or Cloudflare Tunnel are blocked to protect home internet upload bandwidth and mobile data.</p>
+</div>
 </section>
 
 <!-- Panel 2: Storage & Quota (NEW!) -->
@@ -1003,7 +1011,7 @@ const fileModal=document.getElementById('fileModal'),modalBody=document.getEleme
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function api(url,options={}){const headers={'x-csrf-token':csrf,...options.headers};if(options.body!==undefined&&!(options.body instanceof FormData)&&!Object.keys(headers).some(key=>key.toLowerCase()==='content-type'))headers['content-type']='application/json';const response=await fetch(url,{...options,headers});if(response.status===401){location='/admin/login';throw new Error('Session expired')}const data=await response.json().catch(()=>({}));if(!response.ok)throw new Error(data.error||'The request could not be completed.');return data}
 function toast(message){const node=document.getElementById('toast');node.textContent=message;node.classList.add('show');if(toastTimer)clearTimeout(toastTimer);toastTimer=setTimeout(()=>{node.classList.remove('show');toastTimer=null},2400)}
-function showConfirm({ title = 'Confirm Action', eyebrow = 'Confirmation', message, confirmText = 'Confirm', danger = false }){
+function showConfirm({ title = 'Confirm Action', eyebrow = 'Confirmation', message, confirmText = 'Confirm', cancelText = 'Cancel', danger = false }){
   return new Promise(resolve => {
     const modal = document.getElementById('confirmModal');
     const titleEl = document.getElementById('confirmModalTitle');
@@ -1018,6 +1026,10 @@ function showConfirm({ title = 'Confirm Action', eyebrow = 'Confirmation', messa
     msgEl.textContent = message;
     okBtn.textContent = confirmText;
     okBtn.className = 'btn ' + (danger ? 'danger' : 'primary');
+    if (cancelBtn) {
+      cancelBtn.textContent = cancelText || 'Cancel';
+      cancelBtn.style.display = cancelText === '' ? 'none' : '';
+    }
 
     let resolved = false;
     const finish = (result) => {
@@ -1038,6 +1050,34 @@ function showConfirm({ title = 'Confirm Action', eyebrow = 'Confirmation', messa
   });
 }
 window.showConfirm = showConfirm;
+
+function isLanConnected() {
+  if (typeof state.isLan === 'boolean') return state.isLan;
+  if (typeof dlData?.isLan === 'boolean') return dlData.isLan;
+  const h = window.location.hostname;
+  if (h === 'localhost' || h === '127.0.0.1' || /^192\.168\./.test(h) || /^10\./.test(h) || /^172\.(1[6-9]|2\d|3[01])\./.test(h) || h.endsWith('.local') || h.endsWith('.lan')) {
+    return true;
+  }
+  return false;
+}
+window.isLanConnected = isLanConnected;
+
+async function checkLanForDeviceDownload() {
+  if (state.settings?.restrictDeviceDownloadsToLan === false) return true;
+  if (isLanConnected()) return true;
+
+  const lanUrl = state.settings?.lanBaseUrl || 'http://192.168.129.10:60500';
+  await showConfirm({
+    title: 'Local Network (LAN) Required',
+    eyebrow: 'Download Restricted',
+    message: 'Direct device downloads are restricted to your local network (LAN) to protect internet bandwidth.\n\nPlease connect to your home Wi-Fi and access your server locally at ' + lanUrl + ' to save media files to this device.',
+    confirmText: 'Understood',
+    cancelText: '',
+    danger: true
+  });
+  return false;
+}
+window.checkLanForDeviceDownload = checkLanForDeviceDownload;
 function brandingIconUrl(){return '/addon-icon?v='+encodeURIComponent(state.settings.addonIconUpdatedAt||0)}
 function syncManifestUrl(){const form=document.getElementById('settingsForm'),output=document.getElementById('manifestUrl');if(!form||!output)return;const base=String(form.elements.baseUrl?.value||state.settings.baseUrl||'').trim().replace(/\/+$/,'');const accessPath=String(state.settings.addonAccessPath||'');output.value=base&&accessPath?base+accessPath+'/manifest.json':''}
 function refreshBuild(){const node=document.getElementById('buildVersion'),build=state.build||{};if(node)node.textContent='v'+String(build.version||'unknown')+' · '+String(build.revision||'dev')}
@@ -1194,7 +1234,7 @@ function renderLibrary(){
   }).join('') || '<tr><td colspan="7"><div class="empty">No files match this filter.</div></td></tr>';
 }
 function setSelectValue(select,value,label){if(!select)return;const stringValue=String(value??'');if(stringValue&&!Array.from(select.options).some(option=>option.value===stringValue)){const option=document.createElement('option');option.value=stringValue;option.textContent=label||stringValue;select.appendChild(option)}select.value=stringValue}
-function fillSettings(force=false){if(settingsDirty&&!force)return;const form=document.getElementById('settingsForm'),s=state.settings;for(const name of ['addonName','baseUrl','mediaSoftLimitGb','lanBaseUrl','moviesPath','tvPath','scanIntervalMinutes','minimumFileSizeMb','streamTokenExpiryHours','longLivedStreamTokens','adminUsername','maxConcurrentDownloads','maxDownloadSpeedMBps','downloadTimeoutSeconds','autoRescanOnDownload','enableLibraryEditing','enableDeviceDownloads'])if(form.elements[name])form.elements[name].value=String(s[name]??'');document.getElementById('tmdbStatus').textContent=s.metadataProvider||'Automatic metadata is active.';refreshBranding();syncManifestUrl()}
+function fillSettings(force=false){if(settingsDirty&&!force)return;const form=document.getElementById('settingsForm'),s=state.settings;for(const name of ['addonName','baseUrl','mediaSoftLimitGb','lanBaseUrl','moviesPath','tvPath','scanIntervalMinutes','minimumFileSizeMb','streamTokenExpiryHours','longLivedStreamTokens','adminUsername','maxConcurrentDownloads','maxDownloadSpeedMBps','downloadTimeoutSeconds','autoRescanOnDownload','enableLibraryEditing','enableDeviceDownloads','restrictDeviceDownloadsToLan'])if(form.elements[name])form.elements[name].value=String(s[name]??'');document.getElementById('tmdbStatus').textContent=s.metadataProvider||'Automatic metadata is active.';refreshBranding();syncManifestUrl()}
 async function load(){const request=++stateRequest,data=await api('/admin/api/state');if(request!==stateRequest)return;state={...state,...data};render()}
 async function loadHealth(force=false){const request=++healthRequest,summary=document.getElementById('healthSummary');if(!state.health&&summary){summary.className='health-banner';summary.innerHTML='<div><div class="health-banner-title">Running system checks…</div><div class="health-banner-meta">External checks are bounded and cached for one minute.</div></div>'}try{const data=await api('/admin/api/system-health'+(force?'?refresh=1':''));if(request!==healthRequest)return;state.health=data;renderHealth()}catch(err){if(request===healthRequest&&summary){summary.className='health-banner danger';summary.innerHTML='<div><div class="health-banner-title">System checks could not run</div><div class="health-banner-meta">'+esc(err.message||'The diagnostic request failed.')+'</div></div>'+diagnosticBadge('error')}throw err}}
 async function refreshHealth(button){const original=button.textContent;button.disabled=true;button.textContent='Checking…';try{await loadHealth(true);toast('System checks refreshed')}catch(err){toast(err.message||'System checks failed')}finally{button.disabled=false;button.textContent=original}}
@@ -1239,7 +1279,7 @@ function renderSearchResults(results,type){const box=document.getElementById('tm
 async function searchTmdb(){const file=modalState.file,input=document.getElementById('tmdbQuery'),status=document.getElementById('tmdbSearchStatus'),box=document.getElementById('tmdbResults'),searchButton=document.getElementById('tmdbSearch');if(!file||!input||!status||!box||!searchButton)return;const query=input.value.trim();if(!query){status.textContent='Enter a title before searching.';box.innerHTML='<div class="notice error" role="alert">A TMDB search title is required.</div>';input.focus();return}modalState.searchController?.abort();const controller=new AbortController();modalState.searchController=controller;const token=beginOperation();searchButton.textContent='Searching…';status.textContent='Searching TMDB…';box.innerHTML='<div class="modal-loading"><span>Searching for matches…</span></div>';try{const year=file.parsedYear?'&year='+encodeURIComponent(file.parsedYear):'';const data=await api('/admin/api/tmdb/search?type='+encodeURIComponent(file.libraryType)+'&query='+encodeURIComponent(query)+year,{signal:controller.signal});if(token!==modalState.operation||modalState.id!==file.id)return;renderSearchResults(data.results,file.libraryType)}catch(err){if(err.name==='AbortError')return;if(token===modalState.operation){status.textContent='Search failed.';box.innerHTML='<div class="notice error" role="alert">'+esc(err.message||'TMDB search failed. Please try again.')+'</div>'}}finally{if(modalState.searchController===controller)modalState.searchController=null;const activeButton=document.getElementById('tmdbSearch');if(activeButton)activeButton.textContent='Search TMDB';endOperation(token)}}
 async function applyMatch(id,provider,button){const file=modalState.file;if(!file)return;const token=beginOperation();setModalError('');button.textContent='Applying…';try{const data=await api('/admin/api/files/'+encodeURIComponent(file.id)+'/match',{method:'POST',body:JSON.stringify({type:file.libraryType,id,provider})});await refreshAfterAction(file.id,data.file);toast('Metadata match applied')}catch(err){setModalError(err.message||'The match could not be applied.');toast('Match failed')}finally{endOperation(token)}}
 async function saveOverrides(){const file=modalState.file;if(!file?.mediaItemId)return;const token=beginOperation();setModalError('');try{await api('/admin/api/items/'+encodeURIComponent(file.mediaItemId),{method:'PATCH',body:JSON.stringify({displayTitle:document.getElementById('editTitle').value,poster:document.getElementById('editPoster').value,background:document.getElementById('editBackground').value})});await refreshAfterAction(file.id);toast('Display overrides saved')}catch(err){setModalError(err.message||'Display overrides could not be saved.')}finally{endOperation(token)}}
-async function handleAction(button){const action=button.dataset.action,id=button.dataset.id;if(action==='download'){if(state.settings?.enableDeviceDownloads===false){toast('Direct device downloads are disabled in Settings.');return}const fn=modalState.file?.relativePath?modalState.file.relativePath.split('/').pop():'';dlDownloadFile(id,fn);return}if(action==='test'){const preview=window.open('about:blank','_blank');if(preview)preview.opener=null;const token=beginOperation();setModalError('');try{const data=await api('/admin/api/files/'+encodeURIComponent(id)+'/stream',{method:'POST'});if(preview)preview.location.replace(data.url);else setModalError('The stream URL was created, but the browser blocked the new tab. Allow pop-ups for this admin page and try again.')}catch(err){preview?.close();setModalError(err.message||'The stream test could not be created.')}finally{endOperation(token)}return}const promptText=action==='ignore'?'Ignore this file? It will stay out of the catalog until you apply a match.':'Remove the current manual match? The file will return to Library.';if(!await showConfirm({title:action==='ignore'?'Ignore Media File':'Remove Match',eyebrow:'Catalog Management',message:promptText,confirmText:action==='ignore'?'Ignore File':'Remove Match',danger:action==='ignore'}))return;const token=beginOperation();setModalError('');try{const data=await api('/admin/api/files/'+encodeURIComponent(id)+'/'+action,{method:'POST'});await refreshAfterAction(id,data.file);toast(action==='ignore'?'File ignored':'Match removed')}catch(err){setModalError(err.message||'The action could not be completed.');toast('Action failed')}finally{endOperation(token)}}
+async function handleAction(button){const action=button.dataset.action,id=button.dataset.id;if(action==='download'){if(state.settings?.enableDeviceDownloads===false){toast('Direct device downloads are disabled in Settings.');return}if(!await checkLanForDeviceDownload())return;const fn=modalState.file?.relativePath?modalState.file.relativePath.split('/').pop():'';dlDownloadFile(id,fn);return}if(action==='test'){const preview=window.open('about:blank','_blank');if(preview)preview.opener=null;const token=beginOperation();setModalError('');try{const data=await api('/admin/api/files/'+encodeURIComponent(id)+'/stream',{method:'POST'});if(preview)preview.location.replace(data.url);else setModalError('The stream URL was created, but the browser blocked the new tab. Allow pop-ups for this admin page and try again.')}catch(err){preview?.close();setModalError(err.message||'The stream test could not be created.')}finally{endOperation(token)}return}const promptText=action==='ignore'?'Ignore this file? It will stay out of the catalog until you apply a match.':'Remove the current manual match? The file will return to Library.';if(!await showConfirm({title:action==='ignore'?'Ignore Media File':'Remove Match',eyebrow:'Catalog Management',message:promptText,confirmText:action==='ignore'?'Ignore File':'Remove Match',danger:action==='ignore'}))return;const token=beginOperation();setModalError('');try{const data=await api('/admin/api/files/'+encodeURIComponent(id)+'/'+action,{method:'POST'});await refreshAfterAction(id,data.file);toast(action==='ignore'?'File ignored':'Match removed')}catch(err){setModalError(err.message||'The action could not be completed.');toast('Action failed')}finally{endOperation(token)}}
 async function copyText(id,label){const node=document.getElementById(id),value=node&&'value'in node?String(node.value||''):node?.textContent||'';try{if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(value);else{const area=document.createElement('textarea');area.value=value;area.style.position='fixed';area.style.opacity='0';document.body.appendChild(area);area.select();document.execCommand('copy');area.remove()}toast(label||'Copied')}catch{toast('Copy failed. Select the text and copy it manually.')}}
 document.addEventListener('click',async e=>{const target=e.target.closest('button');if(!target)return;if(target.dataset.view)switchView(target.dataset.view);else if(target.dataset.viewGo)switchView(target.dataset.viewGo);else if(target.dataset.settingsTab)activateSettingsPanel(target.dataset.settingsTab,{focus:true});else if(target.dataset.refreshHealth!==undefined)refreshHealth(target);else if(target.dataset.refreshBackups!==undefined)loadBackups().catch(err=>toast(err.message));else if(target.dataset.createBackup!==undefined)createBackup(target);else if(target.dataset.close!==undefined||target.classList.contains('modal-close')||target.hasAttribute('data-close'))closeModal();else if(target.dataset.file)openFile(target.dataset.file,target);else if(target.dataset.retryFile)openFile(target.dataset.retryFile,target);else if(target.dataset.scan)startScan(target);else if(target.dataset.cancelScan!==undefined)cancelScan(target);else if(target.id==='changeAddonIcon')document.getElementById('addonIconFile')?.click();else if(target.id==='removeAddonIcon')removeAddonIconNow(target);else if(target.id==='adminWipeAllMediaBtn')openDangerModal();else if(target.id==='tmdbSearch')searchTmdb();else if(target.dataset.applyMatch)applyMatch(target.dataset.applyMatch,target.dataset.provider,target);else if(target.dataset.action)handleAction(target);else if(target.dataset.changeMatch!==undefined){document.getElementById('tmdbQuery')?.focus();document.getElementById('tmdbQuery')?.scrollIntoView({block:'center'})}else if(target.dataset.saveOverrides!==undefined)saveOverrides();else if(target.dataset.copy)copyText(target.dataset.copy,target.dataset.copyLabel)});
 document.getElementById('librarySearch').addEventListener('input',renderLibrary);document.getElementById('libraryType').addEventListener('change',renderLibrary);
@@ -1676,6 +1716,7 @@ async function dlDownloadFile(id, filename) {
     toast('Direct device downloads are disabled in Settings.');
     return;
   }
+  if (!await checkLanForDeviceDownload()) return;
   const file = (dlData.localFiles || []).find(f => f.id === id) || (state.files || []).find(f => f.id === id);
   const size = file?.size ?? file?.bytes ?? 0;
   const sizeText = size > 0 ? ' (' + fmtGb(size) + ')' : '';
@@ -1705,6 +1746,7 @@ async function dlDownloadSelected() {
     toast('Direct device downloads are disabled in Settings.');
     return;
   }
+  if (!await checkLanForDeviceDownload()) return;
   const ids = Array.from(dlSelectedIds);
   if (ids.length === 0) return;
   const files = (dlData.localFiles || []).filter(f => dlSelectedIds.has(f.id));
