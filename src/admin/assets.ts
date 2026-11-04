@@ -783,11 +783,11 @@ export function adminHtml(csrf: string): string {
 <div class="field full">
   <label for="downloadedCatalogMode">Downloaded Catalog Presentation & Tracking</label>
   <select id="downloadedCatalogMode" class="select" name="downloadedCatalogMode">
-    <option value="trackable">Full Tracking & Downloaded Episodes Only (Recommended — Shows only downloaded episodes + tracks to Trakt, TMDB & Crosswatch)</option>
+    <option value="trackable">Preserve Tracking & Filter Downloaded Episodes (Recommended — Shows only downloaded episodes with full scrobbling & tracking support)</option>
     <option value="strict">Strict Offline Isolation (Shows only downloaded episodes & completely hides third-party add-ons)</option>
     <option value="standard">Standard Full Listing (Cinemeta full series listing)</option>
   </select>
-  <p class="help"><b>Full Tracking (Default):</b> Series in your "Downloaded" catalog show only episodes stored on disk. Playback seamlessly scrobbles to Trakt, writes to Stremio Library, and triggers Crosswatch to sync to TMDB, TVDB, MDBList, and AniList. Local Gigabit LAN streams are prioritized at the top.<br><b>Strict Offline Isolation:</b> Completely isolates metadata and streams using offline prefixes to hide all third-party add-ons.<br><b>Standard:</b> Displays full series listings directly from Cinemeta.</p>
+  <p class="help"><b>Preserve Tracking (Default):</b> Series in your "Downloaded" catalog show only episodes stored on your server. Playback retains canonical media identifiers, enabling player scrobblers, watch progress tracking, and external sync tools to function normally. Local Gigabit LAN streams are prioritized at the top.<br><b>Strict Offline Isolation:</b> Completely isolates metadata and streams using offline prefixes to hide all third-party add-ons (external scrobblers and tracking tools will not recognize offline IDs).<br><b>Standard:</b> Displays full series listings directly from Cinemeta.</p>
 </div>
 </section>
 

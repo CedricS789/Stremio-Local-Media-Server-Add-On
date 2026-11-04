@@ -1761,7 +1761,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
         // In 'standard' mode: regular IDs (Cinemeta full listing).
         // In 'strict' mode: 'dls:' prefix for all items (both movie & series).
         // In 'trackable' mode: 'dls:' prefix for series (to show ONLY downloaded episodes in the episode list),
-        //                      and standard canonical IDs for movies (so Stremio natively scrobbles to Trakt & Crosswatch).
+        //                      and standard canonical IDs for movies (to preserve standard scrobbling & tracking support).
         const idPrefix = mode === 'strict' ? 'dls:' : (mode === 'trackable' && expectedType === 'series' ? 'dls:' : '');
         reply.header('Cache-Control', 'no-store').send({
             metas: rows.map((item) => catalogPreview(item, idPrefix))
@@ -1818,8 +1818,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
         }
         const mode = settings.downloadedCatalogMode;
         // In 'trackable' mode, series videos use canonical episode IDs (tt...:season:episode)
-        // so Stremio's native Trakt player scrobbler tracks playback, writes to Stremio library,
-        // and enables Crosswatch to sync to TMDB, TVDB, MDBList, and AniList.
+        // so player scrobblers, watch progress, and external tracking integrations function normally.
         // In 'strict' mode, keep prefixUsed ('dls:') on video IDs to hide 3rd-party addons completely.
         const videoIdPrefix = mode === 'strict' ? prefixUsed : '';
         const metaObj = fullMeta(item, episodes, prefixUsed, videoIdPrefix);
