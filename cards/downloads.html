@@ -2044,7 +2044,7 @@ function renderFileItem(f, isMobile) {
   const quality = rawQuality ? (/p$/i.test(rawQuality) ? rawQuality.toLowerCase() : rawQuality + 'p') : '';
   const dateStr = f.added_at ? 'Downloaded ' + formatDate(f.added_at) : '';
 
-  const metaContent = '<span class="file-play-icon">▶</span> ' + escapeHtml(filename) + (quality ? ' &bull; ' + quality : '') + (dateStr ? ' &bull; ' + dateStr : '');
+  const metaContent = escapeHtml(filename) + (quality ? ' &bull; ' + quality : '') + (dateStr ? ' &bull; ' + dateStr : '');
   const metaHtml = stremioUrl
     ? '<a href="' + stremioUrl + '" class="file-meta-link" title="Open in Stremio: ' + escapeHtml(filename) + '">' + metaContent + '</a>'
     : '<div class="file-meta" title="' + escapeHtml(f.relative_path) + '">' + escapeHtml(filename) + (quality ? ' &bull; ' + quality : '') + (dateStr ? ' &bull; ' + dateStr : '') + '</div>';

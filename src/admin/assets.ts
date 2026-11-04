@@ -1845,7 +1845,7 @@ function dlRenderFileItem(f) {
   const rawQuality = f.quality ? String(f.quality).trim() : '';
   const quality = rawQuality ? (/p$/i.test(rawQuality) ? rawQuality.toLowerCase() : rawQuality + 'p') : '';
   const dateStr = f.added_at ? 'Downloaded ' + formatDate(f.added_at) : '';
-  const metaContent = '<span class="file-play-icon">▶</span> ' + esc(filename) + (quality ? ' · ' + esc(quality) : '') + (dateStr ? ' · ' + esc(dateStr) : '');
+  const metaContent = esc(filename) + (quality ? ' · ' + esc(quality) : '') + (dateStr ? ' · ' + esc(dateStr) : '');
   const metaHtml = '<a href="' + esc(stremioUrl) + '" class="file-meta-link" title="Open in Stremio: ' + esc(filename) + '">' + metaContent + '</a>';
   const openBtn = '<a href="' + esc(stremioUrl) + '" class="btn-stremio" title="Open directly in Stremio">▶ Stremio</a>';
   const canDownload = state.settings?.enableDeviceDownloads !== false;
