@@ -20,9 +20,18 @@ describe('Stremio output builders', () => {
   });
 
   it('builds series videos with Stremio episode IDs', () => {
-    const series = { ...item, id: 'tmdb:series:2', type: 'series' as const, stremio_id: 'tt0000002' };
+    const series = { ...item, id: 'tmdb:series:2', type: 'series' as const, stremio_id: 'tt0000002', imdb_id: 'tt0000002' };
     const meta = fullMeta(series, [{ season: 1, episode: 2, title: 'Second', overview: null, still: null, air_date: '2024-02-01', runtime_minutes: 45 }]);
     expect(meta.videos).toEqual([expect.objectContaining({ id: 'tt0000002:1:2', season: 1, episode: 2, title: 'Second' })]);
+  });
+
+  it('builds catalog and series meta with custom ID prefix (e.g. dls:)', () => {
+    expect(catalogPreview(item, 'dls:')).toMatchObject({ id: 'dls:tt0000001', type: 'movie' });
+    const series = { ...item, id: 'tmdb:series:2', type: 'series' as const, stremio_id: 'tt0000002', imdb_id: 'tt0000002' };
+    const meta = fullMeta(series, [{ season: 1, episode: 1, title: 'Pilot', overview: null, still: null, air_date: '2024-02-01', runtime_minutes: 45 }], 'dls:');
+    expect(meta.id).toBe('dls:tt0000002');
+    expect(meta.imdb_id).toBe('tt0000002');
+    expect(meta.videos).toEqual([expect.objectContaining({ id: 'dls:tt0000002:1:1', season: 1, episode: 1, title: 'Pilot' })]);
   });
 
   it('describes direct-play stream quality', () => {

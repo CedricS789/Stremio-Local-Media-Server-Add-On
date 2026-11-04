@@ -775,6 +775,18 @@ export function adminHtml(csrf: string): string {
   </select>
   <p class="help">When enabled, media files can only be saved to devices connected to your local home network (LAN). Downloads attempted over the public internet or Cloudflare Tunnel are blocked to protect home internet upload bandwidth and mobile data.</p>
 </div>
+<div class="settings-section">
+  <h3>Downloaded Catalog Presentation</h3>
+  <p>Control episode visibility and source isolation in Stremio's Downloaded catalog.</p>
+</div>
+<div class="field full">
+  <label for="isolateDownloadedCatalog">Isolate Downloaded Catalog in Stremio</label>
+  <select id="isolateDownloadedCatalog" class="select" name="isolateDownloadedCatalog">
+    <option value="true">Isolated (Recommended — Show only downloaded episodes & downloaded sources, hide AIOStreams)</option>
+    <option value="false">Standard (Show full series episode list from Cinemeta & allow other addons like AIOStreams)</option>
+  </select>
+  <p class="help">When enabled, opening a series or movie from your "Downloaded" catalog in Stremio shows only the episodes actually stored on your server, and only your local server playback sources (third-party sources like AIOStreams are hidden). Note: In this isolated mode, Stremio's native Trakt scrobbler does not recognize the custom catalog ID during playback from this catalog.</p>
+</div>
 </section>
 
 <!-- Panel 2: Storage & Quota (NEW!) -->
@@ -1215,7 +1227,7 @@ function renderLibrary(){
   }).join('') || '<tr><td colspan="7"><div class="empty">No files match this filter.</div></td></tr>';
 }
 function setSelectValue(select,value,label){if(!select)return;const stringValue=String(value??'');if(stringValue&&!Array.from(select.options).some(option=>option.value===stringValue)){const option=document.createElement('option');option.value=stringValue;option.textContent=label||stringValue;select.appendChild(option)}select.value=stringValue}
-function fillSettings(force=false){if(settingsDirty&&!force)return;const form=document.getElementById('settingsForm'),s=state.settings;for(const name of ['addonName','baseUrl','mediaSoftLimitGb','lanBaseUrl','moviesPath','tvPath','scanIntervalMinutes','minimumFileSizeMb','streamTokenExpiryHours','longLivedStreamTokens','adminUsername','maxConcurrentDownloads','maxDownloadSpeedMBps','downloadTimeoutSeconds','autoRescanOnDownload','enableLibraryEditing','enableDeviceDownloads','restrictDeviceDownloadsToLan'])if(form.elements[name])form.elements[name].value=String(s[name]??'');document.getElementById('tmdbStatus').textContent=s.metadataProvider||'Automatic metadata is active.';refreshBranding();syncManifestUrl()}
+function fillSettings(force=false){if(settingsDirty&&!force)return;const form=document.getElementById('settingsForm'),s=state.settings;for(const name of ['addonName','baseUrl','mediaSoftLimitGb','lanBaseUrl','moviesPath','tvPath','scanIntervalMinutes','minimumFileSizeMb','streamTokenExpiryHours','longLivedStreamTokens','adminUsername','maxConcurrentDownloads','maxDownloadSpeedMBps','downloadTimeoutSeconds','autoRescanOnDownload','enableLibraryEditing','enableDeviceDownloads','restrictDeviceDownloadsToLan','isolateDownloadedCatalog'])if(form.elements[name])form.elements[name].value=String(s[name]??'');document.getElementById('tmdbStatus').textContent=s.metadataProvider||'Automatic metadata is active.';refreshBranding();syncManifestUrl()}
 async function load(){const request=++stateRequest,data=await api('/admin/api/state');if(request!==stateRequest)return;state={...state,...data};render()}
 async function loadHealth(force=false){const request=++healthRequest,summary=document.getElementById('healthSummary');if(!state.health&&summary){summary.className='health-banner';summary.innerHTML='<div><div class="health-banner-title">Running system checks…</div><div class="health-banner-meta">External checks are bounded and cached for one minute.</div></div>'}try{const data=await api('/admin/api/system-health'+(force?'?refresh=1':''));if(request!==healthRequest)return;state.health=data;renderHealth()}catch(err){if(request===healthRequest&&summary){summary.className='health-banner danger';summary.innerHTML='<div><div class="health-banner-title">System checks could not run</div><div class="health-banner-meta">'+esc(err.message||'The diagnostic request failed.')+'</div></div>'+diagnosticBadge('error')}throw err}}
 async function refreshHealth(button){const original=button.textContent;button.disabled=true;button.textContent='Checking…';try{await loadHealth(true);toast('System checks refreshed')}catch(err){toast(err.message||'System checks failed')}finally{button.disabled=false;button.textContent=original}}
@@ -1484,7 +1496,7 @@ function dlGetStremioUrl(f) {
     const term = f.title || (f.relative_path ? f.relative_path.split('/')[0] : '');
     return term ? 'stremio:///search?search=' + encodeURIComponent(term) : 'stremio://';
   }
-  const cleanId = String(sid).replace(/^zpm:/, '');
+  const cleanId = String(sid).replace(/^(dls|zpm):/, '');
   if (f.type === 'movie') {
     return 'stremio:///detail/movie/' + encodeURIComponent(cleanId) + '/' + encodeURIComponent(cleanId) + '?autoPlay=true';
   } else if (f.type === 'series') {

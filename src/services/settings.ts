@@ -66,6 +66,9 @@ export class SettingsService {
   get restrictDeviceDownloadsToLan(): boolean {
     return this.boolean('restrictDeviceDownloadsToLan', true);
   }
+  get isolateDownloadedCatalog(): boolean {
+    return this.boolean('isolateDownloadedCatalog', true);
+  }
   get allowTailscaleDownloads(): boolean {
     return this.boolean('allowTailscaleDownloads', false);
   }
@@ -393,6 +396,7 @@ export class SettingsService {
       enableLibraryEditing: this.enableLibraryEditing,
       enableDeviceDownloads: this.enableDeviceDownloads,
       restrictDeviceDownloadsToLan: this.restrictDeviceDownloadsToLan,
+      isolateDownloadedCatalog: this.isolateDownloadedCatalog,
       allowTailscaleDownloads: this.allowTailscaleDownloads,
       downloadTimeoutSeconds: this.downloadTimeoutSeconds,
       lanBaseUrl: this.lanBaseUrl,

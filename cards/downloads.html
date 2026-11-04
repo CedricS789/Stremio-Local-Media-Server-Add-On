@@ -2015,7 +2015,7 @@ function getStremioUrl(f) {
     const term = f.title || (f.relative_path ? f.relative_path.split('/')[0] : '');
     return term ? 'stremio:///search?search=' + encodeURIComponent(term) : 'stremio://';
   }
-  const cleanId = String(sid).replace(/^zpm:/, '');
+  const cleanId = String(sid).replace(/^(dls|zpm):/, '');
   if (f.type === 'movie') {
     return 'stremio:///detail/movie/' + encodeURIComponent(cleanId) + '/' + encodeURIComponent(cleanId) + '?autoPlay=true';
   } else if (f.type === 'series') {

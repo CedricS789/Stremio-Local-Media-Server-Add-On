@@ -14,9 +14,10 @@ export interface StremioMetaPreview {
   imdbRating?: string;
 }
 
-export function catalogPreview(item: MediaItemRow): StremioMetaPreview {
+export function catalogPreview(item: MediaItemRow, idPrefix: string = ''): StremioMetaPreview {
+  const prefix = idPrefix ? (idPrefix.endsWith(':') ? idPrefix : `${idPrefix}:`) : '';
   return withoutUndefined({
-    id: item.stremio_id,
+    id: `${prefix}${item.stremio_id}`,
     type: item.type,
     name: item.display_title || item.title,
     poster: item.poster || undefined,
@@ -38,12 +39,13 @@ interface EpisodeRow {
   runtime_minutes: number | null;
 }
 
-export function fullMeta(item: MediaItemRow, episodes: EpisodeRow[] = []): Record<string, unknown> {
+export function fullMeta(item: MediaItemRow, episodes: EpisodeRow[] = [], idPrefix: string = ''): Record<string, unknown> {
   const metadata = parseJson<Record<string, any>>(item.metadata_json, {});
+  const prefix = idPrefix ? (idPrefix.endsWith(':') ? idPrefix : `${idPrefix}:`) : '';
   const base = {
-    ...catalogPreview(item),
+    ...catalogPreview(item, idPrefix),
     moviedb_id: item.tmdb_id || undefined,
-    imdb_id: item.imdb_id || undefined,
+    imdb_id: item.imdb_id || (item.stremio_id.startsWith('tt') ? item.stremio_id : undefined),
     runtime: item.runtime_minutes ? `${item.runtime_minutes} min` : undefined,
     released: item.release_date ? new Date(`${item.release_date}T00:00:00.000Z`).toISOString() : undefined,
     cast: parseJson<string[]>(item.cast_json, []),
@@ -54,7 +56,7 @@ export function fullMeta(item: MediaItemRow, episodes: EpisodeRow[] = []): Recor
     return withoutUndefined({
       ...base,
       videos: episodes.map((episode) => withoutUndefined({
-        id: `${item.stremio_id}:${episode.season}:${episode.episode}`,
+        id: `${prefix}${item.stremio_id}:${episode.season}:${episode.episode}`,
         title: episode.title || `Episode ${episode.episode}`,
         overview: episode.overview || undefined,
         thumbnail: episode.still || undefined,

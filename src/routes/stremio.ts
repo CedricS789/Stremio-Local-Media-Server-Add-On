@@ -16,7 +16,7 @@ const manifest = {
     version: buildInfo().version,
     name: 'Stremio Local Media Server',
     description: 'Direct playback and in-Stremio downloads for your personal movie and TV library.',
-    resources: ['catalog', 'stream'],
+    resources: ['catalog', 'meta', 'stream'],
     types: ['movie', 'series'],
     catalogs: [
         {
@@ -32,7 +32,7 @@ const manifest = {
             extra: [{ name: 'search', isRequired: false }, { name: 'skip', isRequired: false }]
         }
     ],
-    idPrefixes: ['tt', 'tmdb:', 'zpm:']
+    idPrefixes: ['dls:', 'tt', 'tmdb:', 'zpm:']
 };
 
 const AIO_CACHE_TTL_MS = 10 * 60 * 1000;
@@ -807,7 +807,8 @@ function catalogType(catalogId) {
     return null;
 }
 function episodeId(id) {
-    const match = /^(.*):(\d+):(\d+)$/.exec(id);
+    const clean = String(id || '').replace(/^(dls|zpm):/, '');
+    const match = /^(.*):(\d+):(\d+)$/.exec(clean);
     return match ? { itemId: match[1], season: Number(match[2]), episode: Number(match[3]) } : null;
 }
 function headerValue(request, name) {
@@ -1190,7 +1191,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
         if (!aioBase) return reply.code(500).send({ error: 'AIOSTREAMS_BASE_URL is not configured' });
 
         const type = String(request.query?.type || 'series');
-        const id = String(request.query?.id || '').replace(/^zpm:/, '');
+        const id = String(request.query?.id || '').replace(/^(dls|zpm):/, '');
         const mode = String(request.query?.mode || (type === 'movie' ? 'movie' : 'episode'));
 
         let cinemetaId = id;
@@ -1249,7 +1250,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
         if (!checkDownloadsAuth(request, reply)) return reply.code(401).send({ error: 'Authentication required' });
         const body = request.body || {};
         const type = String(body.type || 'series');
-        const id = String(body.id || '').replace(/^zpm:/, '');
+        const id = String(body.id || '').replace(/^(dls|zpm):/, '');
         const mode = String(body.mode || (type === 'movie' ? 'movie' : 'episode'));
         const url = String(body.url || '');
         const givenFilename = String(body.filename || '');
@@ -1744,8 +1745,9 @@ export function registerStremioRoutes(app, database, settings, config, requester
         const rows = database.sqlite.prepare(`SELECT mi.* FROM media_files mf JOIN media_items mi ON mi.id=mf.media_item_id
       WHERE mi.type=? AND mf.status='matched' AND (?='' OR instr(lower(COALESCE(mi.display_title,mi.title)),lower(?))>0)
       GROUP BY mi.id ORDER BY ${order} LIMIT 100 OFFSET ?`).all(expectedType, search, search, skip);
+        const isolate = settings.isolateDownloadedCatalog !== false;
         reply.header('Cache-Control', 'no-store').send({
-            metas: rows.map((item) => catalogPreview(item))
+            metas: rows.map((item) => catalogPreview(item, isolate ? 'dls:' : ''))
         });
     };
     app.get(`${prefix}/catalog/:type/:catalogId.json`, secureRoute, catalogHandler);
@@ -1754,13 +1756,13 @@ export function registerStremioRoutes(app, database, settings, config, requester
     app.get(`${prefix}/meta/:type/:id.json`, secureRoute, async (request, reply) => {
         const { type } = request.params;
         const rawId = request.params.id;
-        // Only provide metadata for custom non-IMDb/non-TMDB items (zpm:)
+        // Only provide metadata for custom isolated items (dls: or legacy zpm:)
         // For standard IMDb (tt...) and TMDB items, official Cinemeta/RPDB provides full metadata, ratings & posters.
-        if (!rawId.startsWith('zpm:') || !['movie', 'series'].includes(type)) {
+        if ((!rawId.startsWith('zpm:') && !rawId.startsWith('dls:')) || !['movie', 'series'].includes(type)) {
             return reply.code(404).send({ meta: null });
         }
-        const cleanId = rawId.replace(/^zpm:/, '');
-        const isZpm = true;
+        const prefixUsed = rawId.startsWith('dls:') ? 'dls:' : 'zpm:';
+        const cleanId = rawId.replace(/^(dls|zpm):/, '');
         const item = database.sqlite.prepare(`SELECT mi.* FROM media_items mi WHERE mi.type=? AND (mi.stremio_id=? OR ('tmdb:' || mi.tmdb_id)=?)
       AND EXISTS (SELECT 1 FROM media_files mf WHERE mf.media_item_id=mi.id AND mf.status='matched')`).get(type, cleanId, cleanId);
         if (!item)
@@ -1778,18 +1780,31 @@ export function registerStremioRoutes(app, database, settings, config, requester
                     expanded.set(key, metadataByKey.get(key) || { season: file.season, episode: number, title: null, overview: null, still: null, air_date: null, runtime_minutes: null });
                 }
             episodes = [...expanded.values()].sort((a, b) => a.season - b.season || a.episode - b.episode);
-        }
-        const metaObj = fullMeta(item, episodes);
-        if (isZpm) {
-            metaObj.id = item.stremio_id.startsWith('zpm:') ? item.stremio_id : `zpm:${item.stremio_id}`;
-            delete metaObj.imdb_id;
-            delete metaObj.moviedb_id;
-            if (metaObj.videos) {
-                metaObj.videos = metaObj.videos.map((v) => ({
-                    ...v,
-                    id: v.id.startsWith('zpm:') ? v.id : `zpm:${v.id}`
-                }));
+
+            if (episodes.some(ep => !ep.title || !ep.still)) {
+                try {
+                    const cinemetaMeta = await fetchCinemeta('series', cleanId);
+                    if (cinemetaMeta?.videos) {
+                        const cMap = new Map(cinemetaMeta.videos.map(v => [`${v.season}:${v.episode}`, v]));
+                        for (const ep of episodes) {
+                            const cv = cMap.get(`${ep.season}:${ep.episode}`);
+                            if (cv) {
+                                if (!ep.title) ep.title = cv.name || cv.title;
+                                if (!ep.still) ep.still = cv.thumbnail;
+                                if (!ep.overview) ep.overview = cv.overview;
+                                if (!ep.air_date && cv.released) ep.air_date = cv.released;
+                            }
+                        }
+                    }
+                } catch { /* best effort cinemeta enrichment */ }
             }
+        }
+        const metaObj = fullMeta(item, episodes, prefixUsed);
+        if (item.imdb_id || cleanId.startsWith('tt')) {
+            metaObj.imdb_id = item.imdb_id || cleanId;
+        }
+        if (item.tmdb_id) {
+            metaObj.moviedb_id = item.tmdb_id;
         }
         reply.header('Cache-Control', 'no-store').send({ meta: metaObj });
     });
@@ -1797,7 +1812,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
     app.get(`${prefix}/stream/:type/:id.json`, secureRoute, async (request, reply) => {
         const { type, accessToken } = request.params;
         const rawId = request.params.id;
-        const id = rawId.replace(/^zpm:/, '');
+        const id = rawId.replace(/^(dls|zpm):/, '');
         let files = [];
         let requestedEpisode;
         let parsedSeries = null;
@@ -2061,7 +2076,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
 
     app.get(`${prefix}/cancel/:mode/:id`, secureRoute, async (request, reply) => {
         const { mode } = request.params;
-        const id = request.params.id.replace(/^zpm:/, '');
+        const id = request.params.id.replace(/^(dls|zpm):/, '');
         if (mode === 'movie') {
             const active = activeDownloads.get(`movie:${id}`);
             if (active?.controller)
@@ -2096,7 +2111,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
 
     app.get(`${prefix}/delete/:mode/:id`, secureRoute, async (request, reply) => {
         const { mode } = request.params;
-        const id = request.params.id.replace(/^zpm:/, '');
+        const id = request.params.id.replace(/^(dls|zpm):/, '');
         if (mode === 'movie') {
             const delKey = `movie:${id}`;
             if (!isDeleteArmed(delKey)) {
@@ -2172,7 +2187,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
 
     app.get(`${prefix}/download/prompt/:mode/:id`, secureRoute, async (request, reply) => {
         const { mode } = request.params;
-        const id = request.params.id.replace(/^zpm:/, '');
+        const id = request.params.id.replace(/^(dls|zpm):/, '');
         const type = mode === 'movie' ? 'movie' : 'series';
         promptUrl = `${settings.baseUrl}/downloads/choose?type=${type}&id=${encodeURIComponent(id)}&mode=${encodeURIComponent(mode)}`;
         lastDownloadTriggeredAt = Date.now();
@@ -2229,7 +2244,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
 
     app.get(`${prefix}/download/:mode/:id`, secureRoute, async (request, reply) => {
         const { mode } = request.params;
-        const id = request.params.id.replace(/^zpm:/, '');
+        const id = request.params.id.replace(/^(dls|zpm):/, '');
         if (mode === 'movie') {
             const dlKey = `movie:${id}`;
             if (!activeDownloads.has(dlKey)) {

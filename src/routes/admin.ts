@@ -1307,6 +1307,7 @@ export function registerAdminRoutes(
       'enableLibraryEditing',
       'enableDeviceDownloads',
       'restrictDeviceDownloadsToLan',
+      'isolateDownloadedCatalog',
       'allowTailscaleDownloads',
       'autoRequestEnabled',
       'radarrEnabled',
