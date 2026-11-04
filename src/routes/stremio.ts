@@ -13,10 +13,22 @@ import { planSiloPlayback } from '../services/playback/playback-policy.js';
 
 const manifest = {
     id: 'community.nuviflow',
-    version: buildInfo().version,
+    version: '1.1.0',
     name: 'Stremio Local Media Server',
     description: 'Direct playback and in-Stremio downloads for your personal movie and TV library.',
-    resources: ['catalog', 'meta', 'stream'],
+    resources: [
+        'catalog',
+        {
+            name: 'meta',
+            types: ['series', 'movie'],
+            idPrefixes: ['dls:']
+        },
+        {
+            name: 'stream',
+            types: ['series', 'movie'],
+            idPrefixes: ['dls:', 'tt', 'tmdb:', 'zpm:']
+        }
+    ],
     types: ['movie', 'series'],
     catalogs: [
         {

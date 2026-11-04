@@ -695,9 +695,10 @@ export function adminHtml(csrf: string): string {
   <div class="manifest-row">
     <input id="manifestUrl" class="input" type="text" readonly aria-readonly="true">
     <button class="btn" type="button" data-copy="manifestUrl" data-copy-label="Manifest URL copied">Copy manifest URL</button>
+    <a id="installAddonBtn" class="btn primary" href="#" style="text-decoration:none;">Install / Sync in Stremio</a>
     <button id="regenerateAddonUrl" class="btn danger" type="button">Regenerate secure URL</button>
   </div>
-  <p class="help">Keep this URL private. Regenerating it immediately revokes the old addon installation and requires reinstalling in Stremio.</p>
+  <p class="help">Click <b>Install / Sync in Stremio</b> to sync the updated addon manifest to your Stremio app. Keep this URL private.</p>
 </div>
 <div class="field full">
   <label for="tmdbApiKey">TMDB API key (optional)</label>
@@ -1073,7 +1074,7 @@ async function checkLanForDeviceDownload() {
 }
 window.checkLanForDeviceDownload = checkLanForDeviceDownload;
 function brandingIconUrl(){return '/addon-icon?v='+encodeURIComponent(state.settings.addonIconUpdatedAt||0)}
-function syncManifestUrl(){const form=document.getElementById('settingsForm'),output=document.getElementById('manifestUrl');if(!form||!output)return;const base=String(form.elements.baseUrl?.value||state.settings.baseUrl||'').trim().replace(/\/+$/,'');const accessPath=String(state.settings.addonAccessPath||'');output.value=base&&accessPath?base+accessPath+'/manifest.json':''}
+function syncManifestUrl(){const form=document.getElementById('settingsForm'),output=document.getElementById('manifestUrl'),btn=document.getElementById('installAddonBtn');if(!form||!output)return;const base=String(form.elements.baseUrl?.value||state.settings.baseUrl||'').trim().replace(/\/+$/,'');const accessPath=String(state.settings.addonAccessPath||'');const url=base&&accessPath?base+accessPath+'/manifest.json':'';output.value=url;if(btn){btn.href=url?'stremio://'+url.replace(/^https?:\/\//,''):'#';btn.style.display=url?'inline-flex':'none';}}
 function refreshBuild(){const node=document.getElementById('buildVersion'),build=state.build||{};if(node)node.textContent='v'+String(build.version||'unknown')+' · '+String(build.revision||'dev')}
 async function regenerateAddonUrl(button){if(!await showConfirm({title:'Regenerate Secure URL',eyebrow:'Security Action',message:'Regenerating the secure addon URL will cause any existing Stremio installation using this URL to stop working immediately. You will need to reinstall the addon in Stremio.',confirmText:'Regenerate URL',danger:true}))return;const original=button.textContent;button.disabled=true;button.textContent='Regenerating…';try{const data=await api('/admin/api/addon-access/regenerate',{method:'POST'});state.settings=data.settings;syncManifestUrl();toast('Secure addon URL regenerated. Reinstall it in Stremio.')}catch(err){toast(err.message||'Could not regenerate addon URL')}finally{button.disabled=false;button.textContent=original}}
 function refreshBranding(){refreshBuild();const url=brandingIconUrl(),name=state.settings.addonName||'Stremio Local Media Server';for(const id of ['sidebarBrandIcon','addonIconPreview']){const image=document.getElementById(id);if(image&&image.getAttribute('src')!==url){image.src=url;image.alt=name}}const brandName=document.getElementById('brandName');if(brandName)brandName.textContent=name;document.title=name}
