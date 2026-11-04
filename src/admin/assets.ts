@@ -1037,6 +1037,7 @@ function showConfirm({ title = 'Confirm Action', eyebrow = 'Confirmation', messa
     okBtn.focus();
   });
 }
+window.showConfirm = showConfirm;
 function brandingIconUrl(){return '/addon-icon?v='+encodeURIComponent(state.settings.addonIconUpdatedAt||0)}
 function syncManifestUrl(){const form=document.getElementById('settingsForm'),output=document.getElementById('manifestUrl');if(!form||!output)return;const base=String(form.elements.baseUrl?.value||state.settings.baseUrl||'').trim().replace(/\/+$/,'');const accessPath=String(state.settings.addonAccessPath||'');output.value=base&&accessPath?base+accessPath+'/manifest.json':''}
 function refreshBuild(){const node=document.getElementById('buildVersion'),build=state.build||{};if(node)node.textContent='v'+String(build.version||'unknown')+' · '+String(build.revision||'dev')}
@@ -1669,23 +1670,37 @@ function dlRenderPills() {
   }
 }
 
-function dlDownloadFile(id, filename) {
+async function dlDownloadFile(id, filename) {
   if (!id) return;
   if (state.settings?.enableDeviceDownloads === false) {
     toast('Direct device downloads are disabled in Settings.');
     return;
   }
+  const file = (dlData.localFiles || []).find(f => f.id === id) || (state.files || []).find(f => f.id === id);
+  const size = file?.size ?? file?.bytes ?? 0;
+  const sizeText = size > 0 ? ' (' + fmtGb(size) + ')' : '';
+  const displayName = filename || (file ? (file.displayTitle || file.parsedTitle || file.relativePath || file.relative_path) : '') || 'media file';
+
+  const confirmed = await showConfirm({
+    title: 'Save to Device',
+    eyebrow: 'Local Download',
+    message: 'Save "' + displayName + '"' + sizeText + ' directly from the home server to this device?',
+    confirmText: 'Save to Device',
+    danger: false
+  });
+  if (!confirmed) return;
+
   const a = document.createElement('a');
   a.href = '/admin/api/files/' + encodeURIComponent(id) + '/download';
   if (filename) a.download = filename;
   document.body.appendChild(a);
   a.click();
   a.remove();
-  toast('Saving from home server: ' + (filename || 'media file'));
+  toast('Saving from home server: ' + displayName);
 }
 window.dlDownloadFile = dlDownloadFile;
 
-function dlDownloadSelected() {
+async function dlDownloadSelected() {
   if (state.settings?.enableDeviceDownloads === false) {
     toast('Direct device downloads are disabled in Settings.');
     return;
@@ -1694,7 +1709,20 @@ function dlDownloadSelected() {
   if (ids.length === 0) return;
   const files = (dlData.localFiles || []).filter(f => dlSelectedIds.has(f.id));
   if (files.length === 0) return;
-  toast('Saving ' + files.length + ' file' + (files.length === 1 ? '' : 's') + ' from home server to this device…');
+  const totalBytes = files.reduce((acc, f) => acc + (Number(f.size) || 0), 0);
+  const countText = files.length + ' file' + (files.length === 1 ? '' : 's');
+  const sizeText = totalBytes > 0 ? ' (' + fmtGb(totalBytes) + ')' : '';
+
+  const confirmed = await showConfirm({
+    title: 'Save Selected Files to Device',
+    eyebrow: 'Batch Download',
+    message: 'Save ' + countText + sizeText + ' directly from the home server to this device?',
+    confirmText: 'Save ' + countText,
+    danger: false
+  });
+  if (!confirmed) return;
+
+  toast('Saving ' + countText + ' from home server to this device…');
   files.forEach((f, idx) => {
     setTimeout(() => {
       const name = f.relative_path ? f.relative_path.split('/').pop() : 'media-' + f.id;
