@@ -698,6 +698,10 @@ export function registerAdminRoutes(
       return reply.code(401).send({ error: 'Authentication required' });
     }
 
+    if (!settings.enableDeviceDownloads) {
+      return reply.code(403).send({ error: 'Direct device downloads are disabled in Settings.' });
+    }
+
     const { id } = request.params as { id: string };
     const file = database.sqlite.prepare('SELECT * FROM media_files WHERE id=?').get(id) as MediaFileRow | undefined;
     if (!file) return reply.code(404).send({ error: 'Media file not found' });
@@ -1293,6 +1297,7 @@ export function registerAdminRoutes(
     for (const key of [
       'autoRescanOnDownload',
       'enableLibraryEditing',
+      'enableDeviceDownloads',
       'autoRequestEnabled',
       'radarrEnabled',
       'sonarrEnabled',

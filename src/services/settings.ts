@@ -60,6 +60,9 @@ export class SettingsService {
   get enableLibraryEditing(): boolean {
     return this.boolean('enableLibraryEditing', false);
   }
+  get enableDeviceDownloads(): boolean {
+    return this.boolean('enableDeviceDownloads', true);
+  }
   get downloadTimeoutSeconds(): number {
     return this.number('downloadTimeoutSeconds', 60, 15);
   }
@@ -382,6 +385,7 @@ export class SettingsService {
       maxDownloadSpeedMBps: this.maxDownloadSpeedMBps,
       autoRescanOnDownload: this.autoRescanOnDownload,
       enableLibraryEditing: this.enableLibraryEditing,
+      enableDeviceDownloads: this.enableDeviceDownloads,
       downloadTimeoutSeconds: this.downloadTimeoutSeconds,
       lanBaseUrl: this.lanBaseUrl,
 

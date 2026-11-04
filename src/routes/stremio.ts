@@ -1694,6 +1694,9 @@ export function registerStremioRoutes(app, database, settings, config, requester
         url: '/downloads/file/:id/download',
         handler: async (request, reply) => {
             if (!checkDownloadsAuth(request, reply)) return reply.code(401).send({ error: 'Authentication required' });
+            if (!settings.enableDeviceDownloads) {
+                return reply.code(403).send({ error: 'Direct device downloads are disabled in Settings.' });
+            }
             const { id } = request.params as { id: string };
             const queryStr = request.raw.url && request.raw.url.includes('?')
                 ? '?' + request.raw.url.split('?')[1]
