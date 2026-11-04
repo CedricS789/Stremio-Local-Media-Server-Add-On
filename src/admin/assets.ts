@@ -35,6 +35,7 @@ export const adminCss = `
 .show-icon{font-size:16px;line-height:1}
 .show-title{font-size:14px;font-weight:800;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .show-badge{font-size:11px;font-weight:750;color:var(--muted);background:#050609;border:1px solid var(--line);padding:2px 9px;border-radius:999px;white-space:nowrap}
+.show-selected-badge{font-size:11px;font-weight:750;background:rgba(14,165,233,0.18);border:1px solid rgba(56,189,248,0.38);color:#7dd3fc;padding:2px 9px;border-radius:999px;white-space:nowrap}
 .show-group-actions{display:flex;align-items:center;gap:8px}
 .show-group-body{background:var(--panel)}
 .show-group-body .file-item{border:none;border-bottom:1px solid var(--line);border-radius:0;margin-bottom:0;background:transparent;box-shadow:none}
@@ -216,9 +217,8 @@ export const adminCss = `
     font-weight:750;
     word-break:break-word;
   }
-  .show-badge{
+  .show-badge, .show-selected-badge{
     font-size:11px;
-    margin-left:auto;
   }
   .show-group-actions{
     width:100%;
@@ -1871,21 +1871,32 @@ function dlRenderFiles() {
       const cleanableBytes = serverShow.cleanableWatchedBytes || 0;
       const watchedCount = serverShow.watchedCount || 0;
 
+      const groupSelectedCount = group.files.filter(f => dlSelectedIds.has(f.id)).length;
+      const allGroupSelected = group.files.length > 0 && groupSelectedCount === group.files.length;
+      const someGroupSelected = groupSelectedCount > 0 && !allGroupSelected;
+
       const cleanBtn = cleanableCount > 0
         ? '<button class="btn small" style="background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.4);color:#fbbf24;font-weight:650;display:inline-flex;align-items:center;gap:5px;" onclick="dlOpenCleanWatchedModal(\'' + esc(group.title) + '\')">🧹 Clean Watched (' + cleanableCount + ' ep · ' + fmtGb(cleanableBytes) + ')</button>'
         : (watchedCount === 1
           ? '<span class="badge" style="background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.3);color:#34d399;font-size:11px;display:inline-flex;align-items:center;gap:4px;" title="1 episode watched. Safeguard active: preserved and protected.">🛡️ 1 Watched (Safeguarded)</span>'
           : '');
 
-      html += '<div class="show-group ' + (isCollapsed ? 'collapsed' : '') + '">' +
+      const selectBtn = '<button class="btn small group-select-btn" type="button" onclick="event.stopPropagation(); dlToggleSelectGroup(\'' + esc(group.title) + '\', event)" title="' + (allGroupSelected ? 'Deselect all episodes in this show' : 'Select all episodes in this show') + '" style="display:inline-flex;align-items:center;gap:4px;">' + (allGroupSelected ? '✕ Deselect' : '✓ Select all') + '</button>';
+
+      const selectedBadge = '<span class="badge show-selected-badge" style="background:rgba(14,165,233,0.18);border:1px solid rgba(56,189,248,0.38);color:#7dd3fc;font-size:11px;font-weight:700;' + (groupSelectedCount > 0 ? 'display:inline-flex;' : 'display:none;') + '">' + groupSelectedCount + '/' + group.files.length + ' selected</span>';
+
+      html += '<div class="show-group ' + (isCollapsed ? 'collapsed' : '') + '" data-show-title="' + esc(group.title) + '">' +
         '<div class="show-group-header" onclick="dlToggleShowGroup(\'' + esc(group.title) + '\')">' +
           '<div class="show-group-left">' +
+            '<input type="checkbox" class="file-check group-check" ' + (allGroupSelected ? 'checked ' : '') + (someGroupSelected ? 'data-indeterminate="true" ' : '') + 'title="Select all episodes in ' + esc(group.title) + '" onclick="event.stopPropagation()" onchange="dlToggleSelectGroup(\'' + esc(group.title) + '\', event)">' +
             '<span class="show-chevron">▼</span>' +
             '<span class="show-icon">📺</span>' +
             '<span class="show-title">' + esc(group.title) + '</span>' +
             '<span class="show-badge">' + group.files.length + ' ep' + (group.files.length === 1 ? '' : 's') + ' · ' + fmtGb(group.totalBytes) + '</span>' +
+            selectedBadge +
           '</div>' +
           '<div class="show-group-actions" onclick="event.stopPropagation()">' +
+            selectBtn +
             cleanBtn +
             '<button class="btn danger small" onclick="dlOpenDeleteModal(\'show\', { title:\'' + esc(group.title) + '\', count:' + group.files.length + ', bytes:' + group.totalBytes + ' })">🗑️ Delete Show</button>' +
           '</div>' +
@@ -1896,6 +1907,8 @@ function dlRenderFiles() {
       '</div>';
     }
     container.innerHTML = html;
+    container.querySelectorAll('.group-check[data-indeterminate="true"]').forEach(el => { el.indeterminate = true; });
+    dlSyncGroupCheckboxes();
     return;
   }
 
@@ -1951,6 +1964,63 @@ function dlToggleSelect(id) {
   if (dlSelectedIds.has(id)) dlSelectedIds.delete(id);
   else dlSelectedIds.add(id);
   dlRenderBatchBar();
+  dlSyncGroupCheckboxes();
+}
+
+function dlToggleSelectGroup(title, event) {
+  if (event && typeof event.stopPropagation === 'function') event.stopPropagation();
+  const filtered = dlGetFilteredFiles();
+  const groupFiles = filtered.filter(f => {
+    const showTitle = f.title || (f.relative_path ? f.relative_path.split('/')[0] : 'Unknown Show');
+    return showTitle === title;
+  });
+  if (groupFiles.length === 0) return;
+  const allSelected = groupFiles.every(f => dlSelectedIds.has(f.id));
+  if (allSelected) {
+    groupFiles.forEach(f => dlSelectedIds.delete(f.id));
+  } else {
+    groupFiles.forEach(f => dlSelectedIds.add(f.id));
+  }
+  dlRenderBatchBar();
+  dlRenderFiles();
+}
+
+function dlSyncGroupCheckboxes() {
+  document.querySelectorAll('.show-group').forEach(groupEl => {
+    const title = groupEl.dataset.showTitle;
+    const checks = groupEl.querySelectorAll('.show-group-body .file-check');
+    const totalCount = checks.length;
+    const checkedCount = Array.from(checks).filter(c => c.checked).length;
+    const groupCheck = groupEl.querySelector('.group-check');
+    const groupBtn = groupEl.querySelector('.group-select-btn');
+    const badgeEl = groupEl.querySelector('.show-selected-badge');
+    if (groupCheck) {
+      groupCheck.checked = totalCount > 0 && checkedCount === totalCount;
+      groupCheck.indeterminate = checkedCount > 0 && checkedCount < totalCount;
+    }
+    if (groupBtn) {
+      const all = totalCount > 0 && checkedCount === totalCount;
+      groupBtn.innerHTML = all ? '✕ Deselect' : '✓ Select all';
+      groupBtn.title = all ? 'Deselect all episodes in this show' : 'Select all episodes in this show';
+    }
+    if (badgeEl) {
+      if (checkedCount > 0) {
+        badgeEl.style.display = 'inline-flex';
+        badgeEl.textContent = checkedCount + '/' + totalCount + ' selected';
+      } else {
+        badgeEl.style.display = 'none';
+      }
+    }
+  });
+
+  const masterCheck = document.getElementById('dlMasterCheck');
+  if (masterCheck) {
+    const allChecks = document.querySelectorAll('.show-group-body .file-check, #dlFilesList > .file-item .file-check');
+    const totalCount = allChecks.length;
+    const totalChecked = Array.from(allChecks).filter(c => c.checked).length;
+    masterCheck.checked = totalCount > 0 && totalChecked === totalCount;
+    masterCheck.indeterminate = totalChecked > 0 && totalChecked < totalCount;
+  }
 }
 
 function dlToggleSelectAll() {
@@ -2325,6 +2395,7 @@ window.dlToggleSortDirection = dlToggleSortDirection;
 window.dlToggleShowGroup = dlToggleShowGroup;
 window.dlToggleSelect = dlToggleSelect;
 window.dlToggleSelectAll = dlToggleSelectAll;
+window.dlToggleSelectGroup = dlToggleSelectGroup;
 window.dlClearSelection = dlClearSelection;
 window.dlRescanLibrary = dlRescanLibrary;
 window.dlCancel = dlCancel;
