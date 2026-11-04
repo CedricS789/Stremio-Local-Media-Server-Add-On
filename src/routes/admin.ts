@@ -1297,6 +1297,11 @@ export function registerAdminRoutes(
       }
     }
 
+    if (body.downloadedCatalogMode && ['trackable', 'strict', 'standard'].includes(body.downloadedCatalogMode)) {
+      settings.set('downloadedCatalogMode', body.downloadedCatalogMode);
+      settings.set('isolateDownloadedCatalog', body.downloadedCatalogMode !== 'standard' ? 'true' : 'false');
+    }
+
     if (body.tmdbApiKey?.trim()) {
       settings.set('tmdbApiKey', body.tmdbApiKey);
     }

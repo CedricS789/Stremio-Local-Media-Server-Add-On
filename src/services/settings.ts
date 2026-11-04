@@ -66,8 +66,14 @@ export class SettingsService {
   get restrictDeviceDownloadsToLan(): boolean {
     return this.boolean('restrictDeviceDownloadsToLan', true);
   }
+  get downloadedCatalogMode(): 'trackable' | 'strict' | 'standard' {
+    const val = (this.get('downloadedCatalogMode') || '').trim().toLowerCase();
+    if (val === 'strict' || val === 'standard') return val;
+    if (this.get('isolateDownloadedCatalog') === 'false') return 'standard';
+    return 'trackable';
+  }
   get isolateDownloadedCatalog(): boolean {
-    return this.boolean('isolateDownloadedCatalog', true);
+    return this.downloadedCatalogMode !== 'standard';
   }
   get allowTailscaleDownloads(): boolean {
     return this.boolean('allowTailscaleDownloads', false);
@@ -397,6 +403,7 @@ export class SettingsService {
       enableDeviceDownloads: this.enableDeviceDownloads,
       restrictDeviceDownloadsToLan: this.restrictDeviceDownloadsToLan,
       isolateDownloadedCatalog: this.isolateDownloadedCatalog,
+      downloadedCatalogMode: this.downloadedCatalogMode,
       allowTailscaleDownloads: this.allowTailscaleDownloads,
       downloadTimeoutSeconds: this.downloadTimeoutSeconds,
       lanBaseUrl: this.lanBaseUrl,

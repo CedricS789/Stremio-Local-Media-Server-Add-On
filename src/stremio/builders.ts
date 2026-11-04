@@ -39,9 +39,12 @@ interface EpisodeRow {
   runtime_minutes: number | null;
 }
 
-export function fullMeta(item: MediaItemRow, episodes: EpisodeRow[] = [], idPrefix: string = ''): Record<string, unknown> {
+export function fullMeta(item: MediaItemRow, episodes: EpisodeRow[] = [], idPrefix: string = '', videoIdPrefix?: string): Record<string, unknown> {
   const metadata = parseJson<Record<string, any>>(item.metadata_json, {});
   const prefix = idPrefix ? (idPrefix.endsWith(':') ? idPrefix : `${idPrefix}:`) : '';
+  const vidPref = videoIdPrefix !== undefined
+    ? (videoIdPrefix ? (videoIdPrefix.endsWith(':') ? videoIdPrefix : `${videoIdPrefix}:`) : '')
+    : prefix;
   const base = {
     ...catalogPreview(item, idPrefix),
     moviedb_id: item.tmdb_id || undefined,
@@ -56,7 +59,7 @@ export function fullMeta(item: MediaItemRow, episodes: EpisodeRow[] = [], idPref
     return withoutUndefined({
       ...base,
       videos: episodes.map((episode) => withoutUndefined({
-        id: `${prefix}${item.stremio_id}:${episode.season}:${episode.episode}`,
+        id: `${vidPref}${item.stremio_id}:${episode.season}:${episode.episode}`,
         title: episode.title || `Episode ${episode.episode}`,
         overview: episode.overview || undefined,
         thumbnail: episode.still || undefined,

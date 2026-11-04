@@ -34,6 +34,14 @@ describe('Stremio output builders', () => {
     expect(meta.videos).toEqual([expect.objectContaining({ id: 'dls:tt0000002:1:1', season: 1, episode: 1, title: 'Pilot' })]);
   });
 
+  it('builds series meta with custom catalog ID prefix but canonical video IDs for tracking', () => {
+    const series = { ...item, id: 'tmdb:series:2', type: 'series' as const, stremio_id: 'tt0000002', imdb_id: 'tt0000002' };
+    const meta = fullMeta(series, [{ season: 1, episode: 1, title: 'Pilot', overview: null, still: null, air_date: '2024-02-01', runtime_minutes: 45 }], 'dls:', '');
+    expect(meta.id).toBe('dls:tt0000002');
+    expect(meta.imdb_id).toBe('tt0000002');
+    expect(meta.videos).toEqual([expect.objectContaining({ id: 'tt0000002:1:1', season: 1, episode: 1, title: 'Pilot' })]);
+  });
+
   it('describes direct-play stream quality', () => {
     expect(streamTitle({ quality: '1080P', height: 1080, video_codec: 'hevc', audio_channels: 6 } as MediaFileRow)).toBe('1080p • HEVC • 5.1');
   });

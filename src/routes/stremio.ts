@@ -1745,9 +1745,14 @@ export function registerStremioRoutes(app, database, settings, config, requester
         const rows = database.sqlite.prepare(`SELECT mi.* FROM media_files mf JOIN media_items mi ON mi.id=mf.media_item_id
       WHERE mi.type=? AND mf.status='matched' AND (?='' OR instr(lower(COALESCE(mi.display_title,mi.title)),lower(?))>0)
       GROUP BY mi.id ORDER BY ${order} LIMIT 100 OFFSET ?`).all(expectedType, search, search, skip);
-        const isolate = settings.isolateDownloadedCatalog !== false;
+        const mode = settings.downloadedCatalogMode;
+        // In 'standard' mode: regular IDs (Cinemeta full listing).
+        // In 'strict' mode: 'dls:' prefix for all items (both movie & series).
+        // In 'trackable' mode: 'dls:' prefix for series (to show ONLY downloaded episodes in the episode list),
+        //                      and standard canonical IDs for movies (so Stremio natively scrobbles to Trakt & Crosswatch).
+        const idPrefix = mode === 'strict' ? 'dls:' : (mode === 'trackable' && expectedType === 'series' ? 'dls:' : '');
         reply.header('Cache-Control', 'no-store').send({
-            metas: rows.map((item) => catalogPreview(item, isolate ? 'dls:' : ''))
+            metas: rows.map((item) => catalogPreview(item, idPrefix))
         });
     };
     app.get(`${prefix}/catalog/:type/:catalogId.json`, secureRoute, catalogHandler);
@@ -1799,7 +1804,13 @@ export function registerStremioRoutes(app, database, settings, config, requester
                 } catch { /* best effort cinemeta enrichment */ }
             }
         }
-        const metaObj = fullMeta(item, episodes, prefixUsed);
+        const mode = settings.downloadedCatalogMode;
+        // In 'trackable' mode, series videos use canonical episode IDs (tt...:season:episode)
+        // so Stremio's native Trakt player scrobbler tracks playback, writes to Stremio library,
+        // and enables Crosswatch to sync to TMDB, TVDB, MDBList, and AniList.
+        // In 'strict' mode, keep prefixUsed ('dls:') on video IDs to hide 3rd-party addons completely.
+        const videoIdPrefix = mode === 'strict' ? prefixUsed : '';
+        const metaObj = fullMeta(item, episodes, prefixUsed, videoIdPrefix);
         if (item.imdb_id || cleanId.startsWith('tt')) {
             metaObj.imdb_id = item.imdb_id || cleanId;
         }
