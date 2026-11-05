@@ -1145,7 +1145,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
             }
         }
 
-        return { isActive: false, key, direct: null, isSeasonBatch: false, parentSeason: null };
+        return null;
     };
 
     const cancelDownloadByKey = (key: string): boolean => {
@@ -1544,7 +1544,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
             type,
             id,
             mode,
-            activeDownload: activeCheck.isActive ? (activeCheck.direct || activeCheck.parentSeason) : null,
+            activeDownload: activeCheck ? (activeCheck.direct || activeCheck.parentSeason) : null,
             existingMedia,
             existingEpisodes,
             downloadingEpisodes,
@@ -1587,7 +1587,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
             const dlKey = canonicalDownloadKey('movie', id);
             const activeCheck = getActiveDownloadForMedia('movie', id);
 
-            if (activeCheck.isActive && activeCheck.direct) {
+            if (activeCheck?.isActive && activeCheck.direct) {
                 if (!replaceActive) {
                     return reply.code(409).send({
                         ok: false,
@@ -1637,7 +1637,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
             const dlKey = canonicalDownloadKey('episode', id);
             const activeCheck = getActiveDownloadForMedia('episode', id);
 
-            if (activeCheck.isActive) {
+            if (activeCheck?.isActive) {
                 if (activeCheck.direct) {
                     if (!replaceActive) {
                         return reply.code(409).send({
@@ -2383,28 +2383,10 @@ export function registerStremioRoutes(app, database, settings, config, requester
             return localStreams;
         });
 
-        // 2. Build in-Stremio Download, Progress Bar & Delete buttons
+        // 2. Build in-Stremio Download & Delete buttons
         if (type === 'movie') {
             const cleanId = cleanMediaId(id);
-            const active = getActiveDownloadForMedia('movie', cleanId);
-            if (active) {
-                const desc = active.status === 'queued'
-                    ? `⏳ Queued (${active.queuePosition ? '#' + active.queuePosition : 'waiting'})\nWaiting for download slot`
-                    : `⏳ Downloading Movie\n${formatProgressBar(active.downloadedBytes, active.totalBytes, active.startedAt)}`;
-                streams.push({
-                    name: addonName,
-                    description: desc,
-                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/download/status/${encodeURIComponent(id)}`,
-                    behaviorHints: { bingeGroup: `nuvi-flow:dl:${id}` }
-                });
-                streams.push({
-                    name: addonName,
-                    description: active.status === 'queued' ? `🛑 Remove from Queue\nCancel queued download` : `🛑 Cancel Movie Download\nStop active download`,
-                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/cancel/movie/${encodeURIComponent(id)}`,
-                    behaviorHints: { bingeGroup: `nuvi-flow:cancel:${id}` }
-                });
-            }
-            else if (files.length > 0) {
+            if (files.length > 0) {
                 const totalBytes = files.reduce((acc, f) => acc + (Number(f.size) || 0), 0);
                 const delKey = `movie:${cleanId}`;
                 const armed = isDeleteArmed(delKey);
@@ -2437,33 +2419,9 @@ export function registerStremioRoutes(app, database, settings, config, requester
             const ee = String(parsedSeries.episode).padStart(2, '0');
             const cleanId = cleanMediaId(id);
             const epKey = canonicalDownloadKey('episode', id);
-            const seasonKey = `season:${parsedSeries.itemId}:${parsedSeries.season}`;
             const meta = await fetchCinemeta('series', parsedSeries.itemId);
-            const activeEp = getActiveDownloadForMedia('episode', cleanId);
 
-            if (activeEp) {
-                const isSeasonBatch = activeEp.key.startsWith('season:');
-                const desc = activeEp.status === 'queued'
-                    ? `⏳ Queued (${activeEp.queuePosition ? '#' + activeEp.queuePosition : 'waiting'})\nWaiting for download slot`
-                    : (isSeasonBatch
-                        ? `⏳ Downloading with Season ${parsedSeries.season}\n${activeEp.filename}`
-                        : `⏳ Downloading S${ss}E${ee}\n${formatProgressBar(activeEp.downloadedBytes, activeEp.totalBytes, activeEp.startedAt)}`);
-                streams.push({
-                    name: addonName,
-                    description: desc,
-                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/download/status/${encodeURIComponent(id)}`,
-                    behaviorHints: { bingeGroup: `nuvi-flow:dl:ep:${id}` }
-                });
-                streams.push({
-                    name: addonName,
-                    description: isSeasonBatch
-                        ? `🛑 Cancel Season ${parsedSeries.season} Download\nStop batch download`
-                        : (activeEp.status === 'queued' ? `🛑 Remove from Queue\nCancel queued download` : `🛑 Cancel S${ss}E${ee} Download\nStop active download`),
-                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/cancel/${isSeasonBatch ? 'season' : 'episode'}/${encodeURIComponent(id)}`,
-                    behaviorHints: { bingeGroup: `nuvi-flow:cancel:ep:${id}` }
-                });
-            }
-            else if (files.length > 0) {
+            if (files.length > 0) {
                 const epBytes = files.reduce((acc, f) => acc + (Number(f.size) || 0), 0);
                 const armedEp = isDeleteArmed(epKey);
                 streams.push({
@@ -2499,22 +2457,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
             const distinctEps = new Set(localSeasonRows.map((r) => r.episode_start)).size;
             const remainingEps = Math.max(0, totalSeasonEps - distinctEps);
 
-            if (activeDownloads.has(seasonKey)) {
-                const activeSeason = activeDownloads.get(seasonKey);
-                streams.push({
-                    name: addonName,
-                    description: `⏳ Downloading Season ${parsedSeries.season}\n${activeSeason.filename}`,
-                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/download/status/${encodeURIComponent(id)}`,
-                    behaviorHints: { bingeGroup: `nuvi-flow:dl:season:${id}` }
-                });
-                streams.push({
-                    name: addonName,
-                    description: `🛑 Cancel Season ${parsedSeries.season} Download\nStop remaining queued eps`,
-                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/cancel/season/${encodeURIComponent(id)}`,
-                    behaviorHints: { bingeGroup: `nuvi-flow:cancel:season:${id}` }
-                });
-            }
-            else if (remainingEps > 0) {
+            if (remainingEps > 0) {
                 streams.push({
                     name: addonName,
                     description: `⬇️ Download Season ${parsedSeries.season}\nChoose season release`,
