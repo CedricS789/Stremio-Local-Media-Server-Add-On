@@ -934,7 +934,7 @@ function renderExistingMediaNotice() {
       <span>File size on disk: ${formatBytes(em.size)}</span>
     </div>
     <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
-      💡 You can safely replace or upgrade this file. The server will download your selected source to temporary storage and only replace your existing file once the download is 100% complete and verified.
+      💡 You can safely change the source for this file. The server will download your selected source to temporary storage and only replace your existing file once the download is 100% complete and verified.
     </div>
   `;
   container.style.display = 'flex';
@@ -1283,7 +1283,7 @@ async function startDownload(streamIndex, btnEl, confirmedReplace = false) {
     }
     replaceActive = true;
   } else if (existingMediaInfo && !confirmedReplace) {
-    if (!confirm(`This file is already in your library:\n"${existingMediaInfo.filename}" (${formatBytes(existingMediaInfo.size)})\n\nDo you want to download this new source to REPLACE and upgrade it?`)) {
+    if (!confirm(`This file is already in your library:\n"${existingMediaInfo.filename}" (${formatBytes(existingMediaInfo.size)})\n\nDo you want to download this new source to REPLACE and switch to it?`)) {
       return;
     }
     replaceExisting = true;
@@ -1334,7 +1334,7 @@ async function startDownload(streamIndex, btnEl, confirmedReplace = false) {
             return startDownload(streamIndex, btnEl, true);
           }
         } else if (errData.existingMedia) {
-          if (confirm(`Media conflict: This file is already in your library:\n"${errData.existingMedia.filename}"\n\nDo you want to replace and upgrade with this source?`)) {
+          if (confirm(`Media conflict: This file is already in your library:\n"${errData.existingMedia.filename}"\n\nDo you want to replace it with this source?`)) {
             existingMediaInfo = errData.existingMedia;
             return startDownload(streamIndex, btnEl, true);
           }

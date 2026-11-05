@@ -497,7 +497,7 @@ export function adminHtml(csrf: string): string {
         <p class="muted">Live background downloads, storage quota allocation, and downloaded media management.</p>
       </div>
       <div class="actions">
-        <button class="btn" type="button" id="dlOpenSourcePickerBtn" onclick="dlOpenSourcePickerModal()" style="display:inline-flex;align-items:center;gap:6px;" title="Pick from your catalogue or search online to browse releases and upgrade sources">🎯 Source Picker</button>
+        <button class="btn" type="button" id="dlOpenSourcePickerBtn" onclick="dlOpenSourcePickerModal()" style="display:inline-flex;align-items:center;gap:6px;" title="Pick from your catalogue or search online to browse releases and change sources">🎯 Source Picker</button>
         <button class="btn" type="button" id="dlRescanBtn" onclick="dlRescanLibrary()">🔄 Rescan Storage</button>
       </div>
     </div>
@@ -1044,7 +1044,7 @@ export function adminHtml(csrf: string): string {
       <header class="modal-header" style="background:#0a0e17; border-bottom:1px solid rgba(56,189,248,0.25);">
         <div class="modal-heading">
           <div class="eyebrow" style="color:var(--brand2); font-weight:800;">Source Selector</div>
-          <h3 id="sourcePickerModalTitle" style="color:#ffffff; font-size:17px;">🎯 Source Picker & Quality Upgrades</h3>
+          <h3 id="sourcePickerModalTitle" style="color:#ffffff; font-size:17px;">🎯 Source Picker & Change Source</h3>
         </div>
         <button class="btn small modal-close" type="button" onclick="dlCloseSourcePickerModal()" aria-label="Close dialog">✕</button>
       </header>
@@ -1372,7 +1372,7 @@ function renderLibrary(){
     const fn = f.relativePath ? f.relativePath.split('/').pop() : '';
     const dlBtn = canDownload ? '<button class="btn small" type="button" onclick="dlDownloadFile(\'' + esc(f.id) + '\', \'' + esc(fn).replace(/'/g, "\\'") + '\')" title="Download file directly to this device">📥</button>' : '';
     const chooseUrl = (f.status === 'matched') ? dlGetChooseUrl(f) : null;
-    const upgradeBtn = chooseUrl ? '<a href="' + esc(chooseUrl) + '" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;" title="Choose higher quality or replace source in Source Picker">🎯</a>' : '';
+    const changeSourceBtn = chooseUrl ? '<a href="' + esc(chooseUrl) + '" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;" title="Change source or choose different quality in Source Picker">🔄</a>' : '';
     return '<tr>' +
       '<td><strong>' + esc(f.displayTitle || f.parsedTitle || 'Unknown') + '</strong></td>' +
       '<td>' + esc(f.libraryType) + '</td>' +
@@ -1380,7 +1380,7 @@ function renderLibrary(){
       '<td>' + esc(f.quality || (f.height ? f.height + 'p' : '—')) + '</td>' +
       '<td>' + duration(f.durationSeconds) + '</td>' +
       '<td>' + statusBadge(f) + '</td>' +
-      '<td><div style="display:inline-flex;gap:6px;align-items:center;"><button class="btn small" type="button" data-file="' + esc(f.id) + '">Open</button>' + upgradeBtn + dlBtn + '</div></td>' +
+      '<td><div style="display:inline-flex;gap:6px;align-items:center;"><button class="btn small" type="button" data-file="' + esc(f.id) + '">Open</button>' + changeSourceBtn + dlBtn + '</div></td>' +
     '</tr>';
   }).join('') || '<tr><td colspan="7"><div class="empty">No files match this filter.</div></td></tr>';
 }
@@ -1442,7 +1442,7 @@ function renderFooter(file){
     buttons.push('<button class="btn primary" type="button" data-action="test" data-id="'+esc(file.id)+'">Test stream</button>');
     const chooseUrl=dlGetChooseUrl(file);
     if(chooseUrl){
-      buttons.push('<a class="btn" href="'+esc(chooseUrl)+'" target="_blank" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;" title="Choose higher quality or replace source in Source Picker">🎯 Source / Upgrade</a>');
+      buttons.push('<a class="btn" href="'+esc(chooseUrl)+'" target="_blank" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;" title="Change source or choose different quality in Source Picker">🔄 Change Source</a>');
     }
   }
   const canDownload=state.settings?.enableDeviceDownloads!==false;
@@ -2069,8 +2069,8 @@ function dlRenderFileItem(f) {
   const metaHtml = '<a href="' + esc(stremioUrl) + '" class="file-meta-link" title="Open in Stremio: ' + esc(filename) + '">' + metaContent + '</a>';
   const openBtn = '<a href="' + esc(stremioUrl) + '" class="btn-stremio" title="Open directly in Stremio">▶ Stremio</a>';
   const chooseUrl = dlGetChooseUrl(f);
-  const upgradeBtn = chooseUrl
-    ? '<a href="' + esc(chooseUrl) + '" target="_blank" class="btn small" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;text-decoration:none;" title="Choose higher quality or replace source in Source Picker">🎯 Upgrade</a>'
+  const changeSourceBtn = chooseUrl
+    ? '<a href="' + esc(chooseUrl) + '" target="_blank" class="btn small" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;text-decoration:none;" title="Change source or choose different quality in Source Picker">🔄 Change Source</a>'
     : '';
   const canDownload = state.settings?.enableDeviceDownloads !== false;
   const downloadBtn = canDownload ? '<button class="btn small" type="button" onclick="dlDownloadFile(\'' + esc(f.id) + '\', \'' + esc(filename).replace(/'/g, "\\'") + '\')" title="Save file to this device (' + esc(filename) + ')" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;">📥 Save</button>' : '';
@@ -2095,7 +2095,7 @@ function dlRenderFileItem(f) {
     '<div class="file-size-badge">' + fmtGb(f.size) + '</div>' +
     '<div class="file-actions">' +
       openBtn +
-      upgradeBtn +
+      changeSourceBtn +
       downloadBtn +
       watchBtn +
       '<button class="btn danger small" onclick="dlOpenDeleteModal(\'file\', { id:\'' + esc(f.id) + '\', name:\'' + esc(filename) + '\', size:' + (Number(f.size) || 0) + ' })">🗑️ Delete</button>' +
@@ -2464,7 +2464,7 @@ function spOnMediaSelectChange() {
     if (seriesControls) seriesControls.style.display = 'none';
     if (previewEl) {
       previewEl.style.display = 'block';
-      previewEl.innerHTML = '🎬 <strong>' + esc(item.title) + '</strong>' + (item.year ? ' (' + item.year + ')' : '') + '<br><span style="color:var(--muted);font-size:11.5px;">Click below to open the Source Picker to upgrade or replace this movie.</span>';
+      previewEl.innerHTML = '🎬 <strong>' + esc(item.title) + '</strong>' + (item.year ? ' (' + item.year + ')' : '') + '<br><span style="color:var(--muted);font-size:11.5px;">Click below to open the Source Picker to change or replace source for this movie.</span>';
     }
     if (launchBtn) launchBtn.disabled = false;
   } else {
@@ -2490,7 +2490,7 @@ function spOnSeasonChange() {
   if (!epSelect) return;
 
   const seasonEps = item.episodes.filter(e => e.season === selectedSeason).sort((a, b) => a.episode - b.episode);
-  let html = '<option value="season">📦 Entire Season ' + selectedSeason + ' (Season Pack Upgrade)</option>';
+  let html = '<option value="season">📦 Entire Season ' + selectedSeason + ' (Season Pack — Batch Change / Download)</option>';
   for (const ep of seasonEps) {
     const epCode = 'S' + String(selectedSeason).padStart(2, '0') + 'E' + String(ep.episode).padStart(2, '0');
     const sizeStr = ep.size ? ' · ' + fmtGb(ep.size) : '';
@@ -2511,7 +2511,7 @@ function spUpdatePreview() {
     const isSeasonPack = target === 'season';
     previewEl.style.display = 'block';
     previewEl.innerHTML = '📺 <strong>' + esc(item.title) + '</strong> — ' +
-      (isSeasonPack ? ('Entire Season ' + season + ' (Batch Upgrade / Multi-Episode Picker)') : ('Season ' + season + ' Episode ' + target)) +
+      (isSeasonPack ? ('Entire Season ' + season + ' (Season Pack — Batch Change / Download)') : ('Season ' + season + ' Episode ' + target)) +
       '<br><span style="color:var(--muted);font-size:11.5px;">Click below to launch Source Picker for this selection.</span>';
   }
 }

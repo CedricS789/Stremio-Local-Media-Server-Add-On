@@ -1608,7 +1608,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
                         ok: false,
                         alreadyExists: true,
                         existingMedia: existingCheck,
-                        message: `This movie is already in your library ("${existingCheck.filename}"). Choose Replace to upgrade or replace with this source.`
+                        message: `This movie is already in your library ("${existingCheck.filename}"). Choose Replace to switch to this source.`
                     });
                 }
                 replaceOldPath = existingCheck.file?.absolute_path || existingCheck.path || null;
