@@ -1293,6 +1293,10 @@ export function registerAdminRoutes(
       settings.set('aiometadataUrl', body.aiometadataUrl.trim());
     }
 
+    if (typeof body.aiostreamsUrl === 'string') {
+      settings.set('aiostreamsUrl', body.aiostreamsUrl.trim());
+    }
+
     for (const key of [
       'moviesPath',
       'tvPath',
@@ -1605,6 +1609,42 @@ export function registerAdminRoutes(
       return reply.send({
         ok: true,
         name: data?.name || 'AIOMetadata',
+        version: data?.version || '',
+        latencyMs,
+        cleanBaseUrl: rawUrl.replace(/\/manifest\.json$/, '')
+      });
+    } catch (err: any) {
+      return reply.send({ ok: false, error: err?.message || 'Connection timed out or failed' });
+    }
+  });
+
+  app.post('/admin/api/aiostreams/test', {
+    preHandler: requireAdmin(config, true)
+  }, async (request, reply) => {
+    const body = (request.body || {}) as { url?: string };
+    let rawUrl = (body.url || settings.aiostreamsUrl || '').trim();
+    if (!rawUrl) {
+      return reply.send({ ok: false, error: 'No AIOStreams instance URL provided' });
+    }
+    rawUrl = rawUrl.replace(/^stremio:\/\//i, 'https://').replace(/\/+$/, '');
+    if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
+      rawUrl = `https://${rawUrl}`;
+    }
+    const manifestUrl = rawUrl.endsWith('/manifest.json') ? rawUrl : `${rawUrl}/manifest.json`;
+    const start = Date.now();
+    try {
+      const resp = await fetch(manifestUrl, {
+        headers: { 'User-Agent': 'Stremio/5.0' },
+        signal: AbortSignal.timeout(6000)
+      });
+      if (!resp.ok) {
+        return reply.send({ ok: false, error: `AIOStreams returned HTTP ${resp.status} ${resp.statusText}` });
+      }
+      const data = (await resp.json()) as any;
+      const latencyMs = Date.now() - start;
+      return reply.send({
+        ok: true,
+        name: data?.name || 'AIOStreams',
         version: data?.version || '',
         latencyMs,
         cleanBaseUrl: rawUrl.replace(/\/manifest\.json$/, '')

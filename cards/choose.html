@@ -819,13 +819,15 @@ let activeDownloadInfo = null;
 let existingMediaInfo = null;
 let selectedEpisodes = new Set();
 
-function getDownloadButtonLabel() {
+function getDownloadButtonLabel(stream) {
   if (mode === 'season') {
     if (selectedEpisodes.size === 0) return '⚠️ Select at least 1 ep';
-    if (allSeasonEpisodes.length > 0 && selectedEpisodes.size === allSeasonEpisodes.length) {
-      return `⬇ Download Entire Season (${allSeasonEpisodes.length} eps)`;
+    const count = selectedEpisodes.size;
+    const estSize = stream?.videoSize ? ` · ~${formatBytes(stream.videoSize * count)}` : '';
+    if (allSeasonEpisodes.length > 0 && count === allSeasonEpisodes.length) {
+      return `⬇ Download Entire Season (${count} eps${estSize})`;
     }
-    return `⬇ Download Selected (${selectedEpisodes.size} eps)`;
+    return `⬇ Download Selected (${count} eps${estSize})`;
   }
   if (activeDownloadInfo) {
     return '⬇ Switch to this Source';
@@ -837,11 +839,15 @@ function getDownloadButtonLabel() {
 }
 
 function updateButtons() {
-  const lbl = getDownloadButtonLabel();
   const disabled = (mode === 'season' && selectedEpisodes.size === 0);
-  document.querySelectorAll('.btn-download').forEach(b => {
-    b.innerText = lbl;
-    b.disabled = disabled;
+  document.querySelectorAll('.stream-card').forEach(card => {
+    const btn = card.querySelector('.btn-download');
+    const origIdx = card.getAttribute('data-orig-idx');
+    const s = allStreams.find(x => x._origIdx == origIdx);
+    if (btn) {
+      btn.innerText = getDownloadButtonLabel(s);
+      btn.disabled = disabled;
+    }
   });
   const badge = document.getElementById('selectedEpBadge');
   if (badge) badge.innerText = `${selectedEpisodes.size} of ${allSeasonEpisodes.length} selected`;
@@ -947,7 +953,7 @@ function toggleEpisode(num) {
     selectedEpisodes.add(num);
   }
   renderEpisodePills();
-  updateButtons();
+  applyFilters();
 }
 
 function selectAllEpisodes(flag) {
@@ -956,7 +962,7 @@ function selectAllEpisodes(flag) {
     allSeasonEpisodes.forEach(ep => selectedEpisodes.add(Number(ep.episode)));
   }
   renderEpisodePills();
-  updateButtons();
+  applyFilters();
 }
 
 function selectMissingOnly() {
@@ -968,7 +974,7 @@ function selectMissingOnly() {
     }
   });
   renderEpisodePills();
-  updateButtons();
+  applyFilters();
 }
 
 function renderEpisodePills() {
@@ -1075,12 +1081,12 @@ async function loadSources() {
           qBadge.style.background = 'rgba(244, 63, 94, 0.15)';
           qBadge.style.color = '#fda4af';
           qBadge.style.border = '1px solid rgba(244, 63, 94, 0.4)';
-          qBadge.innerText = '⚠️ Storage Quota Full (' + formatBytes(q.allocatedLimitBytes) + ')';
+          qBadge.innerText = '⚠️ Storage Space Full (' + formatBytes(q.allocatedLimitBytes) + ')';
         } else {
           qBadge.style.background = 'rgba(14, 165, 233, 0.15)';
           qBadge.style.color = '#7dd3fc';
           qBadge.style.border = '1px solid rgba(14, 165, 233, 0.35)';
-          qBadge.innerText = '💾 Quota: ' + formatBytes(q.remainingBytes) + ' free of ' + formatBytes(q.allocatedLimitBytes);
+          qBadge.innerText = '💾 Storage: ' + formatBytes(q.remainingBytes) + ' free of ' + formatBytes(q.allocatedLimitBytes);
         }
       }
     }
@@ -1210,37 +1216,52 @@ function renderStreams(streams) {
     else if (s.quality) qBadge = `<span class="badge badge-tag">${s.quality}</span>`;
 
     const cachedBadge = s.cached ? '<span class="badge badge-cached">⚡ Cached</span>' : '';
-    const isTrueSeasonPack = Boolean(mode === 'season' && s.folderSize && s.videoSize && s.folderSize > s.videoSize * 1.5);
-    
+    const selCount = mode === 'season' ? Math.max(1, selectedEpisodes.size) : 1;
+    const estSelectedBytes = (s.videoSize || 0) * selCount;
+    const isMultiSeasonArchive = Boolean(mode === 'season' && s.folderSize && s.videoSize && s.folderSize > (s.videoSize * (allSeasonEpisodes.length || 24) * 1.5));
+    const isTrueSeasonPack = Boolean(mode === 'season' && s.folderSize && !isMultiSeasonArchive && s.folderSize > s.videoSize * 1.5);
+
     let sizeBadge = '';
-    if (isTrueSeasonPack) {
-      sizeBadge = `<span class="badge badge-size">📦 Batch Pack: ${formatBytes(s.folderSize)}</span>`;
+    if (mode === 'season') {
+      if (s.videoSize) {
+        sizeBadge = `<span class="badge badge-size" style="background:rgba(56,189,248,0.18);border:1px solid rgba(56,189,248,0.35);color:#7dd3fc;">Selected (${selCount} eps): ~${formatBytes(estSelectedBytes)}</span>` +
+          `<span class="badge badge-size">~${formatBytes(s.videoSize)} / ep</span>`;
+      } else if (s.folderSize) {
+        sizeBadge = `<span class="badge badge-size">📦 Torrent Pack: ${formatBytes(s.folderSize)}</span>`;
+      }
     } else if (s.videoSize) {
-      sizeBadge = `<span class="badge badge-size">${formatBytes(s.videoSize)}${mode === 'season' ? ' / ep' : ''}</span>`;
+      sizeBadge = `<span class="badge badge-size">${formatBytes(s.videoSize)}</span>`;
     }
 
     const audioBadge = s.audio ? `<span class="badge badge-tag">🎵 ${s.audio}</span>` : '';
     const codecBadge = s.codec ? `<span class="badge badge-tag">${s.codec}</span>` : '';
     const langBadges = (s.languages || []).map(l => `<span class="badge badge-lang">${l}</span>`).join(' ');
-    let quotaWarning = '';
-    if (s.videoSize && currentQuota && s.videoSize > currentQuota.remainingBytes) {
-      quotaWarning = `<span class="badge" style="background:rgba(244,63,94,0.18);color:#fda4af;border:1px solid rgba(244,63,94,0.4);">⚠️ Exceeds Quota</span>`;
+    let storageWarning = '';
+    const requiredBytes = mode === 'season' ? estSelectedBytes : (s.videoSize || 0);
+    if (requiredBytes && currentQuota && requiredBytes > currentQuota.remainingBytes) {
+      storageWarning = `<span class="badge" style="background:rgba(244,63,94,0.18);color:#fda4af;border:1px solid rgba(244,63,94,0.4);">⚠️ Exceeds Storage Limit</span>`;
     }
 
-    const buttonLabel = getDownloadButtonLabel();
+    const buttonLabel = getDownloadButtonLabel(s);
     const btnDisabled = (mode === 'season' && selectedEpisodes.size === 0) ? 'disabled' : '';
 
     let seasonProfileBanner = '';
     if (mode === 'season') {
-      if (isTrueSeasonPack) {
-        seasonProfileBanner = `<div style="font-size:11px; color:#38bdf8; font-weight:750; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><span>📦 Complete Season Batch</span><span style="background:var(--accent-surface); color:#7dd3fc; padding:1px 6px; border-radius:4px; font-weight:700;">Total: ${formatBytes(s.folderSize)}</span></div>`;
-      } else {
-        seasonProfileBanner = `<div style="font-size:11px; color:#38bdf8; font-weight:750; margin-bottom:4px; display:flex; align-items:center; gap:6px;"><span>🎬 Release Profile</span><span style="background:var(--accent-surface); color:#7dd3fc; padding:1px 6px; border-radius:4px; font-weight:700;">~${formatBytes(s.videoSize || 0)} per episode</span></div>`;
+      let archiveInfo = '';
+      if (isMultiSeasonArchive) {
+        archiveInfo = `<span style="color:var(--text-muted); font-size:11px; font-weight:normal;" title="This torrent contains multi-season files. Only your selected ${selCount} episodes will be downloaded.">(Multi-season torrent boxset: ${formatBytes(s.folderSize)})</span>`;
+      } else if (isTrueSeasonPack) {
+        archiveInfo = `<span style="color:var(--text-muted); font-size:11px; font-weight:normal;">(Full season torrent: ${formatBytes(s.folderSize)})</span>`;
       }
+      seasonProfileBanner = `<div style="font-size:11.5px; color:#38bdf8; font-weight:700; margin-bottom:4px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">` +
+        `<span>🎯 Selected (${selCount} eps): ~${formatBytes(estSelectedBytes)}</span>` +
+        `<span style="background:var(--accent-surface); color:#7dd3fc; padding:1px 6px; border-radius:4px; font-weight:600; font-size:11px;">~${formatBytes(s.videoSize || 0)} per episode</span>` +
+        archiveInfo +
+      `</div>`;
     }
 
     return `
-      <div class="${cardClass}">
+      <div class="${cardClass}" data-orig-idx="${s._origIdx}">
         <div class="stream-details">
           <div class="stream-badges">
             ${resBadge}
@@ -1250,14 +1271,14 @@ function renderStreams(streams) {
             ${audioBadge}
             ${codecBadge}
             ${langBadges}
-            ${quotaWarning}
+            ${storageWarning}
           </div>
           ${seasonProfileBanner}
           <div class="stream-filename" title="${s.filename}"><span style="color:var(--text-muted); font-size:11px;">${mode === 'season' ? 'Sample file: ' : ''}</span>${s.filename}</div>
           <div class="stream-indexer">
             <span>${s.indexer || 'AIOStreams'}</span>
             ${s.group ? `<span>• Release: <strong>${s.group}</strong></span>` : ''}
-            ${isTrueSeasonPack ? `<span>• Complete Pack: ${formatBytes(s.folderSize)}</span>` : (mode === 'season' && s.videoSize ? `<span>• ~${formatBytes(s.videoSize)} per ep</span>` : '')}
+            ${isMultiSeasonArchive ? `<span>• Torrent Boxset: ${formatBytes(s.folderSize)}</span>` : (isTrueSeasonPack ? `<span>• Season Pack: ${formatBytes(s.folderSize)}</span>` : (mode === 'season' && s.videoSize ? `<span>• ~${formatBytes(s.videoSize)} per ep</span>` : ''))}
           </div>
         </div>
         <div class="stream-actions">

@@ -364,7 +364,7 @@ function score1080pDownward(stream) {
 }
 
 async function fetchBestCandidate(type, id) {
-    const aioBase = String(process.env.AIOSTREAMS_BASE_URL || '').replace(/\/+$/, '');
+    const aioBase = (sharedSettings?.aiostreamsUrl || String(process.env.AIOSTREAMS_BASE_URL || '')).trim().replace(/\/+$/, '');
     if (!aioBase)
         return null;
     const cacheKey = `${type}:${id}`;
@@ -1238,7 +1238,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
         if (quota.usedBytes + requiredBytes > quota.allocatedLimitBytes) {
             return {
                 ok: false,
-                reason: `Storage quota exceeded: File requires ${formatGb(requiredBytes)}, but only ${formatGb(quota.remainingQuotaBytes)} remains in your ${limitGb} GB quota.`
+                reason: `Storage limit exceeded: File requires ${formatGb(requiredBytes)}, but only ${formatGb(quota.remainingQuotaBytes)} free space remains in your ${limitGb} GB storage allocation.`
             };
         }
         const safetyBuffer = 500 * 1024 * 1024;
@@ -1452,8 +1452,8 @@ export function registerStremioRoutes(app, database, settings, config, requester
         if (!checkDownloadsAuth(request, reply)) {
             return reply.code(401).send({ error: 'Authentication required' });
         }
-        const aioBase = String(process.env.AIOSTREAMS_BASE_URL || '').replace(/\/+$/, '');
-        if (!aioBase) return reply.code(500).send({ error: 'AIOSTREAMS_BASE_URL is not configured' });
+        const aioBase = (settings.aiostreamsUrl || String(process.env.AIOSTREAMS_BASE_URL || '')).trim().replace(/\/+$/, '');
+        if (!aioBase) return reply.code(500).send({ error: 'AIOStreams is not configured. Please connect your AIOStreams instance URL in Settings.' });
 
         const type = String(request.query?.type || 'series');
         const id = cleanMediaId(String(request.query?.id || ''));
@@ -1723,7 +1723,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
 
             (async () => {
                 try {
-                    const aioBase = String(process.env.AIOSTREAMS_BASE_URL || '').replace(/\/+$/, '');
+                    const aioBase = (settings.aiostreamsUrl || String(process.env.AIOSTREAMS_BASE_URL || '')).trim().replace(/\/+$/, '');
                     const meta = await fetchCinemeta('series', parsed.itemId);
                     const showTitle = sanitizePathSegment(meta?.name || parsed.itemId, parsed.itemId);
                     const seasonVideos = (meta?.videos || [])

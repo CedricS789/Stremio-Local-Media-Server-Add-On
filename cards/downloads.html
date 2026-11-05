@@ -1212,7 +1212,7 @@
       </div>
       <div>
         <h1>Stremio Local Media Server</h1>
-        <p class="sub">Self-hosted media library, storage quota & active transfers</p>
+        <p class="sub">Self-hosted media library, storage space & active transfers</p>
       </div>
     </div>
     <div class="header-actions">
@@ -1237,7 +1237,7 @@
       <div class="stat-sub" id="stat-sub-used">Media Library</div>
     </div>
     <div class="stat-card">
-      <div class="stat-label">Allocated Quota Remaining</div>
+      <div class="stat-label">Available Storage Remaining</div>
       <div class="stat-val" id="stat-free">0 GB Free</div>
       <div class="stat-sub" id="stat-sub-drive">Host Storage Free: 0 GB</div>
     </div>
@@ -1250,7 +1250,7 @@
 
   <div class="storage-card">
     <div class="storage-card-header">
-      <span class="storage-card-title">📊 Storage Quota Allocation</span>
+      <span class="storage-card-title">📊 Storage Space Allocation</span>
       <span class="storage-card-val" id="storage-card-val">0 GB of 100 GB used (0%)</span>
     </div>
     <div class="storage-bar-bg">
@@ -1910,13 +1910,13 @@ function renderStats() {
   freeCard.textContent = fmtGb(remainingBytes) + ' Free';
   if (usedBytes >= limitBytes) {
     freeCard.style.color = '#f43f5e';
-    document.getElementById('stat-sub-drive').textContent = '⚠️ Storage quota full! Host Storage Free: ' + fmtGb(disk.freeBytes);
+    document.getElementById('stat-sub-drive').textContent = '⚠️ Storage limit reached! Host Storage Free: ' + fmtGb(disk.freeBytes);
   } else if (pct >= 80) {
     freeCard.style.color = '#f59e0b';
-    document.getElementById('stat-sub-drive').textContent = '⚠️ Storage quota at ' + pctStr + '. Host Storage Free: ' + fmtGb(disk.freeBytes);
+    document.getElementById('stat-sub-drive').textContent = '⚠️ Storage space at ' + pctStr + '. Host Storage Free: ' + fmtGb(disk.freeBytes);
   } else {
     freeCard.style.color = '#fff';
-    document.getElementById('stat-sub-drive').textContent = disk.freeBytes ? 'Host Storage Free: ' + fmtGb(disk.freeBytes) : 'Allocated quota';
+    document.getElementById('stat-sub-drive').textContent = disk.freeBytes ? 'Host Storage Free: ' + fmtGb(disk.freeBytes) : 'Storage limit';
   }
   
   document.getElementById('stat-files').textContent = (stats.totalFiles || 0) + ' Files';

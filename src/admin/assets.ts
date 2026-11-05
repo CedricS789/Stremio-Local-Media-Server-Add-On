@@ -77,6 +77,11 @@ export const adminCss = `
 .dl-bar-bg{height:7px;background:#050609;border:1px solid var(--line);border-radius:5px;overflow:hidden;margin-bottom:6px}
 .dl-bar-fill{height:100%;background:linear-gradient(90deg,#0284c7,#38bdf8);border-radius:4px;transition:width .2s ease}
 .dl-meta{font-size:12px;color:var(--muted)}
+.dl-menu-wrap{position:relative;display:inline-block}
+.dl-action-popover{display:none;position:absolute;right:0;top:calc(100% + 4px);background:#090d16;border:1px solid rgba(148,163,184,0.25);box-shadow:0 14px 34px rgba(0,0,0,0.75);border-radius:8px;z-index:999;min-width:210px;padding:6px;flex-direction:column;gap:3px;box-sizing:border-box}
+.dl-menu-item{display:flex;align-items:center;gap:8px;padding:8px 10px;color:var(--text);font-size:12px;font-weight:600;text-decoration:none;background:transparent;border:none;width:100%;text-align:left;cursor:pointer;border-radius:6px;transition:background .15s ease,color .15s ease;box-sizing:border-box}
+.dl-menu-item:hover,.dl-menu-item:focus{background:rgba(56,189,248,0.14);color:#38bdf8;outline:none}
+.dl-menu-icon{font-size:14px;display:inline-flex;align-items:center;justify-content:center;width:18px;flex-shrink:0}
 .brand-user-mobile{display:none}
 @media(max-width:900px){
   /* Shell & Sticky Header */
@@ -486,7 +491,7 @@ export function adminHtml(csrf: string): string {
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="csrf-token" content="${csrf}"><title>Stremio Local Media Server</title><style>${adminCss}</style></head><body>
   <div class="shell"><aside class="sidebar"><div class="sidebar-body"><div class="brand" onclick="switchView('dashboard')" style="cursor:pointer;" title="Stremio Local Media Server — Overview"><div class="brand-left"><div class="brand-mark"><img id="sidebarBrandIcon" src="/addon-icon" alt="Stremio Local Media Server"></div><div class="brand-copy"><h1 id="brandName">Stremio Local Media Server</h1><p>Self-hosted media & downloader</p></div></div><div class="brand-user-mobile"><span class="user-badge-mini"><span class="pulse-dot"></span> admin</span><button class="btn small btn-signout" type="button" id="adminLogoutBtnMobile" onclick="handleLogout()" title="Sign out of server">🔒 Sign Out</button></div></div><nav class="nav" aria-label="Admin sections"><div class="nav-group"><span class="nav-label">Dock</span><button class="active" data-view="dashboard" aria-current="page"><span class="nav-icon">📊</span><span class="nav-text">Overview</span></button></div><div class="nav-group"><span class="nav-label">Media</span><button data-view="library"><span class="nav-icon">🎬</span><span class="nav-text">Library</span></button><button data-view="downloads"><span class="nav-icon">📥</span><span class="nav-text">Downloads</span></button><button data-view="logs"><span class="nav-icon">📋</span><span class="nav-text">Scan logs</span></button></div><div class="nav-group"><span class="nav-label">System</span><button data-view="settings"><span class="nav-icon">⚙️</span><span class="nav-text">Settings</span></button><button data-view="health"><span class="nav-icon">🩺</span><span class="nav-text">System health</span></button><button data-view="backups"><span class="nav-icon">🛡️</span><span class="nav-text">Backups</span></button></div></nav></div><div class="sidebar-foot"><div class="sidebar-user-card"><div class="user-info"><div class="user-avatar-wrap">👤</div><div class="user-meta"><span class="user-name">admin</span><span class="user-role"><span class="pulse-dot"></span> Administrator</span></div></div><button type="button" class="btn small btn-signout" id="adminLogoutBtn" onclick="handleLogout()" title="Sign out of server"><span>🔒</span> Sign Out</button></div><div class="server-state"><div class="server-status-pill"><span class="pulse"></span><span id="serverState">Server online</span></div><span class="server-version" id="buildVersion">v1.1.1</span></div></div></aside>
 <main class="main"><section id="dashboard" class="view active"><div class="topbar"><div><div class="eyebrow">Dock Control</div><h2>Stremio Local Media Server Overview</h2><div class="muted" id="lastScan">Loading scan status…</div></div>
-<div class="actions"><button class="btn primary" type="button" data-view-go="downloads" style="display:inline-flex;align-items:center;gap:6px;">📥 Downloads & Storage</button><button class="btn" data-scan="changed">Scan changes</button><button class="btn" data-scan="full">Full rescan</button></div></div><div class="stats" id="stats"></div><div class="grid"><div class="card"><div class="card-head"><h3>Recently added</h3><button class="btn small" data-view-go="library">View library</button></div><div class="list" id="recentList"></div></div><div class="card"><div class="card-head"><h3>Downloads & Storage Manager</h3><button class="btn small" type="button" data-view-go="downloads">View downloads</button></div><div style="padding:18px 20px;"><p style="margin:0 0 16px 0;color:var(--muted);font-size:13px;line-height:1.6;">Manage downloaded movies and TV series, track your allocated storage quota, choose stream quality directly from Stremio, or trigger instant file cleanup.</p><div style="display:flex;gap:10px;flex-wrap:wrap;"><button class="btn primary" type="button" data-view-go="downloads">📥 Open Downloads & Storage</button></div></div></div></div></section>
+<div class="actions"><button class="btn primary" type="button" data-view-go="downloads" style="display:inline-flex;align-items:center;gap:6px;">📥 Downloads & Storage</button><button class="btn" data-scan="changed">Scan changes</button><button class="btn" data-scan="full">Full rescan</button></div></div><div class="stats" id="stats"></div><div class="grid"><div class="card"><div class="card-head"><h3>Recently added</h3><button class="btn small" data-view-go="library">View library</button></div><div class="list" id="recentList"></div></div><div class="card"><div class="card-head"><h3>Downloads & Storage Manager</h3><button class="btn small" type="button" data-view-go="downloads">View downloads</button></div><div style="padding:18px 20px;"><p style="margin:0 0 16px 0;color:var(--muted);font-size:13px;line-height:1.6;">Manage downloaded movies and TV series, track your available storage space, choose stream quality directly from Stremio, or trigger instant file cleanup.</p><div style="display:flex;gap:10px;flex-wrap:wrap;"><button class="btn primary" type="button" data-view-go="downloads">📥 Open Downloads & Storage</button></div></div></div></div></section>
   <section id="health" class="view"><div class="topbar"><div><div class="eyebrow">Operational readiness</div><h2>System health</h2><p class="muted">On-demand, sanitized checks for the services and storage Stremio Local Media Server depends on.</p></div><div class="actions"><button class="btn" id="copyDiagnostics" type="button" data-copy="diagnosticsJson" data-copy-label="Diagnostics copied" disabled>Copy diagnostics</button><button class="btn primary" type="button" data-refresh-health>Run checks</button></div></div><div class="health-banner" id="healthSummary" aria-live="polite"><div><div class="health-banner-title">Checks have not run yet</div><div class="health-banner-meta">Open this page or run the checks manually.</div></div></div><div class="health-checks" id="healthChecks"></div><section class="outcome-section" aria-labelledby="healthDiagnosticsHeading"><div class="section-head"><div><h3 id="healthDiagnosticsHeading">Sanitized diagnostic bundle</h3><p>Useful for troubleshooting without paths, URLs, credentials, tokens, or raw device identities.</p></div></div><div class="card"><div class="card-body"><div class="health-outcome-summary" id="healthOutcomeSummary">No diagnostic snapshot has loaded.</div><details class="technical-details health-diagnostics"><summary>Diagnostic JSON</summary><div class="technical-inner"><pre class="code" id="diagnosticsJson">Run system checks to create a diagnostic bundle.</pre></div></details></div></div></section></section>
   <section id="backups" class="view"><div class="topbar"><div><div class="eyebrow">Data protection</div><h2>Database backups</h2><p class="muted">Live, integrity-checked SQLite snapshots with bounded automatic retention.</p></div><div class="actions"><button class="btn" type="button" data-refresh-backups>Refresh</button><button class="btn primary" type="button" data-create-backup>Create backup</button></div></div><div class="health-banner" id="backupSummary" aria-live="polite"><div><div class="health-banner-title">Backups have not loaded yet</div><div class="health-banner-meta">Open this page to inspect verified recovery points.</div></div></div><div class="stats activity-operations" id="backupStats" aria-label="Backup status"></div><div class="card table-wrap backup-table"><table class="table"><thead><tr><th>Created</th><th>Trigger</th><th>Size</th><th>Integrity</th><th></th></tr></thead><tbody id="backupRows"></tbody></table></div><div class="notice backup-note">Restores are intentionally offline: stop Stremio Local Media Server, preserve the current database, replace it with a downloaded snapshot, remove stale <code>-wal</code>/<code>-shm</code> companions, then restart and run System Health.</div></section>
   <section id="downloads" class="view">
@@ -494,7 +499,7 @@ export function adminHtml(csrf: string): string {
       <div>
         <div class="eyebrow">Transfers & Disk Storage</div>
         <h2>Downloads & Storage</h2>
-        <p class="muted">Live background downloads, storage quota allocation, and downloaded media management.</p>
+        <p class="muted">Live background downloads, storage space allocation, and downloaded media management.</p>
       </div>
       <div class="actions">
         <button class="btn" type="button" id="dlOpenSourcePickerBtn" onclick="dlOpenSourcePickerModal()" style="display:inline-flex;align-items:center;gap:6px;" title="Pick from your catalogue or search online to browse releases and change sources">🎯 Source Picker</button>
@@ -513,9 +518,9 @@ export function adminHtml(csrf: string): string {
         <div class="muted" id="dlStatSubUsed" style="font-size:11px;">Loading media storage...</div>
       </div>
       <div class="stat">
-        <span>Allocated Quota Remaining</span>
+        <span>Available Storage Remaining</span>
         <strong id="dlStatFree">0 GB Free</strong>
-        <div class="muted" id="dlStatSubDrive" style="font-size:11px;margin-top:10px;">Allocated quota</div>
+        <div class="muted" id="dlStatSubDrive" style="font-size:11px;margin-top:10px;">Storage limit</div>
       </div>
       <div class="stat">
         <span>Downloaded Content</span>
@@ -529,10 +534,10 @@ export function adminHtml(csrf: string): string {
       </div>
     </div>
 
-    <!-- STORAGE QUOTA ALLOCATION CARD -->
+    <!-- STORAGE SPACE ALLOCATION CARD -->
     <div class="card" style="margin-bottom:24px;">
       <div class="card-head">
-        <h3>Storage Quota Allocation</h3>
+        <h3>Storage Space Allocation</h3>
         <span class="badge" id="dlStorageBadge">0 GB / 100 GB</span>
       </div>
       <div style="padding:20px;">
@@ -658,7 +663,7 @@ export function adminHtml(csrf: string): string {
 <div class="settings-nav" role="tablist" aria-label="Settings sections">
   <button class="settings-tab active" id="settings-tab-general" type="button" role="tab" aria-selected="true" aria-controls="settings-panel-general" tabindex="0" data-settings-tab="general">General</button>
   <button class="settings-tab" id="settings-tab-downloads" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-downloads" tabindex="-1" data-settings-tab="downloads">Downloads Engine</button>
-  <button class="settings-tab" id="settings-tab-storage" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-storage" tabindex="-1" data-settings-tab="storage">Storage & Quota</button>
+  <button class="settings-tab" id="settings-tab-storage" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-storage" tabindex="-1" data-settings-tab="storage">Storage & Limits</button>
   <button class="settings-tab" id="settings-tab-streaming" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-streaming" tabindex="-1" data-settings-tab="streaming">Network & Streaming</button>
   <button class="settings-tab" id="settings-tab-security" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-security" tabindex="-1" data-settings-tab="security">Security</button>
   <button class="settings-tab" id="settings-tab-danger" type="button" role="tab" aria-selected="false" aria-controls="settings-panel-danger" tabindex="-1" data-settings-tab="danger" style="color:#fda4af;">Danger Zone</button>
@@ -850,18 +855,64 @@ export function adminHtml(csrf: string): string {
     </div>
   </div>
 </div>
+<div class="field full">
+  <label>Streaming Indexer Provider (AIOStreams)</label>
+  <input type="hidden" id="aiostreamsUrl" name="aiostreamsUrl" value="">
+
+  <!-- Connected State (Active & Locked) -->
+  <div id="aiostreamsConnectedCard" class="provider-card good" style="display:none;">
+    <div class="provider-card-header">
+      <div class="provider-card-left">
+        <span class="provider-badge good">● Connected</span>
+        <span class="provider-name" id="aiostreamsProviderName">AIOStreams</span>
+      </div>
+      <div class="provider-card-actions">
+        <button type="button" class="btn small" id="testAiostreamsBtn">Test Connection</button>
+        <button type="button" class="btn small" id="changeAiostreamsBtn">Change</button>
+        <button type="button" class="btn small danger" id="disconnectAiostreamsBtn">Disconnect</button>
+      </div>
+    </div>
+    <div class="provider-card-body">
+      <div class="provider-url-locked">
+        <span class="lock-icon" title="Connection locked">🔒</span>
+        <span id="aiostreamsUrlDisplay" class="locked-url-text">Connected</span>
+      </div>
+      <p class="provider-meta">
+        Active · Providing torrent & debrid stream indexing, cached release matching, and source selection in Source Picker.
+      </p>
+    </div>
+  </div>
+
+  <!-- Disconnected State -->
+  <div id="aiostreamsDisconnectedCard" class="provider-card" style="display:none;">
+    <div class="provider-card-header">
+      <div class="provider-card-left">
+        <span class="provider-badge neutral">Not Configured</span>
+        <span class="provider-name">AIOStreams Indexer</span>
+      </div>
+      <div class="provider-card-actions">
+        <button type="button" class="btn small primary" id="connectAiostreamsBtn">⚡ Connect AIOStreams</button>
+      </div>
+    </div>
+    <div class="provider-card-body">
+      <p class="provider-meta">
+        Connect your AIOStreams instance URL to enable stream indexing, quality selection, and cached Debrid downloads in Source Picker.
+      </p>
+    </div>
+  </div>
+</div>
 </section>
 
-<!-- Panel 2: Storage & Quota (NEW!) -->
+<!-- Panel 2: Storage & Limits -->
 <section class="settings-panel" id="settings-panel-storage" role="tabpanel" aria-labelledby="settings-tab-storage" data-settings-panel="storage" hidden>
 <div class="settings-section">
-  <h3>Storage Quota</h3>
+  <h3>Storage Space Limit</h3>
   <p>Dedicated storage allocation for downloaded media.</p>
 </div>
 <div class="field full">
   <label for="mediaSoftLimitGb">Max Allocated Storage Space (GB)</label>
   <input id="mediaSoftLimitGb" class="input" name="mediaSoftLimitGb" type="number" min="1" max="100000" step="1" placeholder="100">
-  <p class="help">Total allocated storage space in Gigabytes. Downloads verify available quota and host disk space before starting.</p>
+  <p class="help">Total allocated storage space in Gigabytes. Downloads verify available storage space and host disk space before starting.</p>
 </div>
 <div class="settings-section">
   <h3>Media Library Folders</h3>
@@ -1117,17 +1168,43 @@ export function adminHtml(csrf: string): string {
         <div class="field full" style="margin:0;">
           <label for="aiometadataModalInput">AIOMetadata Manifest URL or UUID</label>
           <input id="aiometadataModalInput" class="input" type="text" placeholder="Paste stremio://... or https://... or your UUID" autocomplete="off" spellcheck="false">
-          <p class="help">Accepts HTTP/HTTPS manifest URLs (e.g. self-hosted or ElfHosted), <code>stremio://...</code> install links, or configuration UUIDs.</p>
+          <p class="help">Accepts any HTTP/HTTPS manifest URL (e.g. self-hosted on LAN or hosted provider), <code>stremio://...</code> install links, or configuration UUIDs.</p>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:#050608;border:1px solid var(--line);border-radius:10px;">
-          <span style="font-size:12px;color:var(--dim);">Need to configure or get your link?</span>
-          <a href="https://aiometadata.elfhosted.com/configure" target="_blank" rel="noopener noreferrer" class="btn small" style="text-decoration:none;">Configure AIOMetadata ↗</a>
+          <span style="font-size:12px;color:var(--dim);">Need to generate or customize a manifest?</span>
+          <a href="https://aiometadata.elfhosted.com/configure" target="_blank" rel="noopener noreferrer" class="btn small" style="text-decoration:none;">Online Configurator ↗</a>
         </div>
         <div id="aiometadataModalStatus" style="display:none;font-size:12.5px;padding:10px 12px;border-radius:8px;"></div>
       </div>
       <footer class="modal-footer">
         <button type="button" class="btn" id="aiometadataModalCancelBtn" data-close>Cancel</button>
         <button type="button" class="btn primary" id="aiometadataModalSaveBtn">Connect & Lock</button>
+      </footer>
+    </div>
+  </dialog>
+  <dialog class="modal" id="aiostreamsModal" role="dialog" aria-modal="true" aria-labelledby="aiostreamsModalTitle">
+    <div class="modal-card" style="width:min(540px, calc(100vw - 32px));">
+      <header class="modal-header">
+        <div class="modal-heading">
+          <div class="eyebrow">Streaming Integration</div>
+          <h3 id="aiostreamsModalTitle">Connect AIOStreams Instance</h3>
+        </div>
+        <button class="btn small modal-close" type="button" data-close aria-label="Close modal">✕</button>
+      </header>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+        <p style="margin:0;font-size:13px;color:var(--muted);line-height:1.5;">
+          Connect your AIOStreams instance URL to enable stream indexing, quality selection, and cached Debrid downloads in Source Picker.
+        </p>
+        <div class="field full" style="margin:0;">
+          <label for="aiostreamsModalInput">AIOStreams Manifest URL or Base URL</label>
+          <input id="aiostreamsModalInput" class="input" type="text" placeholder="e.g. https://aiostreams.example.com or http://192.168.1.100:3000" autocomplete="off" spellcheck="false">
+          <p class="help">Accepts any HTTP/HTTPS URL (e.g. local LAN docker, VPS, or remote domain) or <code>stremio://...</code> install links.</p>
+        </div>
+        <div id="aiostreamsModalStatus" style="display:none;font-size:12.5px;padding:10px 12px;border-radius:8px;"></div>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" class="btn" id="aiostreamsModalCancelBtn" data-close>Cancel</button>
+        <button type="button" class="btn primary" id="aiostreamsModalSaveBtn">Connect & Lock</button>
       </footer>
     </div>
   </dialog>
@@ -1386,7 +1463,8 @@ function renderLibrary(){
 }
 function setSelectValue(select,value,label){if(!select)return;const stringValue=String(value??'');if(stringValue&&!Array.from(select.options).some(option=>option.value===stringValue)){const option=document.createElement('option');option.value=stringValue;option.textContent=label||stringValue;select.appendChild(option)}select.value=stringValue}
 function renderAiometadataCard(){const url=String(state.settings?.aiometadataUrl||'').trim(),conn=document.getElementById('aiometadataConnectedCard'),disconn=document.getElementById('aiometadataDisconnectedCard'),display=document.getElementById('aiometadataUrlDisplay'),nameEl=document.getElementById('aiometadataProviderName'),input=document.getElementById('aiometadataUrl');if(input)input.value=url;if(!conn||!disconn)return;if(url){conn.style.display='flex';disconn.style.display='none';if(display)display.textContent=url;if(nameEl){let host='';try{host=new URL(url).hostname}catch{host=url.replace(/^https?:\/\//i,'').split('/')[0]}nameEl.textContent=host?('AIOMetadata ('+host+')'):'AIOMetadata'}}else{conn.style.display='none';disconn.style.display='flex'}}
-function fillSettings(force=false){if(settingsDirty&&!force)return;const form=document.getElementById('settingsForm'),s=state.settings;for(const name of ['addonName','baseUrl','mediaSoftLimitGb','lanBaseUrl','moviesPath','tvPath','scanIntervalMinutes','minimumFileSizeMb','streamTokenExpiryHours','longLivedStreamTokens','adminUsername','maxConcurrentDownloads','maxDownloadSpeedMBps','downloadTimeoutSeconds','autoRescanOnDownload','enableLibraryEditing','enableDeviceDownloads','restrictDeviceDownloadsToLan','isolateDownloadedCatalog','downloadedCatalogMode','aiometadataUrl'])if(form.elements[name])form.elements[name].value=String(s[name]??'');document.getElementById('tmdbStatus').textContent=s.metadataProvider||'Automatic metadata is active.';refreshBranding();syncManifestUrl();renderAiometadataCard()}
+function renderAiostreamsCard(){const url=String(state.settings?.aiostreamsUrl||'').trim(),conn=document.getElementById('aiostreamsConnectedCard'),disconn=document.getElementById('aiostreamsDisconnectedCard'),display=document.getElementById('aiostreamsUrlDisplay'),nameEl=document.getElementById('aiostreamsProviderName'),input=document.getElementById('aiostreamsUrl');if(input)input.value=url;if(!conn||!disconn)return;if(url){conn.style.display='flex';disconn.style.display='none';if(display)display.textContent=url;if(nameEl){let host='';try{host=new URL(url).hostname}catch{host=url.replace(/^https?:\/\//i,'').split('/')[0]}nameEl.textContent=host?('AIOStreams ('+host+')'):'AIOStreams'}}else{conn.style.display='none';disconn.style.display='flex'}}
+function fillSettings(force=false){if(settingsDirty&&!force)return;const form=document.getElementById('settingsForm'),s=state.settings;for(const name of ['addonName','baseUrl','mediaSoftLimitGb','lanBaseUrl','moviesPath','tvPath','scanIntervalMinutes','minimumFileSizeMb','streamTokenExpiryHours','longLivedStreamTokens','adminUsername','maxConcurrentDownloads','maxDownloadSpeedMBps','downloadTimeoutSeconds','autoRescanOnDownload','enableLibraryEditing','enableDeviceDownloads','restrictDeviceDownloadsToLan','isolateDownloadedCatalog','downloadedCatalogMode','aiometadataUrl','aiostreamsUrl'])if(form.elements[name])form.elements[name].value=String(s[name]??'');document.getElementById('tmdbStatus').textContent=s.metadataProvider||'Automatic metadata is active.';refreshBranding();syncManifestUrl();renderAiometadataCard();renderAiostreamsCard()}
 async function load(){const request=++stateRequest,data=await api('/admin/api/state');if(request!==stateRequest)return;state={...state,...data};render()}
 async function loadHealth(force=false){const request=++healthRequest,summary=document.getElementById('healthSummary');if(!state.health&&summary){summary.className='health-banner';summary.innerHTML='<div><div class="health-banner-title">Running system checks…</div><div class="health-banner-meta">External checks are bounded and cached for one minute.</div></div>'}try{const data=await api('/admin/api/system-health'+(force?'?refresh=1':''));if(request!==healthRequest)return;state.health=data;renderHealth()}catch(err){if(request===healthRequest&&summary){summary.className='health-banner danger';summary.innerHTML='<div><div class="health-banner-title">System checks could not run</div><div class="health-banner-meta">'+esc(err.message||'The diagnostic request failed.')+'</div></div>'+diagnosticBadge('error')}throw err}}
 async function refreshHealth(button){const original=button.textContent;button.disabled=true;button.textContent='Checking…';try{await loadHealth(true);toast('System checks refreshed')}catch(err){toast(err.message||'System checks failed')}finally{button.disabled=false;button.textContent=original}}
@@ -1486,6 +1564,25 @@ document.getElementById('testAiometadataBtn')?.addEventListener('click',async e=
 document.getElementById('disconnectAiometadataBtn')?.addEventListener('click',async()=>{if(!await showConfirm({title:'Disconnect AIOMetadata',eyebrow:'Metadata Integration',message:'Disconnect AIOMetadata? The server will fall back to standard Cinemeta metadata for your downloaded catalog.',confirmText:'Disconnect',danger:true}))return;try{const data=await api('/admin/api/settings',{method:'PUT',body:JSON.stringify({aiometadataUrl:''})});state.settings=data.settings;fillSettings(true);toast('AIOMetadata disconnected. Reverted to Cinemeta default.')}catch(err){toast('Could not disconnect: ' + (err.message||'Unknown error'))}});
 
 aioSaveBtn?.addEventListener('click',async()=>{const raw=String(aioInput?.value||'').trim();if(!raw){if(aioStatus){aioStatus.style.display='block';aioStatus.style.background='rgba(244,63,94,0.15)';aioStatus.style.color='#fecdd3';aioStatus.style.border='1px solid rgba(244,63,94,0.38)';aioStatus.textContent='Please enter a valid AIOMetadata URL or UUID'}return}aioSaveBtn.disabled=true;aioSaveBtn.textContent='Connecting…';if(aioStatus){aioStatus.style.display='block';aioStatus.style.background='rgba(14,165,233,0.15)';aioStatus.style.color='#7dd3fc';aioStatus.style.border='1px solid rgba(56,189,248,0.38)';aioStatus.textContent='Validating connection to metadata provider…'}try{const testData=await api('/admin/api/metadata-provider/test',{method:'POST',body:JSON.stringify({url:raw})});if(!testData.ok)throw new Error(testData.error||'Provider check failed');const saveRes=await api('/admin/api/settings',{method:'PUT',body:JSON.stringify({aiometadataUrl:testData.cleanBaseUrl})});state.settings=saveRes.settings;fillSettings(true);closeAiometadataModal();toast('Connected & locked to ' + (testData.name||'AIOMetadata') + '!')}catch(err){if(aioStatus){aioStatus.style.display='block';aioStatus.style.background='rgba(244,63,94,0.15)';aioStatus.style.color='#fecdd3';aioStatus.style.border='1px solid rgba(244,63,94,0.38)';aioStatus.textContent='Connection error: ' + (err.message||'Unknown error')}}finally{aioSaveBtn.disabled=false;aioSaveBtn.textContent='Connect & Lock'}});
+
+const aioStreamsModal=document.getElementById('aiostreamsModal');
+const aioStreamsInput=document.getElementById('aiostreamsModalInput');
+const aioStreamsStatus=document.getElementById('aiostreamsModalStatus');
+const aioStreamsSaveBtn=document.getElementById('aiostreamsModalSaveBtn');
+
+function openAiostreamsModal(){if(!aioStreamsModal)return;if(aioStreamsInput)aioStreamsInput.value=state.settings?.aiostreamsUrl||'';if(aioStreamsStatus){aioStreamsStatus.style.display='none';aioStreamsStatus.textContent=''}if(aioStreamsSaveBtn){aioStreamsSaveBtn.disabled=false;aioStreamsSaveBtn.textContent='Connect & Lock'}aioStreamsModal.showModal();aioStreamsInput?.focus()}
+function closeAiostreamsModal(){aioStreamsModal?.close()}
+
+document.getElementById('connectAiostreamsBtn')?.addEventListener('click',openAiostreamsModal);
+document.getElementById('changeAiostreamsBtn')?.addEventListener('click',openAiostreamsModal);
+document.getElementById('aiostreamsModalCancelBtn')?.addEventListener('click',closeAiostreamsModal);
+aioStreamsModal?.querySelector('.modal-close')?.addEventListener('click',closeAiostreamsModal);
+
+document.getElementById('testAiostreamsBtn')?.addEventListener('click',async e=>{const btn=e.currentTarget,original=btn.textContent;btn.disabled=true;btn.textContent='Testing…';try{const data=await api('/admin/api/aiostreams/test',{method:'POST',body:JSON.stringify({url:state.settings?.aiostreamsUrl})});if(data.ok){toast('AIOStreams healthy! Latency: ' + data.latencyMs + 'ms (' + (data.name||'AIOStreams') + ' v' + (data.version||'') + ')')}else{toast('AIOStreams test failed: ' + (data.error||'Unknown error'))}}catch(err){toast('AIOStreams test failed: ' + (err.message||'Unknown error'))}finally{btn.disabled=false;btn.textContent=original}});
+
+document.getElementById('disconnectAiostreamsBtn')?.addEventListener('click',async()=>{if(!await showConfirm({title:'Disconnect AIOStreams',eyebrow:'Streaming Integration',message:'Disconnect AIOStreams? Downloads and Source Picker will no longer be able to query streams until reconnected.',confirmText:'Disconnect',danger:true}))return;try{const data=await api('/admin/api/settings',{method:'PUT',body:JSON.stringify({aiostreamsUrl:''})});state.settings=data.settings;fillSettings(true);toast('AIOStreams disconnected.')}catch(err){toast('Could not disconnect: ' + (err.message||'Unknown error'))}});
+
+aioStreamsSaveBtn?.addEventListener('click',async()=>{const raw=String(aioStreamsInput?.value||'').trim();if(!raw){if(aioStreamsStatus){aioStreamsStatus.style.display='block';aioStreamsStatus.style.background='rgba(244,63,94,0.15)';aioStreamsStatus.style.color='#fecdd3';aioStreamsStatus.style.border='1px solid rgba(244,63,94,0.38)';aioStreamsStatus.textContent='Please enter a valid AIOStreams URL'}return}aioStreamsSaveBtn.disabled=true;aioStreamsSaveBtn.textContent='Connecting…';if(aioStreamsStatus){aioStreamsStatus.style.display='block';aioStreamsStatus.style.background='rgba(14,165,233,0.15)';aioStreamsStatus.style.color='#7dd3fc';aioStreamsStatus.style.border='1px solid rgba(56,189,248,0.38)';aioStreamsStatus.textContent='Validating connection to AIOStreams…'}try{const testData=await api('/admin/api/aiostreams/test',{method:'POST',body:JSON.stringify({url:raw})});if(!testData.ok)throw new Error(testData.error||'AIOStreams check failed');const saveRes=await api('/admin/api/settings',{method:'PUT',body:JSON.stringify({aiostreamsUrl:testData.cleanBaseUrl})});state.settings=saveRes.settings;fillSettings(true);closeAiostreamsModal();toast('Connected & locked to ' + (testData.name||'AIOStreams') + '!')}catch(err){if(aioStreamsStatus){aioStreamsStatus.style.display='block';aioStreamsStatus.style.background='rgba(244,63,94,0.15)';aioStreamsStatus.style.color='#fecdd3';aioStreamsStatus.style.border='1px solid rgba(244,63,94,0.38)';aioStreamsStatus.textContent='Connection error: ' + (err.message||'Unknown error')}}finally{aioStreamsSaveBtn.disabled=false;aioStreamsSaveBtn.textContent='Connect & Lock'}});
 const settingsForm=document.getElementById('settingsForm');settingsForm.addEventListener('input',e=>{if(e.target?.id!=='addonIconFile')settingsDirty=true;if(e.target?.name==='baseUrl')syncManifestUrl()});settingsForm.addEventListener('change',e=>{if(e.target?.id==='addonIconFile')return;settingsDirty=true});settingsForm.addEventListener('invalid',e=>{const panel=e.target.closest?.('[data-settings-panel]');if(panel)activateSettingsPanel(panel.dataset.settingsPanel)},true);settingsForm.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target));try{state.settings=(await api('/admin/api/settings',{method:'PUT',body:JSON.stringify(data)})).settings;state.health=null;settingsDirty=false;fillSettings(true);toast('Settings saved')}catch(err){toast(err.message)}});
 document.querySelector('.settings-nav')?.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;const tabs=[...document.querySelectorAll('[data-settings-tab]')],current=tabs.indexOf(document.activeElement);if(current<0)return;e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(current+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;activateSettingsPanel(tabs[next].dataset.settingsTab,{focus:true})});
 fileModal.addEventListener('close',cleanupModal);
@@ -1778,13 +1875,13 @@ function dlRenderStats() {
     statFreeEl.textContent = freeGbStr + ' Free';
     if (usedBytes >= limitBytes) {
       statFreeEl.style.color = 'var(--danger)';
-      if (statSubDriveEl) statSubDriveEl.textContent = '⚠️ Storage quota full! Host free: ' + fmtGb(disk.freeBytes);
+      if (statSubDriveEl) statSubDriveEl.textContent = '⚠️ Storage limit reached! Host free: ' + fmtGb(disk.freeBytes);
     } else if (pct >= 80) {
       statFreeEl.style.color = 'var(--warn)';
-      if (statSubDriveEl) statSubDriveEl.textContent = '⚠️ Storage quota at ' + pctStr + '. Host free: ' + fmtGb(disk.freeBytes);
+      if (statSubDriveEl) statSubDriveEl.textContent = '⚠️ Storage space at ' + pctStr + '. Host free: ' + fmtGb(disk.freeBytes);
     } else {
       statFreeEl.style.color = '#ffffff';
-      if (statSubDriveEl) statSubDriveEl.textContent = disk.freeBytes ? 'Host free: ' + fmtGb(disk.freeBytes) : 'Allocated quota';
+      if (statSubDriveEl) statSubDriveEl.textContent = disk.freeBytes ? 'Host free: ' + fmtGb(disk.freeBytes) : 'Storage limit';
     }
   }
 
@@ -2069,9 +2166,20 @@ function dlRenderFileItem(f) {
   const metaHtml = '<a href="' + esc(stremioUrl) + '" class="file-meta-link" title="Open in Stremio: ' + esc(filename) + '">' + metaContent + '</a>';
   const openBtn = '<a href="' + esc(stremioUrl) + '" class="btn-stremio" title="Open directly in Stremio">▶ Stremio</a>';
   const chooseUrl = dlGetChooseUrl(f);
-  const changeSourceBtn = chooseUrl
-    ? '<a href="' + esc(chooseUrl) + '" target="_blank" class="btn small" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;text-decoration:none;" title="Change source or choose different quality in Source Picker">🔄 Change Source</a>'
-    : '';
+  const menuId = 'fMenu_' + String(f.id).replace(/[^a-zA-Z0-9_]/g, '_');
+  let menuItems = '';
+  if (chooseUrl) {
+    menuItems += '<a href="' + esc(chooseUrl) + '" target="_blank" class="dl-menu-item" onclick="dlCloseAllMenus()"><span class="dl-menu-icon">🔄</span><span>Change Source / Quality</span></a>';
+  }
+  menuItems += '<button type="button" class="dl-menu-item" onclick="dlCopyStreamLink(\'' + esc(stremioUrl) + '\', event)"><span class="dl-menu-icon">📋</span><span>Copy Stream Link</span></button>';
+
+  const moreMenuBtn = '<div class="dl-menu-wrap">' +
+    '<button class="btn small" type="button" onclick="dlToggleActionMenu(\'' + menuId + '\', event)" title="More options" aria-haspopup="true" style="padding:4px 8px;font-weight:700;line-height:1;letter-spacing:1px;font-size:13px;display:inline-flex;align-items:center;justify-content:center;">···</button>' +
+    '<div id="' + menuId + '" class="dl-action-popover">' +
+      menuItems +
+    '</div>' +
+  '</div>';
+
   const canDownload = state.settings?.enableDeviceDownloads !== false;
   const downloadBtn = canDownload ? '<button class="btn small" type="button" onclick="dlDownloadFile(\'' + esc(f.id) + '\', \'' + esc(filename).replace(/'/g, "\\'") + '\')" title="Save file to this device (' + esc(filename) + ')" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;">📥 Save</button>' : '';
 
@@ -2095,10 +2203,10 @@ function dlRenderFileItem(f) {
     '<div class="file-size-badge">' + fmtGb(f.size) + '</div>' +
     '<div class="file-actions">' +
       openBtn +
-      changeSourceBtn +
       downloadBtn +
       watchBtn +
       '<button class="btn danger small" onclick="dlOpenDeleteModal(\'file\', { id:\'' + esc(f.id) + '\', name:\'' + esc(filename) + '\', size:' + (Number(f.size) || 0) + ' })">🗑️ Delete</button>' +
+      moreMenuBtn +
     '</div>' +
   '</div>';
 }
@@ -2162,12 +2270,18 @@ function dlRenderFiles() {
       const selectedBadge = '<span class="badge show-selected-badge" style="background:rgba(14,165,233,0.18);border:1px solid rgba(56,189,248,0.38);color:#7dd3fc;font-size:11px;font-weight:700;' + (groupSelectedCount > 0 ? 'display:inline-flex;' : 'display:none;') + '">' + groupSelectedCount + '/' + group.files.length + ' selected</span>';
 
       const firstWithId = group.files.find(f => f.stremio_id || f.imdb_id);
-      let seasonSourceBtn = '';
+      let groupMoreBtn = '';
       if (firstWithId) {
         const sid = (firstWithId.stremio_id || firstWithId.imdb_id).replace(/^(dls|zpm):/, '');
         const sNum = firstWithId.season || 1;
         const seasonUrl = '/downloads/choose?type=series&id=' + encodeURIComponent(sid + ':' + sNum + ':1') + '&mode=season';
-        seasonSourceBtn = '<a href="' + esc(seasonUrl) + '" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Browse season packs and multi-episode downloads in Source Picker">🎯 Season Sources</a>';
+        const grpMenuId = 'gMenu_' + encodeURIComponent(group.title).replace(/[^a-zA-Z0-9_]/g, '_');
+        groupMoreBtn = '<div class="dl-menu-wrap" onclick="event.stopPropagation()">' +
+          '<button class="btn small" type="button" onclick="dlToggleActionMenu(\'' + grpMenuId + '\', event)" title="More show options" aria-haspopup="true" style="padding:4px 8px;font-weight:700;line-height:1;letter-spacing:1px;font-size:13px;display:inline-flex;align-items:center;justify-content:center;">···</button>' +
+          '<div id="' + grpMenuId + '" class="dl-action-popover">' +
+            '<a href="' + esc(seasonUrl) + '" target="_blank" class="dl-menu-item" onclick="dlCloseAllMenus()"><span class="dl-menu-icon">🎯</span><span>Season Sources / Pack</span></a>' +
+          '</div>' +
+        '</div>';
       }
 
       html += '<div class="show-group ' + (isCollapsed ? 'collapsed' : '') + '" data-show-title="' + esc(group.title) + '">' +
@@ -2182,9 +2296,9 @@ function dlRenderFiles() {
           '</div>' +
           '<div class="show-group-actions" onclick="event.stopPropagation()">' +
             selectBtn +
-            seasonSourceBtn +
             cleanBtn +
             '<button class="btn danger small" onclick="dlOpenDeleteModal(\'show\', { title:\'' + esc(group.title) + '\', count:' + group.files.length + ', bytes:' + group.totalBytes + ' })">🗑️ Delete Show</button>' +
+            groupMoreBtn +
           '</div>' +
         '</div>' +
         '<div class="show-group-body">' +
@@ -2201,6 +2315,43 @@ function dlRenderFiles() {
   // Movies list
   container.innerHTML = filtered.map(f => dlRenderFileItem(f)).join('');
 }
+
+window.dlToggleActionMenu = function(id, evt) {
+  if (evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+  }
+  const el = document.getElementById(id);
+  const isOpen = el && el.style.display === 'flex';
+  dlCloseAllMenus();
+  if (el && !isOpen) {
+    el.style.display = 'flex';
+  }
+};
+
+window.dlCloseAllMenus = function() {
+  document.querySelectorAll('.dl-action-popover').forEach(m => {
+    m.style.display = 'none';
+  });
+};
+
+window.dlCopyStreamLink = function(url, evt) {
+  if (evt) evt.stopPropagation();
+  dlCloseAllMenus();
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(() => {
+      toast('Copied Stremio stream URL to clipboard!');
+    }).catch(() => {
+      prompt('Copy Stremio URL:', url);
+    });
+  } else {
+    prompt('Copy Stremio URL:', url);
+  }
+};
+
+document.addEventListener('click', () => {
+  dlCloseAllMenus();
+});
 
 function dlToggleShowGroup(title) {
   if (dlCollapsedShows.has(title)) dlCollapsedShows.delete(title);

@@ -93,6 +93,12 @@ export class SettingsService {
     return String(process.env.AIOMETADATA_URL || '').trim().replace(/\/+$/, '');
   }
 
+  get aiostreamsUrl(): string {
+    const val = (this.get('aiostreamsUrl') || '').trim();
+    if (val) return val.replace(/\/+$/, '');
+    return String(process.env.AIOSTREAMS_BASE_URL || '').trim().replace(/\/+$/, '');
+  }
+
   get autoRequestEnabled(): boolean {
     return this.boolean('autoRequestEnabled', this.defaults.autoRequestEnabled);
   }
@@ -414,6 +420,7 @@ export class SettingsService {
       downloadTimeoutSeconds: this.downloadTimeoutSeconds,
       lanBaseUrl: this.lanBaseUrl,
       aiometadataUrl: this.aiometadataUrl,
+      aiostreamsUrl: this.aiostreamsUrl,
 
       autoRequestEnabled: this.autoRequestEnabled,
 
