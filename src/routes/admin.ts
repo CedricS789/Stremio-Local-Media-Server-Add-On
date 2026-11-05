@@ -486,7 +486,7 @@ export function registerAdminRoutes(
       .header('Cache-Control', 'no-store')
       .header('X-Content-Type-Options', 'nosniff')
       .header('Content-Security-Policy', "default-src 'none'")
-      .header('Content-Disposition', `attachment; filename="nuvi-flow-backup-${timestamp}.sqlite"`)
+      .header('Content-Disposition', `attachment; filename="stremio-local-media-server-backup-${timestamp}.sqlite"`)
       .header('Content-Length', String(opened.backup.sizeBytes))
       .type('application/vnd.sqlite3')
       .send(opened.stream);

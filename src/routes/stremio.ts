@@ -837,8 +837,20 @@ function getCleanableWatchedForSeries(database: any, seriesId: string) {
 
 
 function sendCardMp4(request, reply, cardName) {
-    const cardPath = path.join('/app/cards', cardName);
-    if (fs.existsSync(cardPath)) {
+    const candidates = [
+        path.join('/app/cards', cardName),
+        path.join(process.cwd(), 'cards', cardName),
+        path.resolve(__dirname, '../../cards', cardName),
+        path.resolve(__dirname, '../cards', cardName)
+    ];
+    let cardPath = '';
+    for (const c of candidates) {
+        if (fs.existsSync(c)) {
+            cardPath = c;
+            break;
+        }
+    }
+    if (cardPath) {
         const buf = fs.readFileSync(cardPath);
         const total = buf.length;
         const range = request.headers.range;

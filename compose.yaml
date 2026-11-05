@@ -43,6 +43,7 @@ services:
       - nuvi_config:/app/data
       - "${MEDIA_ROOT:?Run scripts/Initialize.ps1 first}/media/movies:/media/movies"
       - "${MEDIA_ROOT:?Run scripts/Initialize.ps1 first}/media/tv:/media/tv"
+      - ./cards:/app/cards:ro
     logging: *logging
 
 volumes:
