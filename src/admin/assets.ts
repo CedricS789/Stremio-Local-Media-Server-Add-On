@@ -497,7 +497,7 @@ export function adminHtml(csrf: string): string {
         <p class="muted">Live background downloads, storage quota allocation, and downloaded media management.</p>
       </div>
       <div class="actions">
-        <button class="btn" type="button" id="dlOpenSourcePickerBtn" onclick="dlPromptSourcePicker()" style="display:inline-flex;align-items:center;gap:6px;" title="Open Source Picker by IMDb or Stremio ID">🎯 Open Source Picker</button>
+        <button class="btn" type="button" id="dlOpenSourcePickerBtn" onclick="dlOpenSourcePickerModal()" style="display:inline-flex;align-items:center;gap:6px;" title="Pick from your catalogue or search online to browse releases and upgrade sources">🎯 Source Picker</button>
         <button class="btn" type="button" id="dlRescanBtn" onclick="dlRescanLibrary()">🔄 Rescan Storage</button>
       </div>
     </div>
@@ -1036,6 +1036,68 @@ export function adminHtml(csrf: string): string {
           <button class="btn danger" type="button" onclick="dlGoToStep2()" id="dlModalNextBtn" style="font-weight:750;">Next: Enter Password →</button>
           <button class="btn danger" type="button" onclick="dlExecuteDeletion()" id="dlModalConfirmBtn" style="display:none; font-weight:800;">🗑️ Permanently Delete</button>
         </div>
+      </footer>
+    </div>
+  </dialog>
+  <dialog class="modal" id="sourcePickerModal" role="dialog" aria-modal="true" aria-labelledby="sourcePickerModalTitle">
+    <div class="modal-card" style="width:min(580px, calc(100vw - 32px)); border-color:rgba(56,189,248,0.35); box-shadow:0 30px 80px rgba(0,0,0,0.95), 0 0 30px rgba(14,165,233,0.15);">
+      <header class="modal-header" style="background:#0a0e17; border-bottom:1px solid rgba(56,189,248,0.25);">
+        <div class="modal-heading">
+          <div class="eyebrow" style="color:var(--brand2); font-weight:800;">Source Selector</div>
+          <h3 id="sourcePickerModalTitle" style="color:#ffffff; font-size:17px;">🎯 Source Picker & Quality Upgrades</h3>
+        </div>
+        <button class="btn small modal-close" type="button" onclick="dlCloseSourcePickerModal()" aria-label="Close dialog">✕</button>
+      </header>
+      <div class="modal-body" style="padding:20px; display:flex; flex-direction:column; gap:16px;">
+        <div style="display:flex; gap:6px; padding:4px; background:#050608; border:1px solid var(--line); border-radius:10px;">
+          <button type="button" class="btn small primary" id="spTabCatalogue" onclick="spSwitchTab('catalogue')" style="flex:1; justify-content:center; display:inline-flex; align-items:center; gap:6px;">📚 From Your Catalogue</button>
+          <button type="button" class="btn small" id="spTabSearch" onclick="spSwitchTab('search')" style="flex:1; justify-content:center; display:inline-flex; align-items:center; gap:6px;">🔍 Search Any Title</button>
+        </div>
+
+        <div id="spPanelCatalogue" style="display:flex; flex-direction:column; gap:14px;">
+          <p style="margin:0; font-size:12.5px; color:var(--muted); line-height:1.5;">
+            Choose a movie or TV show already in your catalogue to browse alternative resolutions, seeders, or replacement sources.
+          </p>
+          <div class="field full" style="margin:0;">
+            <label for="spCatalogueSelect" style="display:block; font-size:12px; font-weight:750; color:#e2e8f0; margin-bottom:6px;">Select Media from Catalogue</label>
+            <select id="spCatalogueSelect" class="select" onchange="spOnMediaSelectChange()" style="font-size:13px; font-weight:600;">
+              <option value="">Loading catalogue...</option>
+            </select>
+          </div>
+
+          <div id="spSeriesControls" style="display:none; grid-template-columns:minmax(0, 1fr) minmax(0, 1.4fr); gap:12px;">
+            <div class="field" style="margin:0;">
+              <label for="spSeasonSelect" style="display:block; font-size:12px; font-weight:750; color:#cbd5e1; margin-bottom:6px;">Season</label>
+              <select id="spSeasonSelect" class="select" onchange="spOnSeasonChange()"></select>
+            </div>
+            <div class="field" style="margin:0;">
+              <label for="spEpisodeSelect" style="display:block; font-size:12px; font-weight:750; color:#cbd5e1; margin-bottom:6px;">Target Release</label>
+              <select id="spEpisodeSelect" class="select" onchange="spUpdatePreview()"></select>
+            </div>
+          </div>
+
+          <div id="spSelectedPreview" style="display:none; padding:12px 14px; background:#070a12; border:1px solid rgba(56,189,248,0.25); border-radius:10px; font-size:12px; color:#e0f2fe; line-height:1.5;">
+          </div>
+        </div>
+
+        <div id="spPanelSearch" style="display:none; flex-direction:column; gap:14px;">
+          <p style="margin:0; font-size:12.5px; color:var(--muted); line-height:1.5;">
+            Search any movie or TV series online to pick and download sources directly into your server library.
+          </p>
+          <div class="field full" style="margin:0;">
+            <label for="spSearchInput" style="display:block; font-size:12px; font-weight:750; color:#e2e8f0; margin-bottom:6px;">Search Title</label>
+            <div style="display:flex; gap:8px;">
+              <input id="spSearchInput" class="input" type="text" placeholder="e.g. Breaking Bad, Dune, The 100..." autocomplete="off" onkeydown="if(event.key==='Enter') spDoSearch()">
+              <button type="button" class="btn primary" id="spSearchBtn" onclick="spDoSearch()" style="flex-shrink:0;">Search</button>
+            </div>
+          </div>
+          <div id="spSearchResults" style="display:flex; flex-direction:column; gap:8px; max-height:240px; overflow-y:auto;">
+          </div>
+        </div>
+      </div>
+      <footer class="modal-footer" style="background:#0d0f15; border-top:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;">
+        <button class="btn" type="button" onclick="dlCloseSourcePickerModal()">Cancel</button>
+        <button class="btn primary" type="button" id="spLaunchBtn" onclick="spLaunchFromCatalogue()" style="display:inline-flex; align-items:center; gap:6px; font-weight:750;" disabled>🎯 Open in Source Picker ↗</button>
       </footer>
     </div>
   </dialog>
@@ -2264,24 +2326,271 @@ function dlClearSelection() {
   dlRenderFiles();
 }
 
-function dlPromptSourcePicker() {
-  const val = prompt('Open Source Picker by IMDb ID or Stremio ID (e.g. tt0137523 or tt1405406:1:1):');
-  if (!val) return;
-  const clean = val.trim().replace(/^(dls|zpm):/, '');
-  const parts = clean.split(':');
-  let type = 'movie';
-  let mode = 'movie';
-  let id = clean;
-  if (parts.length >= 3) {
-    type = 'series';
-    mode = 'episode';
-  } else if (parts.length === 2) {
-    type = 'series';
-    mode = 'season';
-    id = parts[0] + ':' + parts[1] + ':1';
-  }
-  window.open('/downloads/choose?type=' + encodeURIComponent(type) + '&id=' + encodeURIComponent(id) + '&mode=' + encodeURIComponent(mode), '_blank');
+let spCatalogueItems = [];
+let spActiveTab = 'catalogue';
+
+function dlOpenSourcePickerModal() {
+  const modal = document.getElementById('sourcePickerModal');
+  if (!modal) return;
+  spSwitchTab('catalogue');
+  spPopulateCatalogue();
+  modal.showModal();
 }
+
+function dlCloseSourcePickerModal() {
+  const modal = document.getElementById('sourcePickerModal');
+  if (modal && modal.open) modal.close();
+}
+
+function spSwitchTab(tab) {
+  spActiveTab = tab;
+  const tabCat = document.getElementById('spTabCatalogue');
+  const tabSearch = document.getElementById('spTabSearch');
+  const panelCat = document.getElementById('spPanelCatalogue');
+  const panelSearch = document.getElementById('spPanelSearch');
+  const launchBtn = document.getElementById('spLaunchBtn');
+  if (tab === 'catalogue') {
+    tabCat?.classList.add('primary');
+    tabSearch?.classList.remove('primary');
+    if (panelCat) panelCat.style.display = 'flex';
+    if (panelSearch) panelSearch.style.display = 'none';
+    if (launchBtn) launchBtn.style.display = 'inline-flex';
+  } else {
+    tabSearch?.classList.add('primary');
+    tabCat?.classList.remove('primary');
+    if (panelCat) panelCat.style.display = 'none';
+    if (panelSearch) panelSearch.style.display = 'flex';
+    if (launchBtn) launchBtn.style.display = 'none';
+    setTimeout(() => document.getElementById('spSearchInput')?.focus(), 50);
+  }
+}
+
+function spPopulateCatalogue() {
+  const select = document.getElementById('spCatalogueSelect');
+  if (!select) return;
+  const itemsMap = new Map();
+
+  const localFiles = (dlData && Array.isArray(dlData.localFiles)) ? dlData.localFiles : [];
+  for (const f of localFiles) {
+    const sid = f.stremio_id || f.imdb_id;
+    if (!sid) continue;
+    const cleanId = String(sid).replace(/^(dls|zpm):/, '');
+    const type = f.type === 'movie' ? 'movie' : 'series';
+    const title = f.title || (f.relative_path ? f.relative_path.split('/')[0] : cleanId);
+    const key = type + ':' + cleanId;
+    if (!itemsMap.has(key)) {
+      itemsMap.set(key, { key, id: cleanId, type, title, year: f.year || null, episodes: [] });
+    }
+    const item = itemsMap.get(key);
+    if (type === 'series' && f.season) {
+      item.episodes.push({
+        fileId: f.id,
+        season: Number(f.season) || 1,
+        episode: Number(f.episode_start) || 1,
+        filename: f.relative_path ? f.relative_path.split('/').pop() : '',
+        size: f.size || 0,
+        quality: f.quality || ''
+      });
+    }
+  }
+
+  const stateFiles = (state && Array.isArray(state.files)) ? state.files : [];
+  for (const f of stateFiles) {
+    if (f.status !== 'matched' || !f.stremioId) continue;
+    const cleanId = String(f.stremioId).replace(/^(dls|zpm):/, '');
+    const type = f.libraryType === 'movie' ? 'movie' : 'series';
+    const title = f.displayTitle || f.parsedTitle || (f.relativePath ? f.relativePath.split('/')[0] : cleanId);
+    const key = type + ':' + cleanId;
+    if (!itemsMap.has(key)) {
+      itemsMap.set(key, { key, id: cleanId, type, title, year: f.parsedYear || null, episodes: [] });
+    }
+    const item = itemsMap.get(key);
+    if (type === 'series' && f.season) {
+      const s = Number(f.season) || 1;
+      const ep = Number(f.episodeStart) || 1;
+      if (!item.episodes.some(e => e.season === s && e.episode === ep)) {
+        item.episodes.push({
+          fileId: f.id,
+          season: s,
+          episode: ep,
+          filename: f.relativePath ? f.relativePath.split('/').pop() : '',
+          size: f.size || 0,
+          quality: f.quality || ''
+        });
+      }
+    }
+  }
+
+  spCatalogueItems = Array.from(itemsMap.values());
+  spCatalogueItems.sort((a, b) => a.title.localeCompare(b.title));
+
+  if (spCatalogueItems.length === 0) {
+    select.innerHTML = '<option value="">(No downloaded media in catalogue yet)</option>';
+    select.disabled = true;
+    spOnMediaSelectChange();
+    return;
+  }
+
+  select.disabled = false;
+  let html = '<option value="">Select a title from your catalogue...</option>';
+  for (const item of spCatalogueItems) {
+    if (item.type === 'movie') {
+      html += '<option value="' + esc(item.key) + '">🎬 ' + esc(item.title) + (item.year ? ' (' + item.year + ')' : '') + '</option>';
+    } else {
+      const epCount = item.episodes.length;
+      html += '<option value="' + esc(item.key) + '">📺 ' + esc(item.title) + ' (' + epCount + ' ep' + (epCount === 1 ? '' : 's') + ')</option>';
+    }
+  }
+  select.innerHTML = html;
+  spOnMediaSelectChange();
+}
+
+function spOnMediaSelectChange() {
+  const select = document.getElementById('spCatalogueSelect');
+  const key = select?.value;
+  const item = spCatalogueItems.find(i => i.key === key);
+  const seriesControls = document.getElementById('spSeriesControls');
+  const launchBtn = document.getElementById('spLaunchBtn');
+  const previewEl = document.getElementById('spSelectedPreview');
+
+  if (!item) {
+    if (seriesControls) seriesControls.style.display = 'none';
+    if (previewEl) previewEl.style.display = 'none';
+    if (launchBtn) launchBtn.disabled = true;
+    return;
+  }
+
+  if (item.type === 'movie') {
+    if (seriesControls) seriesControls.style.display = 'none';
+    if (previewEl) {
+      previewEl.style.display = 'block';
+      previewEl.innerHTML = '🎬 <strong>' + esc(item.title) + '</strong>' + (item.year ? ' (' + item.year + ')' : '') + '<br><span style="color:var(--muted);font-size:11.5px;">Click below to open the Source Picker to upgrade or replace this movie.</span>';
+    }
+    if (launchBtn) launchBtn.disabled = false;
+  } else {
+    if (seriesControls) seriesControls.style.display = 'grid';
+    const seasonSelect = document.getElementById('spSeasonSelect');
+    const uniqueSeasons = Array.from(new Set(item.episodes.map(e => e.season))).sort((a, b) => a - b);
+    if (uniqueSeasons.length === 0) uniqueSeasons.push(1);
+    if (seasonSelect) {
+      seasonSelect.innerHTML = uniqueSeasons.map(s => '<option value="' + s + '">Season ' + s + '</option>').join('');
+    }
+    spOnSeasonChange();
+    if (launchBtn) launchBtn.disabled = false;
+  }
+}
+
+function spOnSeasonChange() {
+  const select = document.getElementById('spCatalogueSelect');
+  const item = spCatalogueItems.find(i => i.key === select?.value);
+  if (!item || item.type !== 'series') return;
+  const seasonSelect = document.getElementById('spSeasonSelect');
+  const selectedSeason = Number(seasonSelect?.value) || 1;
+  const epSelect = document.getElementById('spEpisodeSelect');
+  if (!epSelect) return;
+
+  const seasonEps = item.episodes.filter(e => e.season === selectedSeason).sort((a, b) => a.episode - b.episode);
+  let html = '<option value="season">📦 Entire Season ' + selectedSeason + ' (Season Pack Upgrade)</option>';
+  for (const ep of seasonEps) {
+    const epCode = 'S' + String(selectedSeason).padStart(2, '0') + 'E' + String(ep.episode).padStart(2, '0');
+    const sizeStr = ep.size ? ' · ' + fmtGb(ep.size) : '';
+    html += '<option value="' + ep.episode + '">🎬 ' + epCode + ' — ' + esc(ep.filename || ('Episode ' + ep.episode)) + sizeStr + '</option>';
+  }
+  epSelect.innerHTML = html;
+  spUpdatePreview();
+}
+
+function spUpdatePreview() {
+  const select = document.getElementById('spCatalogueSelect');
+  const item = spCatalogueItems.find(i => i.key === select?.value);
+  const previewEl = document.getElementById('spSelectedPreview');
+  if (!item || !previewEl) return;
+  if (item.type === 'series') {
+    const season = document.getElementById('spSeasonSelect')?.value || '1';
+    const target = document.getElementById('spEpisodeSelect')?.value || 'season';
+    const isSeasonPack = target === 'season';
+    previewEl.style.display = 'block';
+    previewEl.innerHTML = '📺 <strong>' + esc(item.title) + '</strong> — ' +
+      (isSeasonPack ? ('Entire Season ' + season + ' (Batch Upgrade / Multi-Episode Picker)') : ('Season ' + season + ' Episode ' + target)) +
+      '<br><span style="color:var(--muted);font-size:11.5px;">Click below to launch Source Picker for this selection.</span>';
+  }
+}
+
+function spLaunchFromCatalogue() {
+  const select = document.getElementById('spCatalogueSelect');
+  const item = spCatalogueItems.find(i => i.key === select?.value);
+  if (!item) return;
+
+  let url = '';
+  if (item.type === 'movie') {
+    url = '/downloads/choose?type=movie&id=' + encodeURIComponent(item.id) + '&mode=movie';
+  } else {
+    const season = document.getElementById('spSeasonSelect')?.value || '1';
+    const target = document.getElementById('spEpisodeSelect')?.value || 'season';
+    if (target === 'season') {
+      url = '/downloads/choose?type=series&id=' + encodeURIComponent(item.id + ':' + season + ':1') + '&mode=season';
+    } else {
+      url = '/downloads/choose?type=series&id=' + encodeURIComponent(item.id + ':' + season + ':' + target) + '&mode=episode';
+    }
+  }
+
+  dlCloseSourcePickerModal();
+  window.open(url, '_blank');
+}
+
+async function spDoSearch() {
+  const input = document.getElementById('spSearchInput');
+  const query = (input ? input.value : '').trim();
+  const resultsEl = document.getElementById('spSearchResults');
+  const btn = document.getElementById('spSearchBtn');
+  if (!query || !resultsEl) return;
+
+  if (btn) btn.disabled = true;
+  resultsEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">Searching indexers for "' + esc(query) + '"…</div>';
+
+  try {
+    const [moviesData, seriesData] = await Promise.all([
+      api('/admin/api/tmdb/search?type=movie&query=' + encodeURIComponent(query)).catch(() => ({ results: [] })),
+      api('/admin/api/tmdb/search?type=series&query=' + encodeURIComponent(query)).catch(() => ({ results: [] }))
+    ]);
+    const movies = (moviesData.results || []).map(r => ({ ...r, mediaType: 'movie' }));
+    const series = (seriesData.results || []).map(r => ({ ...r, mediaType: 'series' }));
+    const combined = [...movies, ...series].slice(0, 10);
+
+    if (combined.length === 0) {
+      resultsEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--muted);font-size:12px;">No matches found for "' + esc(query) + '".</div>';
+      return;
+    }
+
+    resultsEl.innerHTML = combined.map(r => {
+      const isSeries = r.mediaType === 'series';
+      const cleanId = String(r.id || '').replace(/^(dls|zpm):/, '');
+      const posterImg = r.poster
+        ? '<img src="' + esc(r.poster) + '" style="width:36px;height:50px;object-fit:cover;border-radius:5px;flex-shrink:0;">'
+        : '<div style="width:36px;height:50px;background:#181c28;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;">' + (isSeries ? '📺' : '🎬') + '</div>';
+      const chooseUrl = isSeries
+        ? '/downloads/choose?type=series&id=' + encodeURIComponent(cleanId + ':1:1') + '&mode=season'
+        : '/downloads/choose?type=movie&id=' + encodeURIComponent(cleanId) + '&mode=movie';
+      return '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 12px;background:#050608;border:1px solid var(--line);border-radius:9px;">' +
+        '<div style="display:flex;align-items:center;gap:10px;min-width:0;">' +
+          posterImg +
+          '<div style="min-width:0;">' +
+            '<div style="font-weight:700;font-size:13px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + esc(r.title) + (r.year ? ' (' + esc(r.year) + ')' : '') + '</div>' +
+            '<div style="font-size:11px;color:var(--muted);margin-top:2px;">' + (isSeries ? '📺 TV Series · Season 1' : '🎬 Movie') + '</div>' +
+          '</div>' +
+        '</div>' +
+        '<a href="' + esc(chooseUrl) + '" target="_blank" onclick="dlCloseSourcePickerModal()" class="btn small primary" style="text-decoration:none;white-space:nowrap;display:inline-flex;align-items:center;gap:4px;">🎯 Sources ↗</a>' +
+      '</div>';
+    }).join('');
+  } catch (err) {
+    resultsEl.innerHTML = '<div style="padding:16px;text-align:center;color:var(--danger);font-size:12px;">Search failed: ' + esc(err.message) + '</div>';
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+const spModal = document.getElementById('sourcePickerModal');
+spModal?.addEventListener('click', e => { if (e.target === spModal) dlCloseSourcePickerModal(); });
 
 async function dlRescanLibrary() {
   const btn = document.getElementById('dlRescanBtn');
