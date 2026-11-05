@@ -58,7 +58,7 @@ export function isTailscaleIp(rawIp: string): boolean {
 
 /**
  * Determines whether the incoming request originates from the local network (LAN)
- * or local machine, as opposed to reaching the server via the public internet (e.g. Cloudflare Tunnel).
+ * or local machine, as opposed to reaching the server via the public internet (e.g. reverse proxy, tunnel, or custom domain).
  */
 export function isLanRequest(
   request: FastifyRequest,
@@ -67,7 +67,7 @@ export function isLanRequest(
 ): boolean {
   const headers = request.headers;
 
-  // 1. Cloudflare Tunnel headers indicate public internet transit.
+  // 1. Edge proxy headers (e.g. Cloudflare Tunnel, reverse proxies) indicate public internet transit.
   // Cloudflare always sets cf-connecting-ip, cf-ray, and cf-visitor on tunnel requests.
   if (headers['cf-connecting-ip'] || headers['cf-ray'] || headers['cf-visitor']) {
     return false;

@@ -90,7 +90,7 @@ export class SettingsService {
   get aiometadataUrl(): string {
     const val = (this.get('aiometadataUrl') || '').trim();
     if (val) return val.replace(/\/+$/, '');
-    return String(process.env.AIOMETADATA_URL || 'https://aiometadata.elfhosted.com/stremio/c38df86d-419a-471f-8e6a-b0d7103eedc8').trim().replace(/\/+$/, '');
+    return String(process.env.AIOMETADATA_URL || '').trim().replace(/\/+$/, '');
   }
 
   get autoRequestEnabled(): boolean {

@@ -599,7 +599,7 @@ export function adminHtml(csrf: string): string {
         <span id="dlSelectedSummary" style="font-weight:750;color:#e0f2fe;font-size:13px;">0 selected</span>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;" class="actions">
-        <button id="dlBatchDownloadBtn" class="btn small" type="button" onclick="dlDownloadSelected()" title="Save selected files from home server directly to this device for offline trips" style="display:inline-flex;align-items:center;gap:4px;">📥 Save to device</button>
+        <button id="dlBatchDownloadBtn" class="btn small" type="button" onclick="dlDownloadSelected()" title="Save selected files directly to this device for offline playback" style="display:inline-flex;align-items:center;gap:4px;">📥 Save to device</button>
         <button class="btn small" type="button" onclick="dlClearSelection()">Clear Selection</button>
         <button class="btn danger small" type="button" onclick="dlDeleteSelected()">🗑️ Delete Selected</button>
       </div>
@@ -697,12 +697,12 @@ export function adminHtml(csrf: string): string {
 <div class="field full">
   <label for="baseUrl">Public base URL (Remote Access)</label>
   <input id="baseUrl" class="input" name="baseUrl" type="url" required placeholder="https://media.yourdomain.com">
-  <p class="help">Public HTTPS URL configured through your Cloudflare Tunnel (used when streaming outside your home network).</p>
+  <p class="help">Public HTTPS URL for remote access (e.g. via reverse proxy, tunnel, or custom domain).</p>
 </div>
 <div class="field full">
-  <label for="lanBaseUrl">LAN Direct Streaming Base URL (Home Gigabit Playback)</label>
-  <input id="lanBaseUrl" class="input" name="lanBaseUrl" type="url" placeholder="http://192.168.129.10:60500">
-  <p class="help">Your server's local network address and port (e.g. <code>http://192.168.129.10:60500</code>). When playing media on your home Wi-Fi or Ethernet LAN, Stremio uses this address for pure Gigabit local streaming with 0 internet data. You can change this here at any time if your server's local IP changes.</p>
+  <label for="lanBaseUrl">LAN Direct Streaming Base URL (Local Network Playback)</label>
+  <input id="lanBaseUrl" class="input" name="lanBaseUrl" type="url" placeholder="http://192.168.1.100:60500">
+  <p class="help">Your server's local network address and port (e.g. <code>http://192.168.1.100:60500</code>). When playing media on your local network (LAN / Wi-Fi), Stremio uses this address for direct local streaming without consuming internet bandwidth. Update this if your server's local IP changes.</p>
 </div>
 <div class="field full">
   <label for="manifestUrl">Stremio addon manifest URL</label>
@@ -780,15 +780,15 @@ export function adminHtml(csrf: string): string {
     <option value="true">Enabled (Allows saving files from server to this device)</option>
     <option value="false">Disabled (Hides save buttons and blocks direct file downloads)</option>
   </select>
-  <p class="help">When enabled, users can save media files stored on the home server directly to their local laptop, tablet, or phone for offline use (e.g. trips without internet). This streams directly from the home server disk, not from AIOStreams or remote providers.</p>
+  <p class="help">When enabled, users can save media files stored on the server directly to their device for offline playback (e.g. travel or offline use). Files are served directly from local server storage rather than remote streaming providers.</p>
 </div>
 <div class="field full">
   <label for="restrictDeviceDownloadsToLan">Restrict Device Downloads to Local Network (LAN)</label>
   <select id="restrictDeviceDownloadsToLan" class="select" name="restrictDeviceDownloadsToLan">
-    <option value="true">Strict LAN Only (Recommended — Blocks downloads over public internet & Cloudflare Tunnel)</option>
-    <option value="false">Allow Remote Downloads (Permits saving files over the internet / Cloudflare Tunnel)</option>
+    <option value="true">Strict LAN Only (Recommended — Blocks downloads over public internet & remote proxies)</option>
+    <option value="false">Allow Remote Downloads (Permits saving files over external remote connections)</option>
   </select>
-  <p class="help">When enabled, media files can only be saved to devices connected to your local home network (LAN). Downloads attempted over the public internet or Cloudflare Tunnel are blocked to protect home internet upload bandwidth and mobile data.</p>
+  <p class="help">When enabled, media files can only be saved to devices connected to your local network (LAN / Wi-Fi). Downloads attempted over the public internet or remote proxies are blocked to preserve server upload bandwidth and mobile data.</p>
 </div>
 <div class="settings-section">
   <h3>Downloaded Catalog Presentation</h3>
@@ -801,7 +801,7 @@ export function adminHtml(csrf: string): string {
     <option value="strict">Strict Offline Isolation (Shows only downloaded episodes & completely hides third-party add-ons)</option>
     <option value="standard">Standard Full Listing (Cinemeta full series listing)</option>
   </select>
-  <p class="help"><b>Preserve Tracking (Default):</b> Series in your "Downloaded" catalog show only episodes stored on your server. Playback retains canonical media identifiers, enabling player scrobblers, watch progress tracking, and external sync tools to function normally. Local Gigabit LAN streams are prioritized at the top.<br><b>Strict Offline Isolation:</b> Completely isolates metadata and streams using offline prefixes to hide all third-party add-ons (external scrobblers and tracking tools will not recognize offline IDs).<br><b>Standard:</b> Displays full series listings directly from Cinemeta.</p>
+  <p class="help"><b>Preserve Tracking (Default):</b> Series in your "Downloaded" catalog show only episodes stored on your server. Playback retains canonical media identifiers, enabling player scrobblers, watch progress tracking, and external sync tools to function normally. Local network (LAN) streams are prioritized at the top.<br><b>Strict Offline Isolation:</b> Completely isolates metadata and streams using offline prefixes to hide all third-party add-ons (external scrobblers and tracking tools will not recognize offline IDs).<br><b>Standard:</b> Displays full series listings directly from Cinemeta.</p>
 </div>
 <div class="field full">
   <label>Upstream Metadata Provider (AIOMetadata / ERDB)</label>
@@ -812,7 +812,7 @@ export function adminHtml(csrf: string): string {
     <div class="provider-card-header">
       <div class="provider-card-left">
         <span class="provider-badge good">● Connected</span>
-        <span class="provider-name" id="aiometadataProviderName">AIOMetadata | ElfHosted</span>
+        <span class="provider-name" id="aiometadataProviderName">AIOMetadata</span>
       </div>
       <div class="provider-card-actions">
         <button type="button" class="btn small" id="testAiometadataBtn">Test Connection</button>
@@ -823,7 +823,7 @@ export function adminHtml(csrf: string): string {
     <div class="provider-card-body">
       <div class="provider-url-locked">
         <span class="lock-icon" title="Connection locked">🔒</span>
-        <span id="aiometadataUrlDisplay" class="locked-url-text">https://aiometadata.elfhosted.com/...</span>
+        <span id="aiometadataUrlDisplay" class="locked-url-text">Connected</span>
       </div>
       <p class="provider-meta">
         Active · Providing Rotten Tomatoes & IMDb score badges, ExtendedRatings episode thumbnails, and full cast portraits for downloaded media.
@@ -844,7 +844,7 @@ export function adminHtml(csrf: string): string {
     </div>
     <div class="provider-card-body">
       <p class="provider-meta">
-        Currently using Stremio's default Cinemeta provider. Connect your AIOMetadata instance to unlock Rotten Tomatoes ratings, ExtendedRatings episode badges, and cast pictures in your downloaded catalog.
+        Currently using Stremio's default Cinemeta provider. Connect an upstream metadata provider (e.g. AIOMetadata) to unlock Rotten Tomatoes ratings, ExtendedRatings episode badges, and cast pictures in your downloaded catalog.
       </p>
     </div>
   </div>
@@ -909,7 +909,7 @@ export function adminHtml(csrf: string): string {
       <strong style="color:#fecdd3; font-size:14px;">Wipe All Downloaded Media Files</strong>
     </div>
     <p style="color:#fda4af; font-size:12px; line-height:1.6; margin:0 0 16px 0; max-width:680px;">
-      Permanently delete all downloaded movies, TV series, episodes, and directory folders from home server disk storage. This action cannot be undone and requires confirmation phrase verification and your administrator password.
+      Permanently delete all downloaded movies, TV series, episodes, and directory folders from server disk storage. This action cannot be undone and requires confirmation phrase verification and your administrator password.
     </p>
     <button class="btn danger" type="button" id="adminWipeAllMediaBtn" style="font-weight:800; padding:10px 18px; display:inline-flex; align-items:center; gap:8px;">
       <span>🗑️</span><span>Wipe All Downloaded Media...</span>
@@ -935,7 +935,7 @@ export function adminHtml(csrf: string): string {
             <span style="font-size:22px; line-height:1; flex:0 0 auto;">🚨</span>
             <div style="font-size:13px; color:#fecdd3; line-height:1.55;">
               <strong style="color:#ffffff; display:block; margin-bottom:4px; font-size:14px;">Irreversible Storage Wipe</strong>
-              This will permanently delete <strong>ALL</strong> downloaded movies, TV series, episodes, and directory folders from your home server disk storage. This cannot be undone.
+              This will permanently delete <strong>ALL</strong> downloaded movies, TV series, episodes, and directory folders from your server disk storage. This cannot be undone.
             </div>
           </div>
           <div class="field" style="margin-bottom:0;">
@@ -1049,16 +1049,16 @@ export function adminHtml(csrf: string): string {
       </header>
       <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
         <p style="margin:0;font-size:13px;color:var(--muted);line-height:1.5;">
-          Connect your personal AIOMetadata instance to display ExtendedRatings episode badges, Rotten Tomatoes scores, and cast pictures in your downloaded catalog.
+          Connect an upstream metadata provider (e.g. AIOMetadata) to display ExtendedRatings episode badges, Rotten Tomatoes scores, and cast pictures in your downloaded catalog.
         </p>
         <div class="field full" style="margin:0;">
           <label for="aiometadataModalInput">AIOMetadata Manifest URL or UUID</label>
           <input id="aiometadataModalInput" class="input" type="text" placeholder="Paste stremio://... or https://... or your UUID" autocomplete="off" spellcheck="false">
-          <p class="help">Accepts <code>https://aiometadata.elfhosted.com/...</code>, <code>stremio://...</code> install links, or your configuration UUID.</p>
+          <p class="help">Accepts HTTP/HTTPS manifest URLs (e.g. self-hosted or ElfHosted), <code>stremio://...</code> install links, or configuration UUIDs.</p>
         </div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:#050608;border:1px solid var(--line);border-radius:10px;">
           <span style="font-size:12px;color:var(--dim);">Need to configure or get your link?</span>
-          <a href="https://aiometadata.elfhosted.com/configure" target="_blank" rel="noopener noreferrer" class="btn small" style="text-decoration:none;">Configure on ElfHosted ↗</a>
+          <a href="https://aiometadata.elfhosted.com/configure" target="_blank" rel="noopener noreferrer" class="btn small" style="text-decoration:none;">Configure AIOMetadata ↗</a>
         </div>
         <div id="aiometadataModalStatus" style="display:none;font-size:12.5px;padding:10px 12px;border-radius:8px;"></div>
       </div>
@@ -1151,11 +1151,12 @@ async function checkLanForDeviceDownload() {
   if (state.settings?.restrictDeviceDownloadsToLan === false) return true;
   if (isLanConnected()) return true;
 
-  const lanUrl = state.settings?.lanBaseUrl || 'http://192.168.129.10:60500';
+  const lanUrl = (state.settings?.lanBaseUrl || '').trim();
+  const locationHint = lanUrl ? ' at ' + lanUrl : '';
   await showConfirm({
     title: 'Local Network (LAN) Required',
     eyebrow: 'Download Restricted',
-    message: 'Direct device downloads are restricted to your local network (LAN) to protect internet bandwidth.\n\nPlease connect to your home Wi-Fi and access your server locally at ' + lanUrl + ' to save media files to this device.',
+    message: 'Direct device downloads are restricted to your local network (LAN) to protect bandwidth.\n\nPlease connect to your local network (LAN / Wi-Fi) and access your server locally' + locationHint + ' to save media files to this device.',
     confirmText: 'Understood',
     cancelText: '',
     danger: true
@@ -1319,7 +1320,7 @@ function renderLibrary(){
   }).join('') || '<tr><td colspan="7"><div class="empty">No files match this filter.</div></td></tr>';
 }
 function setSelectValue(select,value,label){if(!select)return;const stringValue=String(value??'');if(stringValue&&!Array.from(select.options).some(option=>option.value===stringValue)){const option=document.createElement('option');option.value=stringValue;option.textContent=label||stringValue;select.appendChild(option)}select.value=stringValue}
-function renderAiometadataCard(){const url=String(state.settings?.aiometadataUrl||'').trim(),conn=document.getElementById('aiometadataConnectedCard'),disconn=document.getElementById('aiometadataDisconnectedCard'),display=document.getElementById('aiometadataUrlDisplay'),input=document.getElementById('aiometadataUrl');if(input)input.value=url;if(!conn||!disconn)return;if(url){conn.style.display='flex';disconn.style.display='none';if(display)display.textContent=url}else{conn.style.display='none';disconn.style.display='flex'}}
+function renderAiometadataCard(){const url=String(state.settings?.aiometadataUrl||'').trim(),conn=document.getElementById('aiometadataConnectedCard'),disconn=document.getElementById('aiometadataDisconnectedCard'),display=document.getElementById('aiometadataUrlDisplay'),nameEl=document.getElementById('aiometadataProviderName'),input=document.getElementById('aiometadataUrl');if(input)input.value=url;if(!conn||!disconn)return;if(url){conn.style.display='flex';disconn.style.display='none';if(display)display.textContent=url;if(nameEl){let host='';try{host=new URL(url).hostname}catch{host=url.replace(/^https?:\/\//i,'').split('/')[0]}nameEl.textContent=host?('AIOMetadata ('+host+')'):'AIOMetadata'}}else{conn.style.display='none';disconn.style.display='flex'}}
 function fillSettings(force=false){if(settingsDirty&&!force)return;const form=document.getElementById('settingsForm'),s=state.settings;for(const name of ['addonName','baseUrl','mediaSoftLimitGb','lanBaseUrl','moviesPath','tvPath','scanIntervalMinutes','minimumFileSizeMb','streamTokenExpiryHours','longLivedStreamTokens','adminUsername','maxConcurrentDownloads','maxDownloadSpeedMBps','downloadTimeoutSeconds','autoRescanOnDownload','enableLibraryEditing','enableDeviceDownloads','restrictDeviceDownloadsToLan','isolateDownloadedCatalog','downloadedCatalogMode','aiometadataUrl'])if(form.elements[name])form.elements[name].value=String(s[name]??'');document.getElementById('tmdbStatus').textContent=s.metadataProvider||'Automatic metadata is active.';refreshBranding();syncManifestUrl();renderAiometadataCard()}
 async function load(){const request=++stateRequest,data=await api('/admin/api/state');if(request!==stateRequest)return;state={...state,...data};render()}
 async function loadHealth(force=false){const request=++healthRequest,summary=document.getElementById('healthSummary');if(!state.health&&summary){summary.className='health-banner';summary.innerHTML='<div><div class="health-banner-title">Running system checks…</div><div class="health-banner-meta">External checks are bounded and cached for one minute.</div></div>'}try{const data=await api('/admin/api/system-health'+(force?'?refresh=1':''));if(request!==healthRequest)return;state.health=data;renderHealth()}catch(err){if(request===healthRequest&&summary){summary.className='health-banner danger';summary.innerHTML='<div><div class="health-banner-title">System checks could not run</div><div class="health-banner-meta">'+esc(err.message||'The diagnostic request failed.')+'</div></div>'+diagnosticBadge('error')}throw err}}
@@ -1355,8 +1356,8 @@ function endOperation(token){if(token!==modalState.operation)return;modalState.b
 function showModal(opener){if(!fileModal.open){const actual=opener||document.activeElement,container=actual?.closest?.('[id]');modalState.opener=actual;modalState.openerContext=actual?.dataset?.file?{containerId:container?.id||null,fileId:actual.dataset.file}:null;fileModal.showModal();document.body.classList.add('modal-open');requestAnimationFrame(()=>fileModal.querySelector('[data-close]')?.focus())}}
 function cleanupModal(){document.body.classList.remove('modal-open');modalState.searchController?.abort();modalState.searchController=null;modalState.id=null;modalState.file=null;modalState.busy=false;modalState.request++;modalState.operation++;modalBody.innerHTML='';modalActions.innerHTML='';const opener=modalState.opener,context=modalState.openerContext;modalState.opener=null;modalState.openerContext=null;let focusTarget=opener&&opener.isConnected?opener:null;if(!focusTarget&&context){const scope=context.containerId?document.getElementById(context.containerId):document;if(scope)focusTarget=[...scope.querySelectorAll('[data-file]')].find(node=>node.dataset.file===context.fileId)||null}focusTarget?.focus()}
 function closeModal(){if(modalState.busy)return;if(fileModal.open)fileModal.close();else cleanupModal()}
-function renderFooter(file){const buttons=[];if(file.status==='matched'&&file.currentMatch){buttons.push('<button class="btn primary" type="button" data-action="test" data-id="'+esc(file.id)+'">Test stream</button>')}const canDownload=state.settings?.enableDeviceDownloads!==false;if(canDownload&&file.id&&file.status!=='ignored'&&file.status!=='error'){const fn=file.relativePath?file.relativePath.split('/').pop():'media';buttons.push('<button class="btn" type="button" data-action="download" data-id="'+esc(file.id)+'" style="display:inline-flex;align-items:center;gap:6px;" title="Save file from home server to this device ('+esc(fn)+')">📥 Download to device</button>')}modalActions.innerHTML=buttons.join('');syncBusyControls()}
-function renderFile(file){modalState.file=file;modalTitle.textContent=file.parsedTitle||file.relativePath;const canEdit=Boolean(state.settings?.enableLibraryEditing);const canDownload=state.settings?.enableDeviceDownloads!==false;const changeBtn=canEdit?'<button class="btn" type="button" data-change-match>Change match</button>':'';const current=file.status==='matched'&&file.currentMatch?'<div class="match-card">'+poster(file.currentMatch.poster,file.currentMatch.title)+'<div class="match-content"><div class="match-title">'+esc(file.currentMatch.title)+(file.currentMatch.year?' ('+esc(file.currentMatch.year)+')':'')+'</div><div class="match-meta"><span class="badge good">Current match</span><span>'+esc(file.libraryType==='series'?'TV series':'Movie')+'</span><span>'+esc(file.currentMatch.stremioId)+'</span></div>'+(file.currentMatch.description?'<p class="match-description">'+esc(file.currentMatch.description)+'</p>':'')+'</div>'+changeBtn+'</div>':'<div class="notice '+(file.status==='ignored'?'warn':'')+'">'+(file.status==='ignored'?'This file is ignored. Apply a TMDB match below to return it to the library.':'No metadata match is assigned yet. Search TMDB and apply the correct result.')+'</div>';const searchSection=canEdit?'<div class="match-search"><div class="field"><label for="tmdbQuery">TMDB title search</label><input id="tmdbQuery" class="input" value="'+esc(file.parsedTitle||'')+'" autocomplete="off"></div><button id="tmdbSearch" class="btn primary" type="button">Search TMDB</button></div><div id="tmdbSearchStatus" class="search-status" role="status" aria-live="polite">Enter a title and search to find matches.</div><div id="tmdbResults" class="search-results"></div>':'<div class="notice" style="display:flex;align-items:center;gap:12px;margin-top:14px;background:rgba(14,165,233,0.07);border:1px solid rgba(56,189,248,0.25);color:#7dd3fc;padding:12px 14px;border-radius:10px;"><span style="font-size:18px;">🔒</span><div><strong style="color:#e0f2fe;">Library Editing is Locked</strong><div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Metadata matches and overrides cannot be altered to prevent accidental changes. To edit, enable <em>Allow Library Editing</em> in Settings.</div></div></div>';const edit=file.status==='matched'&&file.mediaItemId?(canEdit?'<div class="details-section"><div class="section-head"><div><h4>Display overrides</h4><p>Optional presentation changes for this matched title.</p></div></div><div class="form-grid"><div class="field full"><label for="editTitle">Display title</label><input id="editTitle" class="input" value="'+esc(file.displayTitle||'')+'"></div><div class="field"><label for="editPoster">Poster URL</label><input id="editPoster" class="input" value="'+esc(file.poster||'')+'"></div><div class="field"><label for="editBackground">Backdrop URL</label><input id="editBackground" class="input" value="'+esc(file.background||'')+'"></div><div class="field full"><button class="btn" type="button" data-save-overrides>Save display overrides</button></div></div></div>':(file.displayTitle||file.poster||file.background?'<div class="details-section"><div class="section-head"><div><h4>Display overrides (Read-only)</h4><p>Optional presentation changes for this matched title.</p></div></div><div class="form-grid"><div class="field full"><label for="editTitle">Display title</label><input id="editTitle" class="input" value="'+esc(file.displayTitle||'')+'" readonly aria-readonly="true"></div><div class="field"><label for="editPoster">Poster URL</label><input id="editPoster" class="input" value="'+esc(file.poster||'')+'" readonly aria-readonly="true"></div><div class="field"><label for="editBackground">Backdrop URL</label><input id="editBackground" class="input" value="'+esc(file.background||'')+'" readonly aria-readonly="true"></div></div></div>':'')):'';const headingSubtitle=canEdit?'Search TMDB to '+(file.status==='matched'?'change':'identify')+' this '+(file.libraryType==='series'?'series':'movie')+'.':'Catalog assignment and current metadata match.';modalBody.innerHTML='<div id="modalError" class="notice error" role="alert" hidden></div><section class="details-section" aria-labelledby="fileInfoHeading"><div class="section-head"><div><h4 id="fileInfoHeading">File information</h4><p>Local path and catalog assignment.</p></div></div><div class="info-grid"><div class="info-item full"><span class="info-label">File</span><div class="path-row"><span class="info-value path-value" id="filePathValue">'+esc(file.relativePath)+'</span><div class="path-actions"><button class="btn small copy-btn" type="button" data-copy="filePathValue" data-copy-label="Path copied">Copy path</button>'+(canDownload?'<button class="btn small" type="button" data-action="download" data-id="'+esc(file.id)+'" title="Save file from home server to this device">📥 Download</button>':'')+'</div></div></div><div class="info-item"><span class="info-label">Status</span><span class="info-value">'+esc(file.status)+'</span></div><div class="info-item"><span class="info-label">Stremio ID</span><span class="info-value">'+esc(file.stremioId||'Not assigned')+'</span></div></div></section><section class="details-section" aria-labelledby="matchHeading"><div class="section-head"><div><h4 id="matchHeading">Metadata match</h4><p>'+headingSubtitle+'</p></div></div>'+current+searchSection+'</section>'+edit;renderFooter(file);modalBody.scrollTop=0;syncBusyControls()}
+function renderFooter(file){const buttons=[];if(file.status==='matched'&&file.currentMatch){buttons.push('<button class="btn primary" type="button" data-action="test" data-id="'+esc(file.id)+'">Test stream</button>')}const canDownload=state.settings?.enableDeviceDownloads!==false;if(canDownload&&file.id&&file.status!=='ignored'&&file.status!=='error'){const fn=file.relativePath?file.relativePath.split('/').pop():'media';buttons.push('<button class="btn" type="button" data-action="download" data-id="'+esc(file.id)+'" style="display:inline-flex;align-items:center;gap:6px;" title="Save file to this device ('+esc(fn)+')">📥 Download to device</button>')}modalActions.innerHTML=buttons.join('');syncBusyControls()}
+function renderFile(file){modalState.file=file;modalTitle.textContent=file.parsedTitle||file.relativePath;const canEdit=Boolean(state.settings?.enableLibraryEditing);const canDownload=state.settings?.enableDeviceDownloads!==false;const changeBtn=canEdit?'<button class="btn" type="button" data-change-match>Change match</button>':'';const current=file.status==='matched'&&file.currentMatch?'<div class="match-card">'+poster(file.currentMatch.poster,file.currentMatch.title)+'<div class="match-content"><div class="match-title">'+esc(file.currentMatch.title)+(file.currentMatch.year?' ('+esc(file.currentMatch.year)+')':'')+'</div><div class="match-meta"><span class="badge good">Current match</span><span>'+esc(file.libraryType==='series'?'TV series':'Movie')+'</span><span>'+esc(file.currentMatch.stremioId)+'</span></div>'+(file.currentMatch.description?'<p class="match-description">'+esc(file.currentMatch.description)+'</p>':'')+'</div>'+changeBtn+'</div>':'<div class="notice '+(file.status==='ignored'?'warn':'')+'">'+(file.status==='ignored'?'This file is ignored. Apply a TMDB match below to return it to the library.':'No metadata match is assigned yet. Search TMDB and apply the correct result.')+'</div>';const searchSection=canEdit?'<div class="match-search"><div class="field"><label for="tmdbQuery">TMDB title search</label><input id="tmdbQuery" class="input" value="'+esc(file.parsedTitle||'')+'" autocomplete="off"></div><button id="tmdbSearch" class="btn primary" type="button">Search TMDB</button></div><div id="tmdbSearchStatus" class="search-status" role="status" aria-live="polite">Enter a title and search to find matches.</div><div id="tmdbResults" class="search-results"></div>':'<div class="notice" style="display:flex;align-items:center;gap:12px;margin-top:14px;background:rgba(14,165,233,0.07);border:1px solid rgba(56,189,248,0.25);color:#7dd3fc;padding:12px 14px;border-radius:10px;"><span style="font-size:18px;">🔒</span><div><strong style="color:#e0f2fe;">Library Editing is Locked</strong><div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Metadata matches and overrides cannot be altered to prevent accidental changes. To edit, enable <em>Allow Library Editing</em> in Settings.</div></div></div>';const edit=file.status==='matched'&&file.mediaItemId?(canEdit?'<div class="details-section"><div class="section-head"><div><h4>Display overrides</h4><p>Optional presentation changes for this matched title.</p></div></div><div class="form-grid"><div class="field full"><label for="editTitle">Display title</label><input id="editTitle" class="input" value="'+esc(file.displayTitle||'')+'"></div><div class="field"><label for="editPoster">Poster URL</label><input id="editPoster" class="input" value="'+esc(file.poster||'')+'"></div><div class="field"><label for="editBackground">Backdrop URL</label><input id="editBackground" class="input" value="'+esc(file.background||'')+'"></div><div class="field full"><button class="btn" type="button" data-save-overrides>Save display overrides</button></div></div></div>':(file.displayTitle||file.poster||file.background?'<div class="details-section"><div class="section-head"><div><h4>Display overrides (Read-only)</h4><p>Optional presentation changes for this matched title.</p></div></div><div class="form-grid"><div class="field full"><label for="editTitle">Display title</label><input id="editTitle" class="input" value="'+esc(file.displayTitle||'')+'" readonly aria-readonly="true"></div><div class="field"><label for="editPoster">Poster URL</label><input id="editPoster" class="input" value="'+esc(file.poster||'')+'" readonly aria-readonly="true"></div><div class="field"><label for="editBackground">Backdrop URL</label><input id="editBackground" class="input" value="'+esc(file.background||'')+'" readonly aria-readonly="true"></div></div></div>':'')):'';const headingSubtitle=canEdit?'Search TMDB to '+(file.status==='matched'?'change':'identify')+' this '+(file.libraryType==='series'?'series':'movie')+'.':'Catalog assignment and current metadata match.';modalBody.innerHTML='<div id="modalError" class="notice error" role="alert" hidden></div><section class="details-section" aria-labelledby="fileInfoHeading"><div class="section-head"><div><h4 id="fileInfoHeading">File information</h4><p>Local path and catalog assignment.</p></div></div><div class="info-grid"><div class="info-item full"><span class="info-label">File</span><div class="path-row"><span class="info-value path-value" id="filePathValue">'+esc(file.relativePath)+'</span><div class="path-actions"><button class="btn small copy-btn" type="button" data-copy="filePathValue" data-copy-label="Path copied">Copy path</button>'+(canDownload?'<button class="btn small" type="button" data-action="download" data-id="'+esc(file.id)+'" title="Save file to this device">📥 Download</button>':'')+'</div></div></div><div class="info-item"><span class="info-label">Status</span><span class="info-value">'+esc(file.status)+'</span></div><div class="info-item"><span class="info-label">Stremio ID</span><span class="info-value">'+esc(file.stremioId||'Not assigned')+'</span></div></div></section><section class="details-section" aria-labelledby="matchHeading"><div class="section-head"><div><h4 id="matchHeading">Metadata match</h4><p>'+headingSubtitle+'</p></div></div>'+current+searchSection+'</section>'+edit;renderFooter(file);modalBody.scrollTop=0;syncBusyControls()}
 function renderDetailError(id,message){modalTitle.textContent='Unable to load file';modalBody.innerHTML='<div class="notice error" role="alert">'+esc(message)+'</div><div style="margin-top:14px"><button class="btn" type="button" data-retry-file="'+esc(id)+'">Try again</button></div>';modalActions.innerHTML='';syncBusyControls()}
 async function fetchFile(id,{loading=false}={}){const request=++modalState.request;if(loading){modalTitle.textContent='Loading file details';modalBody.innerHTML='<div class="modal-loading"><span>Loading media details…</span></div>';modalActions.innerHTML=''}try{const data=await api('/admin/api/files/'+encodeURIComponent(id));if(request!==modalState.request||modalState.id!==id)return null;renderFile(data.file);return data.file}catch(err){if(request===modalState.request&&modalState.id===id)renderDetailError(id,err.message||'Media details could not be loaded.');return null}}
 async function openFile(id,opener){modalState.searchController?.abort();modalState.searchController=null;modalState.operation++;modalState.busy=false;modalState.id=id;modalState.file=null;showModal(opener);syncBusyControls();return fetchFile(id,{loading:true})}
@@ -1829,7 +1830,7 @@ async function dlDownloadFile(id, filename) {
   const confirmed = await showConfirm({
     title: 'Save to Device',
     eyebrow: 'Local Download',
-    message: 'Save "' + displayName + '"' + sizeText + ' directly from the home server to this device?',
+    message: 'Save "' + displayName + '"' + sizeText + ' directly to this device for offline playback?',
     confirmText: 'Save to Device',
     danger: false
   });
@@ -1841,7 +1842,7 @@ async function dlDownloadFile(id, filename) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  toast('Saving from home server: ' + displayName);
+  toast('Saving to device: ' + displayName);
 }
 window.dlDownloadFile = dlDownloadFile;
 
@@ -1862,13 +1863,13 @@ async function dlDownloadSelected() {
   const confirmed = await showConfirm({
     title: 'Save Selected Files to Device',
     eyebrow: 'Batch Download',
-    message: 'Save ' + countText + sizeText + ' directly from the home server to this device?',
+    message: 'Save ' + countText + sizeText + ' directly to this device for offline playback?',
     confirmText: 'Save ' + countText,
     danger: false
   });
   if (!confirmed) return;
 
-  toast('Saving ' + countText + ' from home server to this device…');
+  toast('Saving ' + countText + ' to this device…');
   files.forEach((f, idx) => {
     setTimeout(() => {
       const name = f.relative_path ? f.relative_path.split('/').pop() : 'media-' + f.id;
@@ -1972,7 +1973,7 @@ function dlRenderFileItem(f) {
   const metaHtml = '<a href="' + esc(stremioUrl) + '" class="file-meta-link" title="Open in Stremio: ' + esc(filename) + '">' + metaContent + '</a>';
   const openBtn = '<a href="' + esc(stremioUrl) + '" class="btn-stremio" title="Open directly in Stremio">▶ Stremio</a>';
   const canDownload = state.settings?.enableDeviceDownloads !== false;
-  const downloadBtn = canDownload ? '<button class="btn small" type="button" onclick="dlDownloadFile(\'' + esc(f.id) + '\', \'' + esc(filename).replace(/'/g, "\\'") + '\')" title="Save file from home server to this device (' + esc(filename) + ')" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;">📥 Save</button>' : '';
+  const downloadBtn = canDownload ? '<button class="btn small" type="button" onclick="dlDownloadFile(\'' + esc(f.id) + '\', \'' + esc(filename).replace(/'/g, "\\'") + '\')" title="Save file to this device (' + esc(filename) + ')" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;">📥 Save</button>' : '';
 
   const watchBtn = !isMovie ? (
     '<button class="btn small" type="button" onclick="dlToggleWatched(\'' + esc(f.id) + '\', event)" ' +

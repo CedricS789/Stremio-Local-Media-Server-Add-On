@@ -18,8 +18,8 @@ Traditional personal media setups (like Plex, Jellyfin, or Emby) force you to ma
 * **Pure Stremio Interface:** No app switching. Media discovery, stream selection, 1-click downloading, library browsing, and playback all live **100% inside Stremio**.
 * **Zero Server Transcoding:** Streams are served via **HTTP Direct Play**. Modern phones (iPhone/Android), tablets, and PCs decode 4K and 1080p REMUX video on hardware with zero CPU strain on your server.
 * **Dual-Stream Playback Engine:**
-  * **`🏠 LAN Direct`**: Streams directly over your home Wi-Fi/Gigabit router (`192.168.x.x`) with **0 MB internet data used** and instant scrubbing.
-  * **`🌐 Remote`**: Secure HTTPS streaming via Cloudflare Tunnel when you are outside the house on 4G/5G or traveling—**no VPN required**.
+  * **`🏠 LAN Direct`**: Streams directly over your local network (`192.168.x.x` / LAN / Wi-Fi) with **0 MB internet data used** and instant scrubbing.
+  * **`🌐 Remote`**: Secure HTTPS streaming via reverse proxy or tunnel (e.g. Cloudflare Tunnel, Caddy, Nginx) when outside your local network on mobile data or traveling—**no VPN required**.
 * **Interactive Source & Quality Picker:** Pick your exact release profile (4K UHD, 1080p Bluray, REMUX, HDR/DV, English/French audio) or download entire TV seasons with 1 click.
 * **Proactive Storage Quota:** Built-in allocation limit (`MEDIA_ALLOCATED_LIMIT_GB=100`) with pre-download space verification and real-time visual progress bars.
 * **Universal Multi-Device Sync:** Windows Desktop, macOS, Linux, iPhone (PWA), iPad (PWA), Android, and Smart TVs.
@@ -35,12 +35,12 @@ flowchart TD
     subgraph Server["Stremio-Local-Media-Server (Home Server or PC)"]
         SDS["Stremio-Local-Media-Server (Docker Engine)<br>Port 60500"]
         Disk[("Local Storage<br>/media/movies & /media/tv")]
-        CF["Cloudflare Tunnel<br>(HTTPS Zero-VPN Route)"]
+        CF["Reverse Proxy / Tunnel<br>(e.g. Cloudflare, Nginx, Caddy)"]
     end
 
     Clients -->|1. Browse & Click 'Download'| SDS
     SDS -->|2. Pull stream from Real-Debrid / TorBox| Disk
-    Disk -->|3. Gigabit LAN Direct Play (0 Internet)| Clients
+    Disk -->|3. Local Network LAN Play (0 Internet)| Clients
     CF -.->|4. Remote HTTPS Playback (Away from home)| Clients
 ```
 
@@ -130,7 +130,7 @@ Because iOS Safari does not natively decode `.mkv` containers or `VC-1` codecs:
 2. **External Player:** In Stremio Web, go to **Settings (Gear icon) → Streaming**, and set **Play in external player** to **Outplayer** or **VLC** (free in the App Store).
 3. **1-Click Downloading:** Clicking **"⬇️ Download Season"** on your iPhone sends the download job directly to your server. Your phone uses **zero battery and zero storage** downloading large files.
 4. **Playback:**
-   * **At Home:** Tap **`🏠 LAN Direct`** (100% Gigabit local Wi-Fi, 0 MB internet data used).
+   * **At Home / Local:** Tap **`🏠 LAN Direct`** (100% local network Wi-Fi/LAN, 0 MB internet data used).
    * **Away from Home:** Tap **`🌐 Remote`** to stream over cellular data without a VPN.
 
 ---

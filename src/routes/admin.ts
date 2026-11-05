@@ -706,7 +706,7 @@ export function registerAdminRoutes(
 
     if (settings.restrictDeviceDownloadsToLan && !isLanRequest(request, settings, settings.allowTailscaleDownloads)) {
       return reply.code(403).send({
-        error: 'Device downloads are restricted to your local network (LAN). Please connect to your home Wi-Fi or LAN to save media files directly.'
+        error: 'Device downloads are restricted to your local network (LAN). Please connect to your local network (LAN / Wi-Fi) to save media files directly.'
       });
     }
 

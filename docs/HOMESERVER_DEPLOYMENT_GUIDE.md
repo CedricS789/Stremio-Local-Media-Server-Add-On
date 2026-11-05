@@ -17,7 +17,7 @@ Unlike traditional setups that require heavy media servers like Plex or Jellyfin
 * **Unified Single Interface:** Media discovery, debrid stream selection, 1-click downloading, and playback all happen **100% inside Stremio** across all your devices.
 * **Zero Server Transcoding:** Video playback is delivered via **HTTP Direct Play**. Decoding is offloaded to client hardware (iPhone, iPad, PC GPU), eliminating CPU strain on the server.
 * **Dual-Stream Playback Engine:** When a file is downloaded, Stremio automatically provides two streams:
-  1. `💾 Local (LAN Direct)` (`http://<SERVER_LAN_IP>:60500/media/...`): 100% Gigabit LAN, 0 Internet data, instant scrubbing.
+  1. `💾 Local (LAN Direct)` (`http://<SERVER_LAN_IP>:60500/media/...`): 100% local network LAN, 0 Internet data, instant scrubbing.
   2. `💾 Local (Remote / HTTPS)` (`https://dock.yourdomain.com/media/...`): For watching when away from home without needing a VPN.
 
 ```mermaid
@@ -30,14 +30,14 @@ flowchart TD
 
     subgraph HomeServer["Home Server (24/7 Always-On)"]
         MMD["Stremio-Local-Media-Server (Docker)<br>Port 60500"]
-        CFTunnel["Cloudflare Tunnel<br>(cloudflared)"]
+        CFTunnel["Reverse Proxy / Tunnel<br>(e.g. Cloudflare, Nginx, Caddy)"]
         Cron["Storage Monitor (Cron)<br>100 GB Soft Limit"]
         Disk[("Storage SSD / HDD<br>/media/movies & /media/tv")]
     end
 
     Clients -->|1. Find show & click 'Download'| MMD
     MMD -->|2. Pull stream from Debrid| Disk
-    Disk -->|3. Gigabit Direct Play (LAN Direct)| Clients
+    Disk -->|3. Local Network Direct Play (LAN Direct)| Clients
     CFTunnel -.->|Remote HTTPS Playback (Zero VPN)| iPhone & iPad
     Cron -->|Monitors 80 GB & 100 GB thresholds| Disk
 ```
@@ -112,9 +112,9 @@ https://dock.yourdomain.com/addon/<YOUR_ACCESS_TOKEN>/manifest.json
 
 ## 6. Multi-Device Playback Guide
 
-### At Home on Local Wi-Fi (Gigabit LAN • 0 Internet Data):
+### On Local Network / Wi-Fi (LAN Direct • 0 Internet Data):
 * When you open any downloaded movie or series in Stremio, select the stream marked:
-  **`💾 Local (LAN Direct)`** (`⚡ Gigabit LAN • No Internet`).
+  **`💾 Local (LAN Direct)`** (`⚡ Local Network LAN • No Internet`).
 * Playback streams directly from your home server over your local Wi-Fi router.
 * No data touches the internet; no VPN is needed.
 
