@@ -1278,6 +1278,10 @@ export function registerAdminRoutes(
       settings.set('lanBaseUrl', body.lanBaseUrl.trim());
     }
 
+    if (typeof body.aiometadataUrl === 'string') {
+      settings.set('aiometadataUrl', body.aiometadataUrl.trim());
+    }
+
     for (const key of [
       'baseUrl',
       'addonName',

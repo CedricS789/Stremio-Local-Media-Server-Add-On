@@ -11,7 +11,7 @@ function clean(value: string | undefined, fallback: string): string {
 export function buildInfo(env: NodeJS.ProcessEnv = process.env): BuildInfo {
   const revision = clean(env.NUVI_FLOW_REVISION, 'dev');
   return {
-    version: clean(env.NUVI_FLOW_VERSION, '1.1.0'),
+    version: clean(env.NUVI_FLOW_VERSION, '1.1.1'),
     revision: revision === 'unknown' ? 'dev' : revision.slice(0, 12)
   };
 }

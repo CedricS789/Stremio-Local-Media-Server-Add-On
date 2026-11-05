@@ -45,4 +45,44 @@ describe('Stremio output builders', () => {
   it('describes direct-play stream quality', () => {
     expect(streamTitle({ quality: '1080P', height: 1080, video_codec: 'hevc', audio_channels: 6 } as MediaFileRow)).toBe('1080p • HEVC • 5.1');
   });
+
+  it('preserves full rich upstream metadata while filtering to downloaded episodes', () => {
+    const upstream = {
+      id: 'tt1405406',
+      name: 'The Vampire Diaries',
+      type: 'series',
+      imdbRating: '7.7',
+      genres: ['Horror', 'Fantasy', 'Drama'],
+      links: [
+        { name: '7.7', category: 'imdb', url: 'https://imdb.com/title/tt1405406' },
+        { name: 'Nina Dobrev', category: 'Cast', url: 'stremio:///search?search=Nina%20Dobrev' }
+      ],
+      app_extras: {
+        cast: [{ name: 'Nina Dobrev', character: 'Elena Gilbert', photo: 'https://artworks.test/nina.jpg' }]
+      },
+      videos: [
+        { id: 'tt1405406:1:1', season: 1, episode: 1, title: 'Pilot', thumbnail: 'https://extendedratings.com/1/1' },
+        { id: 'tt1405406:1:16', season: 1, episode: 16, title: 'Episode 16', thumbnail: 'https://extendedratings.com/1/16' },
+        { id: 'tt1405406:1:17', season: 1, episode: 17, title: 'Episode 17', thumbnail: 'https://extendedratings.com/1/17' }
+      ]
+    };
+
+    const downloadedKeys = new Set(['1:16', '1:17']);
+    const filteredVideos = upstream.videos
+      .filter((v) => downloadedKeys.has(`${v.season}:${v.episode}`))
+      .map((v) => ({ ...v, id: `tt1405406:${v.season}:${v.episode}` }));
+
+    const enriched = {
+      ...upstream,
+      id: 'dls:tt1405406',
+      videos: filteredVideos
+    };
+
+    expect(enriched.id).toBe('dls:tt1405406');
+    expect(enriched.links).toHaveLength(2);
+    expect(enriched.app_extras.cast[0]?.name).toBe('Nina Dobrev');
+    expect(enriched.videos).toHaveLength(2);
+    expect(enriched.videos[0]?.id).toBe('tt1405406:1:16');
+    expect(enriched.videos[0]?.thumbnail).toBe('https://extendedratings.com/1/16');
+  });
 });

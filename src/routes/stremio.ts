@@ -13,7 +13,7 @@ import { planSiloPlayback } from '../services/playback/playback-policy.js';
 
 const manifest = {
     id: 'community.nuviflow',
-    version: '1.1.0',
+    version: '1.1.1',
     name: 'Stremio Local Media Server',
     description: 'Direct playback and in-Stremio downloads for your personal movie and TV library.',
     resources: [
@@ -415,6 +415,44 @@ async function fetchCinemeta(type, itemId) {
     catch {
         return null;
     }
+}
+
+const upstreamMetaCache = new Map<string, { at: number; value: any }>();
+
+async function fetchUpstreamMeta(type: string, itemId: string, upstreamBaseUrl?: string): Promise<any> {
+    const cleanBase = (upstreamBaseUrl || '').trim().replace(/\/+$/, '');
+    const key = `${cleanBase || 'cinemeta'}:${type}:${itemId}`;
+    const cached = upstreamMetaCache.get(key);
+    if (cached && Date.now() - cached.at < META_CACHE_TTL_MS) {
+        return cached.value;
+    }
+
+    let meta: any = null;
+    if (cleanBase) {
+        try {
+            const resp = await fetch(`${cleanBase}/meta/${encodeURIComponent(type)}/${encodeURIComponent(itemId)}.json`, {
+                headers: { 'User-Agent': 'Stremio/5.0' },
+                signal: AbortSignal.timeout(6000)
+            });
+            if (resp.ok) {
+                const data = (await resp.json()) as { meta?: any };
+                if (data?.meta) {
+                    meta = data.meta;
+                }
+            }
+        } catch {
+            // best effort upstream metadata provider
+        }
+    }
+
+    if (!meta) {
+        meta = await fetchCinemeta(type, itemId);
+    }
+
+    if (meta) {
+        upstreamMetaCache.set(key, { at: Date.now(), value: meta });
+    }
+    return meta;
 }
 
 class GlobalBandwidthLimiter {
@@ -1763,8 +1801,20 @@ export function registerStremioRoutes(app, database, settings, config, requester
         // In 'trackable' mode: 'dls:' prefix for series (to show ONLY downloaded episodes in the episode list),
         //                      and standard canonical IDs for movies (to preserve standard scrobbling & tracking support).
         const idPrefix = mode === 'strict' ? 'dls:' : (mode === 'trackable' && expectedType === 'series' ? 'dls:' : '');
+        const cleanBase = (settings.aiometadataUrl || '').trim().replace(/\/+$/, '');
         reply.header('Cache-Control', 'no-store').send({
-            metas: rows.map((item) => catalogPreview(item, idPrefix))
+            metas: rows.map((item) => {
+                const preview = catalogPreview(item, idPrefix);
+                const cached = upstreamMetaCache.get(`${cleanBase || 'cinemeta'}:${expectedType}:${item.stremio_id}`);
+                if (cached?.value) {
+                    if (cached.value.poster) preview.poster = cached.value.poster;
+                    if (cached.value.background) preview.background = cached.value.background;
+                    if (cached.value.logo) preview.logo = cached.value.logo;
+                    if (cached.value.genres?.length) preview.genres = cached.value.genres;
+                    if (cached.value.imdbRating) preview.imdbRating = cached.value.imdbRating;
+                }
+                return preview;
+            })
         });
     };
     app.get(`${prefix}/catalog/:type/:catalogId.json`, secureRoute, catalogHandler);
@@ -1797,37 +1847,82 @@ export function registerStremioRoutes(app, database, settings, config, requester
                     expanded.set(key, metadataByKey.get(key) || { season: file.season, episode: number, title: null, overview: null, still: null, air_date: null, runtime_minutes: null });
                 }
             episodes = [...expanded.values()].sort((a, b) => a.season - b.season || a.episode - b.episode);
-
-            if (episodes.some(ep => !ep.title || !ep.still)) {
-                try {
-                    const cinemetaMeta = await fetchCinemeta('series', cleanId);
-                    if (cinemetaMeta?.videos) {
-                        const cMap = new Map(cinemetaMeta.videos.map(v => [`${v.season}:${v.episode}`, v]));
-                        for (const ep of episodes) {
-                            const cv = cMap.get(`${ep.season}:${ep.episode}`);
-                            if (cv) {
-                                if (!ep.title) ep.title = cv.name || cv.title;
-                                if (!ep.still) ep.still = cv.thumbnail;
-                                if (!ep.overview) ep.overview = cv.overview;
-                                if (!ep.air_date && cv.released) ep.air_date = cv.released;
-                            }
-                        }
-                    }
-                } catch { /* best effort cinemeta enrichment */ }
-            }
         }
+
         const mode = settings.downloadedCatalogMode;
         // In 'trackable' mode, series videos use canonical episode IDs (tt...:season:episode)
         // so player scrobblers, watch progress, and external tracking integrations function normally.
         // In 'strict' mode, keep prefixUsed ('dls:') on video IDs to hide 3rd-party addons completely.
         const videoIdPrefix = mode === 'strict' ? prefixUsed : '';
-        const metaObj = fullMeta(item, episodes, prefixUsed, videoIdPrefix);
-        if (item.imdb_id || cleanId.startsWith('tt')) {
-            metaObj.imdb_id = item.imdb_id || cleanId;
+
+        // Retrieve rich metadata from configured upstream provider (e.g. AIOMetadata) or Cinemeta fallback
+        const upstreamMeta = await fetchUpstreamMeta(type, cleanId, settings.aiometadataUrl);
+
+        let metaObj: Record<string, any>;
+        if (upstreamMeta) {
+            metaObj = { ...upstreamMeta };
+            metaObj.id = `${prefixUsed}${cleanId}`;
+            if (item.imdb_id || cleanId.startsWith('tt')) {
+                metaObj.imdb_id = item.imdb_id || cleanId;
+            }
+            if (item.tmdb_id) {
+                metaObj.moviedb_id = item.tmdb_id;
+            }
+
+            if (type === 'series') {
+                const downloadedKeys = new Set(episodes.map(ep => `${ep.season}:${ep.episode}`));
+                if (Array.isArray(upstreamMeta.videos) && upstreamMeta.videos.length > 0) {
+                    // Filter upstream videos to downloaded episodes only, retaining rich ERDB thumbnails, ratings & titles
+                    const matchedVideos = upstreamMeta.videos
+                        .filter((v: any) => downloadedKeys.has(`${v.season}:${v.episode}`))
+                        .map((v: any) => ({
+                            ...v,
+                            id: `${videoIdPrefix}${cleanId}:${v.season}:${v.episode}`
+                        }));
+
+                    // In case any episode on disk was missing in upstream provider:
+                    const matchedKeys = new Set(matchedVideos.map((v: any) => `${v.season}:${v.episode}`));
+                    for (const ep of episodes) {
+                        const key = `${ep.season}:${ep.episode}`;
+                        if (!matchedKeys.has(key)) {
+                            matchedVideos.push({
+                                id: `${videoIdPrefix}${cleanId}:${ep.season}:${ep.episode}`,
+                                title: ep.title || `Episode ${ep.episode}`,
+                                season: ep.season,
+                                episode: ep.episode,
+                                overview: ep.overview || undefined,
+                                thumbnail: ep.still || undefined,
+                                released: ep.air_date ? new Date(`${ep.air_date}T00:00:00.000Z`).toISOString() : undefined,
+                                runtime: ep.runtime_minutes ? `${ep.runtime_minutes} min` : undefined
+                            });
+                        }
+                    }
+                    matchedVideos.sort((a: any, b: any) => a.season - b.season || a.episode - b.episode);
+                    metaObj.videos = matchedVideos;
+                } else {
+                    metaObj.videos = episodes.map(ep => ({
+                        id: `${videoIdPrefix}${cleanId}:${ep.season}:${ep.episode}`,
+                        title: ep.title || `Episode ${ep.episode}`,
+                        season: ep.season,
+                        episode: ep.episode,
+                        overview: ep.overview || undefined,
+                        thumbnail: ep.still || undefined,
+                        released: ep.air_date ? new Date(`${ep.air_date}T00:00:00.000Z`).toISOString() : undefined,
+                        runtime: ep.runtime_minutes ? `${ep.runtime_minutes} min` : undefined
+                    }));
+                }
+            }
+        } else {
+            // Fallback to local builders if upstream is offline / unreachable
+            metaObj = fullMeta(item, episodes, prefixUsed, videoIdPrefix);
+            if (item.imdb_id || cleanId.startsWith('tt')) {
+                metaObj.imdb_id = item.imdb_id || cleanId;
+            }
+            if (item.tmdb_id) {
+                metaObj.moviedb_id = item.tmdb_id;
+            }
         }
-        if (item.tmdb_id) {
-            metaObj.moviedb_id = item.tmdb_id;
-        }
+
         reply.header('Cache-Control', 'no-store').send({ meta: metaObj });
     });
 
