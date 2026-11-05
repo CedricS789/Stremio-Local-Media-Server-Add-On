@@ -2398,12 +2398,6 @@ export function registerStremioRoutes(app, database, settings, config, requester
                     url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/delete/movie/${encodeURIComponent(id)}`,
                     behaviorHints: { bingeGroup: `nuvi-flow:del:movie:${id}` }
                 });
-                streams.push({
-                    name: addonName,
-                    description: `🔄 Replace / Upgrade Movie\nChoose higher quality or new source`,
-                    externalUrl: `${settings.baseUrl}/downloads/choose?token=${encodeURIComponent(accessToken)}&type=movie&id=${encodeURIComponent(id)}&mode=movie`,
-                    behaviorHints: { bingeGroup: `nuvi-flow:choose:movie:${id}` }
-                });
             }
             else {
                 streams.push({
@@ -2431,12 +2425,6 @@ export function registerStremioRoutes(app, database, settings, config, requester
                         : `🗑️ Delete S${ss}E${ee} (${formatGb(epBytes)})\nClick once to arm`,
                     url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/delete/episode/${encodeURIComponent(id)}`,
                     behaviorHints: { bingeGroup: `nuvi-flow:del:ep:${id}` }
-                });
-                streams.push({
-                    name: addonName,
-                    description: `🔄 Replace / Upgrade S${ss}E${ee}\nChoose higher quality or new source`,
-                    externalUrl: `${settings.baseUrl}/downloads/choose?token=${encodeURIComponent(accessToken)}&type=series&id=${encodeURIComponent(id)}&mode=episode`,
-                    behaviorHints: { bingeGroup: `nuvi-flow:choose:ep:${id}` }
                 });
             }
             else {

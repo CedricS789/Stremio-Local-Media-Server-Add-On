@@ -497,6 +497,7 @@ export function adminHtml(csrf: string): string {
         <p class="muted">Live background downloads, storage quota allocation, and downloaded media management.</p>
       </div>
       <div class="actions">
+        <button class="btn" type="button" id="dlOpenSourcePickerBtn" onclick="dlPromptSourcePicker()" style="display:inline-flex;align-items:center;gap:6px;" title="Open Source Picker by IMDb or Stremio ID">🎯 Open Source Picker</button>
         <button class="btn" type="button" id="dlRescanBtn" onclick="dlRescanLibrary()">🔄 Rescan Storage</button>
       </div>
     </div>
@@ -1308,6 +1309,8 @@ function renderLibrary(){
   tbody.innerHTML = rows.map(f => {
     const fn = f.relativePath ? f.relativePath.split('/').pop() : '';
     const dlBtn = canDownload ? '<button class="btn small" type="button" onclick="dlDownloadFile(\'' + esc(f.id) + '\', \'' + esc(fn).replace(/'/g, "\\'") + '\')" title="Download file directly to this device">📥</button>' : '';
+    const chooseUrl = (f.status === 'matched') ? dlGetChooseUrl(f) : null;
+    const upgradeBtn = chooseUrl ? '<a href="' + esc(chooseUrl) + '" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;" title="Choose higher quality or replace source in Source Picker">🎯</a>' : '';
     return '<tr>' +
       '<td><strong>' + esc(f.displayTitle || f.parsedTitle || 'Unknown') + '</strong></td>' +
       '<td>' + esc(f.libraryType) + '</td>' +
@@ -1315,7 +1318,7 @@ function renderLibrary(){
       '<td>' + esc(f.quality || (f.height ? f.height + 'p' : '—')) + '</td>' +
       '<td>' + duration(f.durationSeconds) + '</td>' +
       '<td>' + statusBadge(f) + '</td>' +
-      '<td><div style="display:inline-flex;gap:6px;align-items:center;"><button class="btn small" type="button" data-file="' + esc(f.id) + '">Open</button>' + dlBtn + '</div></td>' +
+      '<td><div style="display:inline-flex;gap:6px;align-items:center;"><button class="btn small" type="button" data-file="' + esc(f.id) + '">Open</button>' + upgradeBtn + dlBtn + '</div></td>' +
     '</tr>';
   }).join('') || '<tr><td colspan="7"><div class="empty">No files match this filter.</div></td></tr>';
 }
@@ -1356,7 +1359,38 @@ function endOperation(token){if(token!==modalState.operation)return;modalState.b
 function showModal(opener){if(!fileModal.open){const actual=opener||document.activeElement,container=actual?.closest?.('[id]');modalState.opener=actual;modalState.openerContext=actual?.dataset?.file?{containerId:container?.id||null,fileId:actual.dataset.file}:null;fileModal.showModal();document.body.classList.add('modal-open');requestAnimationFrame(()=>fileModal.querySelector('[data-close]')?.focus())}}
 function cleanupModal(){document.body.classList.remove('modal-open');modalState.searchController?.abort();modalState.searchController=null;modalState.id=null;modalState.file=null;modalState.busy=false;modalState.request++;modalState.operation++;modalBody.innerHTML='';modalActions.innerHTML='';const opener=modalState.opener,context=modalState.openerContext;modalState.opener=null;modalState.openerContext=null;let focusTarget=opener&&opener.isConnected?opener:null;if(!focusTarget&&context){const scope=context.containerId?document.getElementById(context.containerId):document;if(scope)focusTarget=[...scope.querySelectorAll('[data-file]')].find(node=>node.dataset.file===context.fileId)||null}focusTarget?.focus()}
 function closeModal(){if(modalState.busy)return;if(fileModal.open)fileModal.close();else cleanupModal()}
-function renderFooter(file){const buttons=[];if(file.status==='matched'&&file.currentMatch){buttons.push('<button class="btn primary" type="button" data-action="test" data-id="'+esc(file.id)+'">Test stream</button>')}const canDownload=state.settings?.enableDeviceDownloads!==false;if(canDownload&&file.id&&file.status!=='ignored'&&file.status!=='error'){const fn=file.relativePath?file.relativePath.split('/').pop():'media';buttons.push('<button class="btn" type="button" data-action="download" data-id="'+esc(file.id)+'" style="display:inline-flex;align-items:center;gap:6px;" title="Save file to this device ('+esc(fn)+')">📥 Download to device</button>')}modalActions.innerHTML=buttons.join('');syncBusyControls()}
+function dlGetChooseUrl(f){
+  if(!f)return null;
+  const sid=f.stremio_id||f.imdb_id||f.stremioId;
+  if(!sid)return null;
+  const cleanId=String(sid).replace(/^(dls|zpm):/,'');
+  const type=(f.type||f.libraryType)==='movie'?'movie':'series';
+  if(type==='movie'){
+    return '/downloads/choose?type=movie&id='+encodeURIComponent(cleanId)+'&mode=movie';
+  }else{
+    const s=f.season||1;
+    const ep=(f.episode_start!=null?f.episode_start:f.episodeStart)||1;
+    const videoId=cleanId+':'+s+':'+ep;
+    return '/downloads/choose?type=series&id='+encodeURIComponent(videoId)+'&mode=episode';
+  }
+}
+function renderFooter(file){
+  const buttons=[];
+  if(file.status==='matched'&&file.currentMatch){
+    buttons.push('<button class="btn primary" type="button" data-action="test" data-id="'+esc(file.id)+'">Test stream</button>');
+    const chooseUrl=dlGetChooseUrl(file);
+    if(chooseUrl){
+      buttons.push('<a class="btn" href="'+esc(chooseUrl)+'" target="_blank" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;" title="Choose higher quality or replace source in Source Picker">🎯 Source / Upgrade</a>');
+    }
+  }
+  const canDownload=state.settings?.enableDeviceDownloads!==false;
+  if(canDownload&&file.id&&file.status!=='ignored'&&file.status!=='error'){
+    const fn=file.relativePath?file.relativePath.split('/').pop():'media';
+    buttons.push('<button class="btn" type="button" data-action="download" data-id="'+esc(file.id)+'" style="display:inline-flex;align-items:center;gap:6px;" title="Save file to this device ('+esc(fn)+')">📥 Download to device</button>');
+  }
+  modalActions.innerHTML=buttons.join('');
+  syncBusyControls();
+}
 function renderFile(file){modalState.file=file;modalTitle.textContent=file.parsedTitle||file.relativePath;const canEdit=Boolean(state.settings?.enableLibraryEditing);const canDownload=state.settings?.enableDeviceDownloads!==false;const changeBtn=canEdit?'<button class="btn" type="button" data-change-match>Change match</button>':'';const current=file.status==='matched'&&file.currentMatch?'<div class="match-card">'+poster(file.currentMatch.poster,file.currentMatch.title)+'<div class="match-content"><div class="match-title">'+esc(file.currentMatch.title)+(file.currentMatch.year?' ('+esc(file.currentMatch.year)+')':'')+'</div><div class="match-meta"><span class="badge good">Current match</span><span>'+esc(file.libraryType==='series'?'TV series':'Movie')+'</span><span>'+esc(file.currentMatch.stremioId)+'</span></div>'+(file.currentMatch.description?'<p class="match-description">'+esc(file.currentMatch.description)+'</p>':'')+'</div>'+changeBtn+'</div>':'<div class="notice '+(file.status==='ignored'?'warn':'')+'">'+(file.status==='ignored'?'This file is ignored. Apply a TMDB match below to return it to the library.':'No metadata match is assigned yet. Search TMDB and apply the correct result.')+'</div>';const searchSection=canEdit?'<div class="match-search"><div class="field"><label for="tmdbQuery">TMDB title search</label><input id="tmdbQuery" class="input" value="'+esc(file.parsedTitle||'')+'" autocomplete="off"></div><button id="tmdbSearch" class="btn primary" type="button">Search TMDB</button></div><div id="tmdbSearchStatus" class="search-status" role="status" aria-live="polite">Enter a title and search to find matches.</div><div id="tmdbResults" class="search-results"></div>':'<div class="notice" style="display:flex;align-items:center;gap:12px;margin-top:14px;background:rgba(14,165,233,0.07);border:1px solid rgba(56,189,248,0.25);color:#7dd3fc;padding:12px 14px;border-radius:10px;"><span style="font-size:18px;">🔒</span><div><strong style="color:#e0f2fe;">Library Editing is Locked</strong><div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Metadata matches and overrides cannot be altered to prevent accidental changes. To edit, enable <em>Allow Library Editing</em> in Settings.</div></div></div>';const edit=file.status==='matched'&&file.mediaItemId?(canEdit?'<div class="details-section"><div class="section-head"><div><h4>Display overrides</h4><p>Optional presentation changes for this matched title.</p></div></div><div class="form-grid"><div class="field full"><label for="editTitle">Display title</label><input id="editTitle" class="input" value="'+esc(file.displayTitle||'')+'"></div><div class="field"><label for="editPoster">Poster URL</label><input id="editPoster" class="input" value="'+esc(file.poster||'')+'"></div><div class="field"><label for="editBackground">Backdrop URL</label><input id="editBackground" class="input" value="'+esc(file.background||'')+'"></div><div class="field full"><button class="btn" type="button" data-save-overrides>Save display overrides</button></div></div></div>':(file.displayTitle||file.poster||file.background?'<div class="details-section"><div class="section-head"><div><h4>Display overrides (Read-only)</h4><p>Optional presentation changes for this matched title.</p></div></div><div class="form-grid"><div class="field full"><label for="editTitle">Display title</label><input id="editTitle" class="input" value="'+esc(file.displayTitle||'')+'" readonly aria-readonly="true"></div><div class="field"><label for="editPoster">Poster URL</label><input id="editPoster" class="input" value="'+esc(file.poster||'')+'" readonly aria-readonly="true"></div><div class="field"><label for="editBackground">Backdrop URL</label><input id="editBackground" class="input" value="'+esc(file.background||'')+'" readonly aria-readonly="true"></div></div></div>':'')):'';const headingSubtitle=canEdit?'Search TMDB to '+(file.status==='matched'?'change':'identify')+' this '+(file.libraryType==='series'?'series':'movie')+'.':'Catalog assignment and current metadata match.';modalBody.innerHTML='<div id="modalError" class="notice error" role="alert" hidden></div><section class="details-section" aria-labelledby="fileInfoHeading"><div class="section-head"><div><h4 id="fileInfoHeading">File information</h4><p>Local path and catalog assignment.</p></div></div><div class="info-grid"><div class="info-item full"><span class="info-label">File</span><div class="path-row"><span class="info-value path-value" id="filePathValue">'+esc(file.relativePath)+'</span><div class="path-actions"><button class="btn small copy-btn" type="button" data-copy="filePathValue" data-copy-label="Path copied">Copy path</button>'+(canDownload?'<button class="btn small" type="button" data-action="download" data-id="'+esc(file.id)+'" title="Save file to this device">📥 Download</button>':'')+'</div></div></div><div class="info-item"><span class="info-label">Status</span><span class="info-value">'+esc(file.status)+'</span></div><div class="info-item"><span class="info-label">Stremio ID</span><span class="info-value">'+esc(file.stremioId||'Not assigned')+'</span></div></div></section><section class="details-section" aria-labelledby="matchHeading"><div class="section-head"><div><h4 id="matchHeading">Metadata match</h4><p>'+headingSubtitle+'</p></div></div>'+current+searchSection+'</section>'+edit;renderFooter(file);modalBody.scrollTop=0;syncBusyControls()}
 function renderDetailError(id,message){modalTitle.textContent='Unable to load file';modalBody.innerHTML='<div class="notice error" role="alert">'+esc(message)+'</div><div style="margin-top:14px"><button class="btn" type="button" data-retry-file="'+esc(id)+'">Try again</button></div>';modalActions.innerHTML='';syncBusyControls()}
 async function fetchFile(id,{loading=false}={}){const request=++modalState.request;if(loading){modalTitle.textContent='Loading file details';modalBody.innerHTML='<div class="modal-loading"><span>Loading media details…</span></div>';modalActions.innerHTML=''}try{const data=await api('/admin/api/files/'+encodeURIComponent(id));if(request!==modalState.request||modalState.id!==id)return null;renderFile(data.file);return data.file}catch(err){if(request===modalState.request&&modalState.id===id)renderDetailError(id,err.message||'Media details could not be loaded.');return null}}
@@ -1972,6 +2006,10 @@ function dlRenderFileItem(f) {
   const metaContent = esc(filename) + (quality ? ' · ' + esc(quality) : '') + (dateStr ? ' · ' + esc(dateStr) : '');
   const metaHtml = '<a href="' + esc(stremioUrl) + '" class="file-meta-link" title="Open in Stremio: ' + esc(filename) + '">' + metaContent + '</a>';
   const openBtn = '<a href="' + esc(stremioUrl) + '" class="btn-stremio" title="Open directly in Stremio">▶ Stremio</a>';
+  const chooseUrl = dlGetChooseUrl(f);
+  const upgradeBtn = chooseUrl
+    ? '<a href="' + esc(chooseUrl) + '" target="_blank" class="btn small" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;text-decoration:none;" title="Choose higher quality or replace source in Source Picker">🎯 Upgrade</a>'
+    : '';
   const canDownload = state.settings?.enableDeviceDownloads !== false;
   const downloadBtn = canDownload ? '<button class="btn small" type="button" onclick="dlDownloadFile(\'' + esc(f.id) + '\', \'' + esc(filename).replace(/'/g, "\\'") + '\')" title="Save file to this device (' + esc(filename) + ')" style="display:inline-flex;align-items:center;justify-content:center;gap:4px;">📥 Save</button>' : '';
 
@@ -1995,6 +2033,7 @@ function dlRenderFileItem(f) {
     '<div class="file-size-badge">' + fmtGb(f.size) + '</div>' +
     '<div class="file-actions">' +
       openBtn +
+      upgradeBtn +
       downloadBtn +
       watchBtn +
       '<button class="btn danger small" onclick="dlOpenDeleteModal(\'file\', { id:\'' + esc(f.id) + '\', name:\'' + esc(filename) + '\', size:' + (Number(f.size) || 0) + ' })">🗑️ Delete</button>' +
@@ -2060,6 +2099,15 @@ function dlRenderFiles() {
 
       const selectedBadge = '<span class="badge show-selected-badge" style="background:rgba(14,165,233,0.18);border:1px solid rgba(56,189,248,0.38);color:#7dd3fc;font-size:11px;font-weight:700;' + (groupSelectedCount > 0 ? 'display:inline-flex;' : 'display:none;') + '">' + groupSelectedCount + '/' + group.files.length + ' selected</span>';
 
+      const firstWithId = group.files.find(f => f.stremio_id || f.imdb_id);
+      let seasonSourceBtn = '';
+      if (firstWithId) {
+        const sid = (firstWithId.stremio_id || firstWithId.imdb_id).replace(/^(dls|zpm):/, '');
+        const sNum = firstWithId.season || 1;
+        const seasonUrl = '/downloads/choose?type=series&id=' + encodeURIComponent(sid + ':' + sNum + ':1') + '&mode=season';
+        seasonSourceBtn = '<a href="' + esc(seasonUrl) + '" target="_blank" class="btn small" style="text-decoration:none;display:inline-flex;align-items:center;gap:4px;" title="Browse season packs and multi-episode downloads in Source Picker">🎯 Season Sources</a>';
+      }
+
       html += '<div class="show-group ' + (isCollapsed ? 'collapsed' : '') + '" data-show-title="' + esc(group.title) + '">' +
         '<div class="show-group-header" onclick="dlToggleShowGroup(\'' + esc(group.title) + '\')">' +
           '<div class="show-group-left">' +
@@ -2072,6 +2120,7 @@ function dlRenderFiles() {
           '</div>' +
           '<div class="show-group-actions" onclick="event.stopPropagation()">' +
             selectBtn +
+            seasonSourceBtn +
             cleanBtn +
             '<button class="btn danger small" onclick="dlOpenDeleteModal(\'show\', { title:\'' + esc(group.title) + '\', count:' + group.files.length + ', bytes:' + group.totalBytes + ' })">🗑️ Delete Show</button>' +
           '</div>' +
@@ -2213,6 +2262,25 @@ function dlClearSelection() {
   dlSelectedIds.clear();
   dlRenderBatchBar();
   dlRenderFiles();
+}
+
+function dlPromptSourcePicker() {
+  const val = prompt('Open Source Picker by IMDb ID or Stremio ID (e.g. tt0137523 or tt1405406:1:1):');
+  if (!val) return;
+  const clean = val.trim().replace(/^(dls|zpm):/, '');
+  const parts = clean.split(':');
+  let type = 'movie';
+  let mode = 'movie';
+  let id = clean;
+  if (parts.length >= 3) {
+    type = 'series';
+    mode = 'episode';
+  } else if (parts.length === 2) {
+    type = 'series';
+    mode = 'season';
+    id = parts[0] + ':' + parts[1] + ':1';
+  }
+  window.open('/downloads/choose?type=' + encodeURIComponent(type) + '&id=' + encodeURIComponent(id) + '&mode=' + encodeURIComponent(mode), '_blank');
 }
 
 async function dlRescanLibrary() {
