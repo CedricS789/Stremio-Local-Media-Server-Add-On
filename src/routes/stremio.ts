@@ -2163,26 +2163,35 @@ export function registerStremioRoutes(app, database, settings, config, requester
       WHERE mi.type=? AND mf.status='matched' AND (?='' OR instr(lower(COALESCE(mi.display_title,mi.title)),lower(?))>0)
       GROUP BY mi.id ORDER BY ${order} LIMIT 100 OFFSET ?`).all(expectedType, search, search, skip);
         const mode = settings.downloadedCatalogMode;
-        // In 'standard' mode: regular IDs (Cinemeta full listing).
-        // In 'strict' mode: 'dls:' prefix for all items (both movie & series).
-        // In 'trackable' mode: 'dls:' prefix for series (to show ONLY downloaded episodes in the episode list),
-        //                      and standard canonical IDs for movies (to preserve standard scrobbling & tracking support).
-        const idPrefix = mode === 'strict' ? 'dls:' : (mode === 'trackable' && expectedType === 'series' ? 'dls:' : '');
+        // In 'standard' and 'trackable' modes: canonical IDs (e.g. tt1405406).
+        // This ensures Stremio has ZERO duplicate entries in 'Continue watching',
+        // full native scrobbling/tracking (Trakt, Crosswatch, TMDB, TVDB), and seamless metadata matching.
+        // In 'strict' mode: 'dls:' prefix for offline isolation.
+        const idPrefix = mode === 'strict' ? 'dls:' : '';
         const cleanBase = (settings.aiometadataUrl || '').trim().replace(/\/+$/, '');
-        reply.header('Cache-Control', 'no-store').send({
-            metas: rows.map((item) => {
-                const preview = catalogPreview(item, idPrefix);
-                const cached = upstreamMetaCache.get(`${cleanBase || 'cinemeta'}:${expectedType}:${item.stremio_id}`);
-                if (cached?.value) {
-                    if (cached.value.poster) preview.poster = cached.value.poster;
-                    if (cached.value.background) preview.background = cached.value.background;
-                    if (cached.value.logo) preview.logo = cached.value.logo;
-                    if (cached.value.genres?.length) preview.genres = cached.value.genres;
-                    if (cached.value.imdbRating) preview.imdbRating = cached.value.imdbRating;
+        const metas = await Promise.all(rows.map(async (item) => {
+            const preview = catalogPreview(item, idPrefix);
+            try {
+                const upstream = await fetchUpstreamMeta(expectedType, item.stremio_id, settings.aiometadataUrl);
+                if (upstream) {
+                    if (upstream.poster) preview.poster = upstream.poster;
+                    if (upstream.background) preview.background = upstream.background;
+                    if (upstream.logo) preview.logo = upstream.logo;
+                    if (upstream.genres?.length) preview.genres = upstream.genres;
+                    if (upstream.imdbRating) preview.imdbRating = upstream.imdbRating;
+                    if (upstream.poster && upstream.poster !== item.poster) {
+                        try {
+                            database.sqlite.prepare('UPDATE media_items SET poster=?, background=COALESCE(?, background), logo=COALESCE(?, logo) WHERE id=?')
+                                .run(upstream.poster, upstream.background || null, upstream.logo || null, item.id);
+                        } catch {}
+                    }
                 }
-                return preview;
-            })
-        });
+            } catch {
+                // best effort upstream metadata
+            }
+            return preview;
+        }));
+        reply.header('Cache-Control', 'no-store').send({ metas });
     };
     app.get(`${prefix}/catalog/:type/:catalogId.json`, secureRoute, catalogHandler);
     app.get(`${prefix}/catalog/:type/:catalogId/:extra.json`, secureRoute, catalogHandler);

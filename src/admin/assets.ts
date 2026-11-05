@@ -908,11 +908,11 @@ export function adminHtml(csrf: string): string {
 <div class="field full">
   <label for="downloadedCatalogMode">Downloaded Catalog Presentation & Tracking</label>
   <select id="downloadedCatalogMode" class="select" name="downloadedCatalogMode">
-    <option value="trackable">Preserve Tracking & Filter Downloaded Episodes (Recommended — Shows only downloaded episodes with full scrobbling & tracking support)</option>
-    <option value="strict">Strict Offline Isolation (Shows only downloaded episodes & completely hides third-party add-ons)</option>
+    <option value="trackable">Unified Tracking (Recommended — Zero Duplicates in Continue Watching, Full Trakt & Crosswatch)</option>
+    <option value="strict">Strict Offline Isolation (Shows only downloaded episodes with 'dls:' prefix & completely hides third-party add-ons)</option>
     <option value="standard">Standard Full Listing (Cinemeta full series listing)</option>
   </select>
-  <p class="help"><b>Preserve Tracking (Default):</b> Series in your "Downloaded" catalog show only episodes stored on your server. Playback retains canonical media identifiers, enabling player scrobblers, watch progress tracking, and external sync tools to function normally. Local network (LAN) streams are prioritized at the top.<br><b>Strict Offline Isolation:</b> Completely isolates metadata and streams using offline prefixes to hide all third-party add-ons (external scrobblers and tracking tools will not recognize offline IDs).<br><b>Standard:</b> Displays full series listings directly from Cinemeta.</p>
+  <p class="help"><b>Unified Tracking (Recommended):</b> Items in your "Downloaded" catalog use canonical media identifiers, preventing duplicate entries on Stremio's Continue Watching row while seamlessly syncing watch progress to Trakt, Crosswatch, TMDB, and TVDB. Local network (LAN) direct streams are always prioritized at the top.<br><b>Strict Offline Isolation:</b> Completely isolates metadata using offline prefixes ('dls:') so only downloaded episodes appear in the episode list (note: Stremio treats this as a separate item, creating a secondary entry in Continue Watching).<br><b>Standard:</b> Displays full series listings directly from Cinemeta.</p>
 </div>
 <div class="field full">
   <label>Upstream Metadata Provider (AIOMetadata / ERDB)</label>
