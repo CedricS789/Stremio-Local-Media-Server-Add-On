@@ -852,4 +852,18 @@ describe('admin media detail API', () => {
     const item = built.database.sqlite.prepare('SELECT display_title,poster,background FROM media_items WHERE id=?').get('item1') as Record<string, string | null>;
     expect(item).toEqual({ display_title: null, poster: null, background: null });
   });
+
+  it('supports partial updates to settings without requiring full form payload', async () => {
+    const response = await request('PUT', '/admin/api/settings', {
+      aiometadataUrl: 'https://aiometadata.elfhosted.com/stremio/c38df86d-419a-471f-8e6a-b0d7103eec8'
+    });
+    expect(response.statusCode).toBe(200);
+    expect(response.json().settings.aiometadataUrl).toBe('https://aiometadata.elfhosted.com/stremio/c38df86d-419a-471f-8e6a-b0d7103eec8');
+
+    const disconnected = await request('PUT', '/admin/api/settings', {
+      aiometadataUrl: ''
+    });
+    expect(disconnected.statusCode).toBe(200);
+    expect(disconnected.json().settings.aiometadataUrl).toBe('');
+  });
 });

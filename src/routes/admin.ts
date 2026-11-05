@@ -1222,22 +1222,33 @@ export function registerAdminRoutes(
 
   app.put('/admin/api/settings', { preHandler: requireAdmin(config, true) }, async (request, reply) => {
     const body = request.body as Record<string, string>;
-    let baseUrl: URL;
-    try { baseUrl = new URL(body.baseUrl || ''); } catch { return reply.code(400).send({ error: 'BASE_URL must be a valid URL' }); }
-    if (!['http:', 'https:'].includes(baseUrl.protocol)) return reply.code(400).send({ error: 'BASE_URL must use HTTP or HTTPS' });
 
-    const addonName = body.addonName?.trim();
-
-    if (!addonName) {
-      return reply.code(400).send({
-        error: 'Addon name is required'
-      });
+    if (typeof body.baseUrl !== 'undefined') {
+      let baseUrl: URL;
+      try {
+        baseUrl = new URL(body.baseUrl || '');
+      } catch {
+        return reply.code(400).send({ error: 'BASE_URL must be a valid URL' });
+      }
+      if (!['http:', 'https:'].includes(baseUrl.protocol)) {
+        return reply.code(400).send({ error: 'BASE_URL must use HTTP or HTTPS' });
+      }
+      settings.set('baseUrl', body.baseUrl.trim().replace(/\/+$/, ''));
     }
 
-    if (addonName.length > 80) {
-      return reply.code(400).send({
-        error: 'Addon name must be 80 characters or fewer'
-      });
+    if (typeof body.addonName !== 'undefined') {
+      const addonName = body.addonName?.trim();
+      if (!addonName) {
+        return reply.code(400).send({
+          error: 'Addon name is required'
+        });
+      }
+      if (addonName.length > 80) {
+        return reply.code(400).send({
+          error: 'Addon name must be 80 characters or fewer'
+        });
+      }
+      settings.set('addonName', addonName);
     }
 
     const numeric: Array<[string, number]> = [
@@ -1283,8 +1294,6 @@ export function registerAdminRoutes(
     }
 
     for (const key of [
-      'baseUrl',
-      'addonName',
       'moviesPath',
       'tvPath',
       'scanIntervalMinutes',
@@ -1306,8 +1315,8 @@ export function registerAdminRoutes(
       settings.set('isolateDownloadedCatalog', body.downloadedCatalogMode !== 'standard' ? 'true' : 'false');
     }
 
-    if (body.tmdbApiKey?.trim()) {
-      settings.set('tmdbApiKey', body.tmdbApiKey);
+    if (typeof body.tmdbApiKey === 'string') {
+      settings.set('tmdbApiKey', body.tmdbApiKey.trim());
     }
 
     // Boolean settings.
