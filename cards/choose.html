@@ -465,6 +465,66 @@
     padding: 1px 6px;
     border-radius: 4px;
   }
+  .ep-pill.is-downloading {
+    border-color: rgba(56, 189, 248, 0.7);
+    background: rgba(14, 165, 233, 0.15);
+  }
+  .ep-pill-dl {
+    font-size: 11px;
+    font-weight: 800;
+    color: #38bdf8;
+    background: rgba(14, 165, 233, 0.25);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  /* Status Notice Cards (Active Download / Existing Media) */
+  .status-notice-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .status-notice-card.is-active-download {
+    border-color: rgba(56, 189, 248, 0.45);
+    background: linear-gradient(180deg, rgba(14, 165, 233, 0.12) 0%, rgba(10, 11, 16, 0.98) 100%);
+  }
+  .status-notice-card.is-existing-media {
+    border-color: rgba(16, 185, 129, 0.45);
+    background: linear-gradient(180deg, rgba(16, 185, 129, 0.12) 0%, rgba(10, 11, 16, 0.98) 100%);
+  }
+  .status-notice-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .status-notice-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 800;
+  }
+  .progress-track {
+    width: 100%;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent-gradient);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+  }
 
   .stream-actions { flex-shrink: 0; }
   .btn-download {
@@ -703,6 +763,12 @@
     </div>
   </div>
 
+  <!-- Active Download In-Progress Notice -->
+  <div id="activeDownloadNotice" style="display:none;" class="status-notice-card is-active-download"></div>
+
+  <!-- Existing Completed Media Notice -->
+  <div id="existingMediaNotice" style="display:none;" class="status-notice-card is-existing-media"></div>
+
   <div class="toolbar">
     <div class="search-row">
       <input type="text" id="searchInput" class="search-input" placeholder="Search sources by release group (e.g. SiC, XEBEC, sodapop), audio (DTS, DD+), or codec..." oninput="applyFilters()">
@@ -748,15 +814,26 @@ let searchQuery = '';
 let allSeasonEpisodes = [];
 let currentQuota = null;
 let existingEpisodes = [];
+let downloadingEpisodes = [];
+let activeDownloadInfo = null;
+let existingMediaInfo = null;
 let selectedEpisodes = new Set();
 
 function getDownloadButtonLabel() {
-  if (mode !== 'season') return '⬇ Download Source';
-  if (selectedEpisodes.size === 0) return '⚠️ Select at least 1 ep';
-  if (allSeasonEpisodes.length > 0 && selectedEpisodes.size === allSeasonEpisodes.length) {
-    return `⬇ Download Entire Season (${allSeasonEpisodes.length} eps)`;
+  if (mode === 'season') {
+    if (selectedEpisodes.size === 0) return '⚠️ Select at least 1 ep';
+    if (allSeasonEpisodes.length > 0 && selectedEpisodes.size === allSeasonEpisodes.length) {
+      return `⬇ Download Entire Season (${allSeasonEpisodes.length} eps)`;
+    }
+    return `⬇ Download Selected (${selectedEpisodes.size} eps)`;
   }
-  return `⬇ Download Selected (${selectedEpisodes.size} eps)`;
+  if (activeDownloadInfo) {
+    return '⬇ Switch to this Source';
+  }
+  if (existingMediaInfo) {
+    return '🔄 Replace with this Source';
+  }
+  return '⬇ Download Source';
 }
 
 function updateButtons() {
@@ -768,6 +845,99 @@ function updateButtons() {
   });
   const badge = document.getElementById('selectedEpBadge');
   if (badge) badge.innerText = `${selectedEpisodes.size} of ${allSeasonEpisodes.length} selected`;
+}
+
+function renderActiveDownloadNotice() {
+  const container = document.getElementById('activeDownloadNotice');
+  if (!container) return;
+  if (!activeDownloadInfo) {
+    container.style.display = 'none';
+    return;
+  }
+  const ad = activeDownloadInfo;
+  const isQueued = ad.status === 'queued';
+  const pct = (ad.totalBytes > 0 && ad.downloadedBytes > 0)
+    ? Math.min(100, Math.round((ad.downloadedBytes / ad.totalBytes) * 100))
+    : 0;
+  const speedStr = ad.speedBytesPerSec > 0 ? `${(ad.speedBytesPerSec / (1024 * 1024)).toFixed(1)} MB/s` : '';
+
+  container.innerHTML = `
+    <div class="status-notice-header">
+      <div class="status-notice-title" style="color:#38bdf8;">
+        <span>⏳</span>
+        <span>${isQueued ? 'Download Queued' : 'Download Currently In Progress'}</span>
+        ${ad.queuePosition ? `<span class="badge badge-tag">#${ad.queuePosition} in queue</span>` : ''}
+      </div>
+      <div>
+        <button class="nav-btn btn-signout" style="padding:4px 10px; font-size:11px;" onclick="cancelActiveDownload('${ad.key}')">🛑 Cancel Download</button>
+      </div>
+    </div>
+    <div class="stream-filename" style="margin:0; font-size:12px; color:#fff;">${ad.filename}</div>
+    ${!isQueued ? `
+      <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-top:2px;">
+        <span>${pct}% (${formatBytes(ad.downloadedBytes)} of ${formatBytes(ad.totalBytes)})</span>
+        <span>${speedStr}</span>
+      </div>
+      <div class="progress-track" style="margin-top:4px;">
+        <div class="progress-fill" style="width: ${pct}%;"></div>
+      </div>
+    ` : `
+      <div style="font-size:12px; color:var(--text-muted);">Waiting for available download slot...</div>
+    `}
+    <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+      💡 Selecting any source below will prompt to cancel this active download and switch to the new source.
+    </div>
+  `;
+  container.style.display = 'flex';
+}
+
+async function cancelActiveDownload(key) {
+  if (!confirm('Are you sure you want to cancel the currently running download?')) return;
+  try {
+    const res = await fetch('/downloads/cancel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key })
+    });
+    if (res.ok) {
+      showToast('Download cancelled');
+      activeDownloadInfo = null;
+      renderActiveDownloadNotice();
+      updateButtons();
+      setTimeout(loadSources, 500);
+    } else {
+      alert('Failed to cancel download');
+    }
+  } catch (e) {
+    alert('Failed to cancel download: ' + e.message);
+  }
+}
+
+function renderExistingMediaNotice() {
+  const container = document.getElementById('existingMediaNotice');
+  if (!container) return;
+  if (!existingMediaInfo || activeDownloadInfo) {
+    container.style.display = 'none';
+    return;
+  }
+  const em = existingMediaInfo;
+  container.innerHTML = `
+    <div class="status-notice-header">
+      <div class="status-notice-title" style="color:#34d399;">
+        <span>💾</span>
+        <span>Already Downloaded in Your Library</span>
+        ${em.resolution ? `<span class="badge badge-tag">${em.resolution}</span>` : ''}
+      </div>
+    </div>
+    <div class="stream-filename" style="margin:0; font-size:12px; color:#fff;">${em.filename}</div>
+    <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--text-muted); margin-top:2px;">
+      <span>File size on disk: ${formatBytes(em.size)}</span>
+    </div>
+    <div style="font-size:11px; color:#94a3b8; margin-top:4px;">
+      💡 You can safely replace or upgrade this file. The server will download your selected source to temporary storage and only replace your existing file once the download is 100% complete and verified.
+    </div>
+  `;
+  container.style.display = 'flex';
 }
 
 function toggleEpisode(num) {
@@ -793,7 +963,7 @@ function selectMissingOnly() {
   selectedEpisodes.clear();
   allSeasonEpisodes.forEach(ep => {
     const num = Number(ep.episode);
-    if (!existingEpisodes.includes(num)) {
+    if (!existingEpisodes.includes(num) && !downloadingEpisodes.includes(num)) {
       selectedEpisodes.add(num);
     }
   });
@@ -807,11 +977,21 @@ function renderEpisodePills() {
   grid.innerHTML = allSeasonEpisodes.map(ep => {
     const num = Number(ep.episode);
     const isLocal = existingEpisodes.includes(num);
+    const isDownloading = downloadingEpisodes.includes(num);
     const isSel = selectedEpisodes.has(num);
     const titleAttr = ep.title ? `${ep.title}` : `Episode ${num}`;
-    return `<div class="ep-pill ${isSel ? 'active' : ''} ${isLocal ? 'is-downloaded' : ''}" title="${titleAttr}" onclick="toggleEpisode(${num})">
+    let stateClass = '';
+    let badgeHtml = '';
+    if (isDownloading) {
+      stateClass = 'is-downloading';
+      badgeHtml = '<span class="ep-pill-dl">⏳ DL</span>';
+    } else if (isLocal) {
+      stateClass = 'is-downloaded';
+      badgeHtml = '<span class="ep-pill-local">Local</span>';
+    }
+    return `<div class="ep-pill ${isSel ? 'active' : ''} ${stateClass}" title="${titleAttr}" onclick="toggleEpisode(${num})">
       <span>${isSel ? '✓' : '○'} E${String(num).padStart(2,'0')}</span>
-      ${isLocal ? '<span class="ep-pill-local">Local</span>' : ''}
+      ${badgeHtml}
     </div>`;
   }).join('');
 }
@@ -907,6 +1087,12 @@ async function loadSources() {
 
     allStreams = (data.streams || []).map((s, i) => ({ ...s, _origIdx: i }));
     existingEpisodes = data.existingEpisodes || [];
+    downloadingEpisodes = data.downloadingEpisodes || [];
+    activeDownloadInfo = data.activeDownload || null;
+    existingMediaInfo = data.existingMedia || null;
+
+    renderActiveDownloadNotice();
+    renderExistingMediaNotice();
 
     if (mode === 'season') {
       const parts = id.split(':');
@@ -918,11 +1104,11 @@ async function loadSources() {
         allSeasonEpisodes = Array.from({ length: 10 }, (_, i) => ({ season: targetSeason, episode: i + 1 }));
       }
       
-      // Default: select missing episodes (or all if all missing/all present)
+      // Default: select missing episodes that are not currently downloading
       selectedEpisodes.clear();
       allSeasonEpisodes.forEach(ep => {
         const num = Number(ep.episode);
-        if (!existingEpisodes.includes(num)) {
+        if (!existingEpisodes.includes(num) && !downloadingEpisodes.includes(num)) {
           selectedEpisodes.add(num);
         }
       });
@@ -1084,11 +1270,33 @@ function renderStreams(streams) {
   }).join('');
 }
 
-async function startDownload(streamIndex, btnEl) {
+async function startDownload(streamIndex, btnEl, confirmedReplace = false) {
   const s = allStreams[streamIndex];
   if (!s) return;
 
-  btnEl.disabled = true;
+  let replaceActive = false;
+  let replaceExisting = false;
+
+  if (activeDownloadInfo && !confirmedReplace) {
+    if (!confirm(`A download is already in progress:\n"${activeDownloadInfo.filename}"\n\nDo you want to CANCEL the existing download and SWITCH to this source?`)) {
+      return;
+    }
+    replaceActive = true;
+  } else if (existingMediaInfo && !confirmedReplace) {
+    if (!confirm(`This file is already in your library:\n"${existingMediaInfo.filename}" (${formatBytes(existingMediaInfo.size)})\n\nDo you want to download this new source to REPLACE and upgrade it?`)) {
+      return;
+    }
+    replaceExisting = true;
+  } else if (confirmedReplace) {
+    if (activeDownloadInfo) replaceActive = true;
+    if (existingMediaInfo) replaceExisting = true;
+  }
+
+  // Disable ALL download buttons immediately to prevent duplicate concurrent clicks!
+  const allButtons = document.querySelectorAll('.btn-download');
+  allButtons.forEach(b => {
+    b.disabled = true;
+  });
   btnEl.innerHTML = '<span class="spinner" style="width:14px;height:14px;border-width:2px;margin:0;display:inline-block;vertical-align:middle;"></span> Starting...';
 
   try {
@@ -1107,7 +1315,9 @@ async function startDownload(streamIndex, btnEl) {
         resolution: s.resolution,
         quality: s.quality,
         group: s.group,
-        bingeGroup: s.bingeGroup
+        bingeGroup: s.bingeGroup,
+        replaceActive,
+        replaceExisting
       })
     });
 
@@ -1117,6 +1327,19 @@ async function startDownload(streamIndex, btnEl) {
     }
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
+      if (res.status === 409) {
+        if (errData.activeDownload) {
+          if (confirm(`Download conflict: A download is currently active:\n"${errData.activeDownload.filename}"\n\nDo you want to switch and replace with this source?`)) {
+            activeDownloadInfo = errData.activeDownload;
+            return startDownload(streamIndex, btnEl, true);
+          }
+        } else if (errData.existingMedia) {
+          if (confirm(`Media conflict: This file is already in your library:\n"${errData.existingMedia.filename}"\n\nDo you want to replace and upgrade with this source?`)) {
+            existingMediaInfo = errData.existingMedia;
+            return startDownload(streamIndex, btnEl, true);
+          }
+        }
+      }
       throw new Error(errData.error || ('HTTP ' + res.status));
     }
     showToast('Download started! Redirecting to live dashboard...');
@@ -1124,8 +1347,7 @@ async function startDownload(streamIndex, btnEl) {
       window.location.href = '/admin?view=downloads';
     }, 1200);
   } catch (err) {
-    btnEl.disabled = false;
-    btnEl.innerText = mode === 'season' ? '⬇ Download Season' : '⬇ Download Source';
+    updateButtons();
     alert('Failed to start download: ' + (err.message || 'Network error'));
   }
 }

@@ -52,7 +52,8 @@ const META_CACHE_TTL_MS = 60 * 60 * 1000;
 const CONFIRM_DELETE_WINDOW_MS = 180 * 1000;
 const aioStreamCache = new Map();
 const cinemetaCache = new Map();
-const activeDownloads = new Map();
+export const activeDownloads = new Map();
+export const activeTargetPaths = new Set<string>();
 const pendingDeletes = new Map();
 let lastDownloadTriggeredAt = 0;
 let promptUrl = '';
@@ -609,7 +610,14 @@ class DownloadQueueManager {
 const bandwidthLimiter = new GlobalBandwidthLimiter();
 const downloadQueue = new DownloadQueueManager();
 
-async function downloadFileToDisk(key, url, destDir, destFilename, expectedBytes, onComplete, checkSpaceFn) {
+async function downloadFileToDisk(key, url, destDir, destFilename, expectedBytes, onComplete, checkSpaceFn, replaceOldPath = null) {
+    if (activeDownloads.has(key)) {
+        const existing = activeDownloads.get(key);
+        if (existing?.status === 'downloading' || existing?.status === 'queued') {
+            throw new Error(`A download is already active for this media item: ${destFilename}`);
+        }
+    }
+
     if (typeof checkSpaceFn === 'function' && expectedBytes && expectedBytes > 0) {
         const check = checkSpaceFn(expectedBytes);
         if (!check.ok) {
@@ -618,7 +626,15 @@ async function downloadFileToDisk(key, url, destDir, destFilename, expectedBytes
     }
     fs.mkdirSync(destDir, { recursive: true });
     const finalPath = path.join(destDir, destFilename);
-    if (fs.existsSync(finalPath)) {
+    const normFinal = path.resolve(finalPath);
+    const partPath = `${finalPath}.part`;
+    const normPart = path.resolve(partPath);
+
+    if (activeTargetPaths.has(normFinal) || activeTargetPaths.has(normPart)) {
+        throw new Error(`File destination is already locked by an active download: ${destFilename}`);
+    }
+
+    if (!replaceOldPath && fs.existsSync(finalPath)) {
         try {
             const stat = fs.statSync(finalPath);
             if (stat.isFile() && stat.size > 1024 * 1024) {
@@ -629,13 +645,17 @@ async function downloadFileToDisk(key, url, destDir, destFilename, expectedBytes
             }
         } catch {}
     }
-    const partPath = `${finalPath}.part`;
+
+    activeTargetPaths.add(normFinal);
+    activeTargetPaths.add(normPart);
+
     const controller = new AbortController();
     const state = {
         key,
         filename: destFilename,
         finalPath,
         partPath,
+        replaceOldPath: replaceOldPath ? path.resolve(replaceOldPath) : null,
         downloadedBytes: 0,
         totalBytes: expectedBytes || 0,
         startedAt: null,
@@ -708,6 +728,18 @@ async function downloadFileToDisk(key, url, destDir, destFilename, expectedBytes
         }
 
         fs.renameSync(partPath, finalPath);
+
+        if (replaceOldPath && fs.existsSync(replaceOldPath)) {
+            try {
+                const normOld = path.resolve(replaceOldPath);
+                if (normOld !== normFinal) {
+                    fs.unlinkSync(replaceOldPath);
+                }
+            } catch (unlinkErr) {
+                /* non-fatal old file cleanup error */
+            }
+        }
+
         if (typeof onComplete === 'function') {
             await onComplete();
         }
@@ -729,6 +761,8 @@ async function downloadFileToDisk(key, url, destDir, destFilename, expectedBytes
             clearTimeout(stallTimer);
             stallTimer = null;
         }
+        activeTargetPaths.delete(normFinal);
+        activeTargetPaths.delete(normPart);
         if (slotAcquired) {
             downloadQueue.releaseSlot(sharedSettings ? sharedSettings.maxConcurrentDownloads : 2);
         } else {
@@ -861,6 +895,23 @@ function episodeId(id) {
     const match = /^(.*):(\d+):(\d+)$/.exec(clean);
     return match ? { itemId: match[1], season: Number(match[2]), episode: Number(match[3]) } : null;
 }
+export function cleanMediaId(id: string): string {
+    return String(id || '').replace(/^(dls|zpm):/, '').trim();
+}
+export function canonicalDownloadKey(mode: string, id: string): string {
+    const clean = cleanMediaId(id);
+    if (mode === 'movie') {
+        return `movie:${clean}`;
+    }
+    const parsed = episodeId(clean);
+    if (parsed) {
+        if (mode === 'season') {
+            return `season:${parsed.itemId}:${parsed.season}`;
+        }
+        return `episode:${parsed.itemId}:${parsed.season}:${parsed.episode}`;
+    }
+    return `${mode}:${clean}`;
+}
 function headerValue(request, name) {
     const value = request.headers[name];
     return Array.isArray(value) ? value[0] : value;
@@ -883,10 +934,12 @@ export function registerStremioRoutes(app, database, settings, config, requester
         }
     };
 
-    const isEpisodeAlreadyPresent = (itemId, showTitle, season, episode) => {
+    const getExistingEpisodeDetails = (itemId: string, showTitle: string, season: number, episode: number) => {
+        const cleanId = cleanMediaId(itemId);
         try {
             const existing = database.sqlite.prepare(`
-                SELECT 1 FROM media_files mf LEFT JOIN media_items mi ON mi.id=mf.media_item_id
+                SELECT mf.id, mf.relative_path, mf.absolute_path, mf.size, mf.quality, mf.source
+                FROM media_files mf LEFT JOIN media_items mi ON mi.id=mf.media_item_id
                 WHERE mf.library_type='series' AND mf.status NOT IN ('ignored','error')
                   AND (
                     (mi.stremio_id=? OR ('tmdb:' || mi.tmdb_id)=? OR mi.imdb_id=?)
@@ -895,21 +948,30 @@ export function registerStremioRoutes(app, database, settings, config, requester
                   )
                   AND mf.season=? AND mf.episode_start<=? AND mf.episode_end>=? LIMIT 1
             `).get(
-                itemId, itemId, itemId,
+                cleanId, cleanId, cleanId,
                 `%${showTitle}%`,
                 `%${showTitle}%`,
                 season, episode, episode
-            );
-            if (existing) return true;
+            ) as any;
+            if (existing) {
+                return {
+                    present: true,
+                    file: existing,
+                    path: existing.absolute_path,
+                    filename: path.basename(existing.relative_path || existing.absolute_path || ''),
+                    size: existing.size,
+                    quality: existing.quality
+                };
+            }
         } catch {}
 
         try {
             const tvRoot = '/media/tv';
-            if (!fs.existsSync(tvRoot)) return false;
+            if (!fs.existsSync(tvRoot)) return { present: false };
             const normShow = showTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
             const epRegex = new RegExp(`(^|[._\\-\\s\\[\\(])s0*${season}e0*${episode}([._\\-\\s\\]\\)]|$)`, 'i');
 
-            const candidateShowDirs = [];
+            const candidateShowDirs: string[] = [];
             const entries = fs.readdirSync(tvRoot);
             for (const entry of entries) {
                 const normEntry = entry.toLowerCase().replace(/[^a-z0-9]/g, '');
@@ -924,7 +986,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
 
             for (const showDir of candidateShowDirs) {
                 if (!fs.existsSync(showDir)) continue;
-                let subEntries = [];
+                let subEntries: string[] = [];
                 try { subEntries = fs.readdirSync(showDir); } catch {}
                 const searchDirs = [showDir];
                 for (const sub of subEntries) {
@@ -945,7 +1007,13 @@ export function registerStremioRoutes(app, database, settings, config, requester
                                 const full = path.join(sDir, file);
                                 const stat = fs.statSync(full);
                                 if (stat.isFile() && stat.size > 1024 * 1024) {
-                                    return true;
+                                    return {
+                                        present: true,
+                                        path: full,
+                                        filename: file,
+                                        size: stat.size,
+                                        quality: ''
+                                    };
                                 }
                             }
                         }
@@ -954,7 +1022,154 @@ export function registerStremioRoutes(app, database, settings, config, requester
             }
         } catch {}
 
-        return false;
+        return { present: false };
+    };
+
+    const isEpisodeAlreadyPresent = (itemId: string, showTitle: string, season: number, episode: number): boolean => {
+        return getExistingEpisodeDetails(itemId, showTitle, season, episode).present;
+    };
+
+    const getExistingMovieDetails = (itemId: string, title?: string) => {
+        const cleanId = cleanMediaId(itemId);
+        try {
+            const existing = database.sqlite.prepare(`
+                SELECT mf.id, mf.relative_path, mf.absolute_path, mf.size, mf.quality, mf.source
+                FROM media_files mf
+                LEFT JOIN media_items mi ON mi.id = mf.media_item_id
+                WHERE mf.library_type = 'movie' AND mf.status NOT IN ('ignored', 'error')
+                  AND (
+                    (mi.stremio_id = ? OR ('tmdb:' || mi.tmdb_id) = ? OR mi.imdb_id = ?)
+                    ${title ? 'OR mf.relative_path LIKE ? OR mf.absolute_path LIKE ?' : ''}
+                  )
+                LIMIT 1
+            `).get(
+                ...(title
+                    ? [cleanId, cleanId, cleanId, `%${title}%`, `%${title}%`]
+                    : [cleanId, cleanId, cleanId])
+            ) as any;
+            if (existing) {
+                return {
+                    present: true,
+                    file: existing,
+                    path: existing.absolute_path,
+                    filename: path.basename(existing.relative_path || existing.absolute_path || ''),
+                    size: existing.size,
+                    quality: existing.quality
+                };
+            }
+        } catch {}
+
+        try {
+            const movieRoot = '/media/movies';
+            if (!fs.existsSync(movieRoot) || !title) return { present: false };
+            const normTitle = title.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const entries = fs.readdirSync(movieRoot);
+            for (const entry of entries) {
+                const normEntry = entry.toLowerCase().replace(/[^a-z0-9]/g, '');
+                if (normEntry === normTitle || (normEntry.length >= 4 && normEntry.includes(normTitle)) || (normTitle.length >= 4 && normTitle.includes(normEntry))) {
+                    const fullDir = path.join(movieRoot, entry);
+                    if (fs.existsSync(fullDir) && fs.statSync(fullDir).isDirectory()) {
+                        const files = fs.readdirSync(fullDir);
+                        for (const file of files) {
+                            if (file.endsWith('.part') || file.endsWith('.tmp') || file.endsWith('.download')) continue;
+                            const full = path.join(fullDir, file);
+                            const stat = fs.statSync(full);
+                            if (stat.isFile() && stat.size > 10 * 1024 * 1024) {
+                                return {
+                                    present: true,
+                                    path: full,
+                                    filename: file,
+                                    size: stat.size,
+                                    quality: ''
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        } catch {}
+
+        return { present: false };
+    };
+
+    const isMovieAlreadyPresent = (itemId: string, title?: string): boolean => {
+        return getExistingMovieDetails(itemId, title).present;
+    };
+
+    const getActiveDownloadDetails = (key: string) => {
+        const active = activeDownloads.get(key);
+        if (!active) return null;
+        const elapsedSec = Math.max(1, (Date.now() - (active.startedAt || Date.now())) / 1000);
+        const speedBps = active.status === 'queued' ? 0 : active.downloadedBytes / elapsedSec;
+        return {
+            key: active.key,
+            filename: active.filename,
+            downloadedBytes: active.downloadedBytes,
+            totalBytes: active.totalBytes,
+            percent: active.totalBytes > 0 ? Math.min(99, Math.round((active.downloadedBytes / active.totalBytes) * 100)) : 0,
+            speedMbps: Number((speedBps / (1024 ** 2)).toFixed(2)),
+            status: active.status || 'downloading',
+            queuePosition: active.queuePosition || 0,
+            startedAt: active.startedAt,
+            finalPath: active.finalPath
+        };
+    };
+
+    const getActiveDownloadForMedia = (mode: string, id: string) => {
+        const clean = cleanMediaId(id);
+        const key = canonicalDownloadKey(mode, clean);
+        const direct = getActiveDownloadDetails(key);
+        if (direct) {
+            return { isActive: true, key, direct, isSeasonBatch: false, parentSeason: null };
+        }
+
+        if (mode === 'episode') {
+            const parsed = episodeId(clean);
+            if (parsed) {
+                const seasonKey = `season:${parsed.itemId}:${parsed.season}`;
+                const season = activeDownloads.get(seasonKey);
+                if (season && !season.cancelled) {
+                    return {
+                        isActive: true,
+                        key: seasonKey,
+                        direct: null,
+                        isSeasonBatch: true,
+                        parentSeason: {
+                            key: seasonKey,
+                            filename: season.filename,
+                            season: parsed.season,
+                            status: season.status || 'downloading'
+                        }
+                    };
+                }
+            }
+        }
+
+        return { isActive: false, key, direct: null, isSeasonBatch: false, parentSeason: null };
+    };
+
+    const cancelDownloadByKey = (key: string): boolean => {
+        const active = activeDownloads.get(key);
+        if (!active) return false;
+
+        if (key.startsWith('season:')) {
+            active.cancelled = true;
+            activeDownloads.delete(key);
+            const seasonEpPrefix = key.replace('season:', 'episode:');
+            for (const [k, v] of activeDownloads.entries()) {
+                if (k.startsWith(seasonEpPrefix + ':')) {
+                    if (v?.controller) v.controller.abort();
+                    downloadQueue.removeFromQueue(k);
+                    activeDownloads.delete(k);
+                }
+            }
+            return true;
+        }
+
+        if (active.controller) active.controller.abort();
+        downloadQueue.removeFromQueue(key);
+        activeDownloads.delete(key);
+        return true;
     };
 
     const checkDownloadsAuth = (request: any, reply: any) => {
@@ -1241,7 +1456,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
         if (!aioBase) return reply.code(500).send({ error: 'AIOSTREAMS_BASE_URL is not configured' });
 
         const type = String(request.query?.type || 'series');
-        const id = String(request.query?.id || '').replace(/^(dls|zpm):/, '');
+        const id = cleanMediaId(String(request.query?.id || ''));
         const mode = String(request.query?.mode || (type === 'movie' ? 'movie' : 'episode'));
 
         let cinemetaId = id;
@@ -1259,25 +1474,68 @@ export function registerStremioRoutes(app, database, settings, config, requester
         ]);
 
         const rawStreams = aioResp?.streams || [];
-        // Directly preserve exact AIOStreams streams and ordering without custom filters
         const streams = rawStreams.filter(s => s && s.url).map(parseAioStream);
 
-        let existingEpisodes = [];
+        let existingEpisodes: number[] = [];
+        let downloadingEpisodes: number[] = [];
+        let existingMedia: any = null;
+
+        if (mode === 'movie') {
+            const check = getExistingMovieDetails(id, meta?.name || id);
+            if (check.present) {
+                existingMedia = {
+                    present: true,
+                    filename: check.filename || 'Movie file',
+                    relativePath: check.file?.relative_path || check.path || '',
+                    size: check.size || check.file?.size || 0,
+                    quality: check.quality || check.file?.quality || ''
+                };
+            }
+        } else if (mode === 'episode') {
+            const parsed = episodeId(id);
+            if (parsed) {
+                const check = getExistingEpisodeDetails(parsed.itemId, meta?.name || parsed.itemId, parsed.season, parsed.episode);
+                if (check.present) {
+                    existingMedia = {
+                        present: true,
+                        filename: check.filename || `S${parsed.season}E${parsed.episode}`,
+                        relativePath: check.file?.relative_path || check.path || '',
+                        size: check.size || check.file?.size || 0,
+                        quality: check.quality || check.file?.quality || '',
+                        season: parsed.season,
+                        episode: parsed.episode
+                    };
+                }
+            }
+        }
+
         if (type === 'series') {
             const parsed = episodeId(id);
             if (parsed) {
                 const localRows = database.sqlite.prepare(`SELECT mf.episode_start, mf.episode_end FROM media_files mf JOIN media_items mi ON mi.id=mf.media_item_id
                   WHERE mi.type='series' AND (mi.stremio_id=? OR ('tmdb:' || mi.tmdb_id)=?) AND mf.status='matched' AND mf.season=?`)
                     .all(parsed.itemId, parsed.itemId, parsed.season);
-                for (const r of localRows) {
+                for (const r of (localRows as any[])) {
                     for (let e = r.episode_start; e <= r.episode_end; e++) {
                         if (!existingEpisodes.includes(e)) existingEpisodes.push(e);
+                    }
+                }
+
+                for (const d of activeDownloads.values()) {
+                    if (d.key && d.key.startsWith(`episode:${parsed.itemId}:${parsed.season}:`)) {
+                        const epPart = d.key.split(':')[3];
+                        const epNum = Number(epPart);
+                        if (epNum && !downloadingEpisodes.includes(epNum)) {
+                            downloadingEpisodes.push(epNum);
+                        }
                     }
                 }
             }
         }
 
+        const activeCheck = getActiveDownloadForMedia(mode, id);
         const quotaInfo = getStorageQuotaInfo();
+
         return reply.header('Cache-Control', 'no-store').send({
             ok: true,
             meta,
@@ -1286,7 +1544,10 @@ export function registerStremioRoutes(app, database, settings, config, requester
             type,
             id,
             mode,
+            activeDownload: activeCheck.isActive ? (activeCheck.direct || activeCheck.parentSeason) : null,
+            existingMedia,
             existingEpisodes,
+            downloadingEpisodes,
             quota: {
                 allocatedLimitBytes: quotaInfo.allocatedLimitBytes,
                 usedBytes: quotaInfo.usedBytes,
@@ -1298,9 +1559,9 @@ export function registerStremioRoutes(app, database, settings, config, requester
 
     app.post('/downloads/start', async (request, reply) => {
         if (!checkDownloadsAuth(request, reply)) return reply.code(401).send({ error: 'Authentication required' });
-        const body = request.body || {};
+        const body = (request.body || {}) as any;
         const type = String(body.type || 'series');
-        const id = String(body.id || '').replace(/^(dls|zpm):/, '');
+        const id = cleanMediaId(body.id);
         const mode = String(body.mode || (type === 'movie' ? 'movie' : 'episode'));
         const url = String(body.url || '');
         const givenFilename = String(body.filename || '');
@@ -1308,8 +1569,10 @@ export function registerStremioRoutes(app, database, settings, config, requester
         const group = String(body.group || '');
         const resolution = String(body.resolution || '1080p');
         const quality = String(body.quality || 'WEB-DL');
+        const replaceActive = Boolean(body.replaceActive);
+        const replaceExisting = Boolean(body.replaceExisting);
 
-        if (!url) {
+        if (!url && mode !== 'season') {
             return reply.code(400).send({ error: 'Missing stream url' });
         }
 
@@ -1321,52 +1584,131 @@ export function registerStremioRoutes(app, database, settings, config, requester
         }
 
         if (mode === 'movie') {
-            const dlKey = `movie:${id}`;
-            if (!activeDownloads.has(dlKey)) {
-                (async () => {
-                    try {
-                        const meta = await fetchCinemeta('movie', id);
-                        const title = sanitizePathSegment(meta?.name || id, id);
-                        const year = meta?.releaseInfo ? String(meta.releaseInfo).slice(0, 4) : '';
-                        const folderName = year ? `${title} (${year})` : title;
-                        const ext = path.extname(givenFilename) || '.mkv';
-                        const filename = sanitizePathSegment(givenFilename || `${folderName}.${resolution}${ext}`, `${folderName}${ext}`);
-                        const destDir = path.join('/media/movies', folderName);
-                        await downloadFileToDisk(dlKey, url, destDir, filename, size, triggerRescan, verifyStorageAvailable);
-                    } catch (err) {
-                        app.log.warn({ err, id }, 'Direct movie download from selection failed');
-                    }
-                })();
+            const dlKey = canonicalDownloadKey('movie', id);
+            const activeCheck = getActiveDownloadForMedia('movie', id);
+
+            if (activeCheck.isActive && activeCheck.direct) {
+                if (!replaceActive) {
+                    return reply.code(409).send({
+                        ok: false,
+                        alreadyDownloading: true,
+                        currentDownload: activeCheck.direct,
+                        message: `Movie is already downloading: "${activeCheck.direct.filename}" (${activeCheck.direct.percent}% complete).`
+                    });
+                }
+                cancelDownloadByKey(dlKey);
+                await new Promise(r => setTimeout(r, 60));
             }
+
+            const existingCheck = getExistingMovieDetails(id, givenFilename);
+            let replaceOldPath: string | null = null;
+            if (existingCheck.present) {
+                if (!replaceExisting && !replaceActive) {
+                    return reply.code(409).send({
+                        ok: false,
+                        alreadyExists: true,
+                        existingMedia: existingCheck,
+                        message: `This movie is already in your library ("${existingCheck.filename}"). Choose Replace to upgrade or replace with this source.`
+                    });
+                }
+                replaceOldPath = existingCheck.file?.absolute_path || existingCheck.path || null;
+            }
+
+            (async () => {
+                try {
+                    const meta = await fetchCinemeta('movie', id);
+                    const title = sanitizePathSegment(meta?.name || id, id);
+                    const year = meta?.releaseInfo ? String(meta.releaseInfo).slice(0, 4) : '';
+                    const folderName = year ? `${title} (${year})` : title;
+                    const ext = path.extname(givenFilename) || '.mkv';
+                    const filename = sanitizePathSegment(givenFilename || `${folderName}.${resolution}${ext}`, `${folderName}${ext}`);
+                    const destDir = path.join('/media/movies', folderName);
+                    await downloadFileToDisk(dlKey, url, destDir, filename, size, triggerRescan, verifyStorageAvailable, replaceOldPath);
+                } catch (err: any) {
+                    app.log.warn({ err: err?.message, id }, 'Direct movie download from selection failed');
+                }
+            })();
             return reply.send({ ok: true, key: dlKey });
         }
 
         if (mode === 'episode') {
             const parsed = episodeId(id);
             if (!parsed) return reply.code(400).send({ error: 'Invalid episode id' });
-            const dlKey = `episode:${id}`;
-            if (!activeDownloads.has(dlKey)) {
-                (async () => {
-                    try {
-                        const meta = await fetchCinemeta('series', parsed.itemId);
-                        const showTitle = sanitizePathSegment(meta?.name || parsed.itemId, parsed.itemId);
-                        const ss = String(parsed.season).padStart(2, '0');
-                        const ee = String(parsed.episode).padStart(2, '0');
-                        const ext = path.extname(givenFilename) || '.mkv';
-                        const filename = sanitizePathSegment(givenFilename || `${showTitle} - S${ss}E${ee} - ${resolution}${ext}`, `${showTitle} - S${ss}E${ee}${ext}`);
-                        const destDir = path.join('/media/tv', showTitle, `Season ${parsed.season}`);
-                        await downloadFileToDisk(dlKey, url, destDir, filename, size, triggerRescan, verifyStorageAvailable);
-                    } catch (err) {
-                        app.log.warn({ err, id }, 'Direct episode download from selection failed');
+            const dlKey = canonicalDownloadKey('episode', id);
+            const activeCheck = getActiveDownloadForMedia('episode', id);
+
+            if (activeCheck.isActive) {
+                if (activeCheck.direct) {
+                    if (!replaceActive) {
+                        return reply.code(409).send({
+                            ok: false,
+                            alreadyDownloading: true,
+                            currentDownload: activeCheck.direct,
+                            message: `Episode S${String(parsed.season).padStart(2, '0')}E${String(parsed.episode).padStart(2, '0')} is already downloading ("${activeCheck.direct.filename}" - ${activeCheck.direct.percent}% complete).`
+                        });
                     }
-                })();
+                    cancelDownloadByKey(dlKey);
+                    await new Promise(r => setTimeout(r, 60));
+                } else if (activeCheck.parentSeason) {
+                    if (!replaceActive) {
+                        return reply.code(409).send({
+                            ok: false,
+                            alreadyInSeasonQueue: true,
+                            seasonBatch: activeCheck.parentSeason,
+                            message: `Episode S${String(parsed.season).padStart(2, '0')}E${String(parsed.episode).padStart(2, '0')} is already queued in the active Season ${parsed.season} batch download.`
+                        });
+                    }
+                }
             }
+
+            let meta = await fetchCinemeta('series', parsed.itemId);
+            const showTitle = sanitizePathSegment(meta?.name || parsed.itemId, parsed.itemId);
+            const existingCheck = getExistingEpisodeDetails(parsed.itemId, showTitle, parsed.season, parsed.episode);
+            let replaceOldPath: string | null = null;
+            if (existingCheck.present) {
+                if (!replaceExisting && !replaceActive) {
+                    return reply.code(409).send({
+                        ok: false,
+                        alreadyExists: true,
+                        existingMedia: existingCheck,
+                        message: `Episode S${String(parsed.season).padStart(2, '0')}E${String(parsed.episode).padStart(2, '0')} is already downloaded in your library ("${existingCheck.filename}"). Choose Replace to replace with this source.`
+                    });
+                }
+                replaceOldPath = existingCheck.file?.absolute_path || existingCheck.path || null;
+            }
+
+            (async () => {
+                try {
+                    const ss = String(parsed.season).padStart(2, '0');
+                    const ee = String(parsed.episode).padStart(2, '0');
+                    const ext = path.extname(givenFilename) || '.mkv';
+                    const filename = sanitizePathSegment(givenFilename || `${showTitle} - S${ss}E${ee} - ${resolution}${ext}`, `${showTitle} - S${ss}E${ee}${ext}`);
+                    const destDir = path.join('/media/tv', showTitle, `Season ${parsed.season}`);
+                    await downloadFileToDisk(dlKey, url, destDir, filename, size, triggerRescan, verifyStorageAvailable, replaceOldPath);
+                } catch (err: any) {
+                    app.log.warn({ err: err?.message, id }, 'Direct episode download from selection failed');
+                }
+            })();
             return reply.send({ ok: true, key: dlKey });
         }
 
         if (mode === 'season') {
             const parsed = episodeId(id);
             if (!parsed) return reply.code(400).send({ error: 'Invalid episode id for season' });
+            const seasonKey = canonicalDownloadKey('season', id);
+
+            if (activeDownloads.has(seasonKey)) {
+                if (!replaceActive) {
+                    return reply.code(409).send({
+                        ok: false,
+                        alreadyDownloading: true,
+                        message: `Season ${parsed.season} is already downloading.`
+                    });
+                }
+                cancelDownloadByKey(seasonKey);
+                await new Promise(r => setTimeout(r, 60));
+            }
+
             const selectedEpList = Array.isArray(body.selectedEpisodes) && body.selectedEpisodes.length > 0
                 ? body.selectedEpisodes.map(Number)
                 : null;
@@ -1378,124 +1720,138 @@ export function registerStremioRoutes(app, database, settings, config, requester
                     return reply.code(400).send({ error: check.reason });
                 }
             }
-            const seasonKey = `season:${parsed.itemId}:${parsed.season}`;
-            if (!activeDownloads.has(seasonKey)) {
-                (async () => {
-                    try {
-                        const aioBase = String(process.env.AIOSTREAMS_BASE_URL || '').replace(/\/+$/, '');
-                        const meta = await fetchCinemeta('series', parsed.itemId);
-                        const showTitle = sanitizePathSegment(meta?.name || parsed.itemId, parsed.itemId);
-                        const seasonVideos = (meta?.videos || [])
-                            .filter((v) => Number(v.season) === parsed.season && Number(v.episode) > 0)
-                            .sort((a, b) => Number(a.episode) - Number(b.episode));
-                        const selectedEpList = Array.isArray(body.selectedEpisodes) && body.selectedEpisodes.length > 0
-                            ? body.selectedEpisodes.map(Number)
-                            : null;
-                        const allSeasonEps = seasonVideos.length > 0
-                            ? seasonVideos.map((v) => Number(v.episode))
-                            : Array.from({ length: 10 }, (_, idx) => idx + 1);
-                        const epNumbers = allSeasonEps.filter(ep => selectedEpList ? selectedEpList.includes(ep) : true);
 
-                        const remainingEpisodes = epNumbers.filter(epNum =>
-                            !isEpisodeAlreadyPresent(parsed.itemId, showTitle, parsed.season, epNum) &&
-                            !activeDownloads.has(`episode:${parsed.itemId}:${parsed.season}:${epNum}`)
-                        );
+            (async () => {
+                try {
+                    const aioBase = String(process.env.AIOSTREAMS_BASE_URL || '').replace(/\/+$/, '');
+                    const meta = await fetchCinemeta('series', parsed.itemId);
+                    const showTitle = sanitizePathSegment(meta?.name || parsed.itemId, parsed.itemId);
+                    const seasonVideos = (meta?.videos || [])
+                        .filter((v: any) => Number(v.season) === parsed.season && Number(v.episode) > 0)
+                        .sort((a: any, b: any) => Number(a.episode) - Number(b.episode));
+                    const selectedEpList = Array.isArray(body.selectedEpisodes) && body.selectedEpisodes.length > 0
+                        ? body.selectedEpisodes.map(Number)
+                        : null;
+                    const allSeasonEps = seasonVideos.length > 0
+                        ? seasonVideos.map((v: any) => Number(v.episode))
+                        : Array.from({ length: 10 }, (_, idx) => idx + 1);
+                    const epNumbers = allSeasonEps.filter(ep => selectedEpList ? selectedEpList.includes(ep) : true);
 
-                        const totalCount = remainingEpisodes.length;
-                        let completedCount = 0;
-                        const seasonState = {
-                            key: seasonKey,
-                            filename: `${showTitle} Season ${parsed.season} (0/${totalCount})`,
-                            downloadedBytes: 0,
-                            totalBytes: 0,
-                            startedAt: Date.now(),
-                            status: 'downloading',
-                            cancelled: false
-                        };
-                        activeDownloads.set(seasonKey, seasonState);
+                    const remainingEpisodes = epNumbers.filter(epNum => {
+                        const epKey = canonicalDownloadKey('episode', `${parsed.itemId}:${parsed.season}:${epNum}`);
+                        return !isEpisodeAlreadyPresent(parsed.itemId, showTitle, parsed.season, epNum) &&
+                               !activeDownloads.has(epKey);
+                    });
 
-                        const downloadEpisode = async (epNum) => {
-                            if (seasonState.cancelled || !activeDownloads.has(seasonKey)) return;
+                    const totalCount = remainingEpisodes.length;
+                    let completedCount = 0;
+                    const seasonState = {
+                        key: seasonKey,
+                        filename: `${showTitle} Season ${parsed.season} (0/${totalCount})`,
+                        downloadedBytes: 0,
+                        totalBytes: 0,
+                        startedAt: Date.now(),
+                        status: 'downloading',
+                        cancelled: false,
+                        queuedEpisodes: [...remainingEpisodes]
+                    };
+                    activeDownloads.set(seasonKey, seasonState);
 
-                            const epFullId = `${parsed.itemId}:${parsed.season}:${epNum}`;
-                            const spaceCheck = verifyStorageAvailable(size);
-                            if (!spaceCheck.ok) {
-                                app.log.warn({ seasonKey, epNum, reason: spaceCheck.reason }, 'Stopping season episode: storage limit reached');
-                                return;
-                            }
-                            const ss = String(parsed.season).padStart(2, '0');
-                            const ee = String(epNum).padStart(2, '0');
-                            const destDir = path.join('/media/tv', showTitle, `Season ${parsed.season}`);
+                    const downloadEpisode = async (epNum: number) => {
+                        if (seasonState.cancelled || !activeDownloads.has(seasonKey)) return;
 
-                            if (epNum === parsed.episode && url) {
-                                const ext = path.extname(givenFilename) || '.mkv';
-                                const filename = sanitizePathSegment(givenFilename || `${showTitle} - S${ss}E${ee} - ${resolution}${ext}`, `${showTitle} - S${ss}E${ee}${ext}`);
-                                await downloadFileToDisk(`episode:${epFullId}`, url, destDir, filename, size, triggerRescan, verifyStorageAvailable);
-                                completedCount++;
-                                seasonState.filename = `${showTitle} Season ${parsed.season} (${completedCount}/${totalCount})`;
-                                return;
-                            }
-
-                            let targetStream = null;
-                            if (aioBase) {
-                                try {
-                                    const resp = await fetch(`${aioBase}/stream/series/${encodeURIComponent(epFullId)}.json`, {
-                                        headers: { 'User-Agent': 'Stremio/5.0' },
-                                        signal: AbortSignal.timeout(9000)
-                                    });
-                                    if (resp.ok) {
-                                        const epData = await resp.json();
-                                        const validStreams = (epData?.streams || [])
-                                            .filter(s => s && s.url)
-                                            .map(parseAioStream);
-
-                                        if (group) {
-                                            targetStream = validStreams.find(s => s.group && s.group.toLowerCase() === group.toLowerCase());
-                                        }
-                                        if (!targetStream && resolution && quality) {
-                                            targetStream = validStreams.find(s => s.resolution === resolution && s.quality === quality);
-                                        }
-                                        if (!targetStream && resolution) {
-                                            targetStream = validStreams.find(s => s.resolution === resolution);
-                                        }
-                                        if (!targetStream) {
-                                            targetStream = validStreams[0] || null;
-                                        }
-                                    }
-                                } catch { /* ignore fetch error for individual ep */ }
-                            }
-
-                            if (!targetStream) return;
-                            if (seasonState.cancelled || !activeDownloads.has(seasonKey)) return;
-
-                            const ext = path.extname(targetStream.filename) || '.mkv';
-                            const filename = sanitizePathSegment(targetStream.filename || `${showTitle} - S${ss}E${ee} - ${resolution}${ext}`, `${showTitle} - S${ss}E${ee}${ext}`);
-                            await downloadFileToDisk(`episode:${epFullId}`, targetStream.url, destDir, filename, targetStream.videoSize, triggerRescan, verifyStorageAvailable);
+                        if (isEpisodeAlreadyPresent(parsed.itemId, showTitle, parsed.season, epNum)) {
                             completedCount++;
                             seasonState.filename = `${showTitle} Season ${parsed.season} (${completedCount}/${totalCount})`;
-                        };
+                            return;
+                        }
 
-                        const concurrency = Math.max(1, sharedSettings ? sharedSettings.maxConcurrentDownloads : 2);
-                        const workerCount = Math.min(concurrency, remainingEpisodes.length);
-                        let nextIdx = 0;
+                        const epFullId = `${parsed.itemId}:${parsed.season}:${epNum}`;
+                        const epKey = canonicalDownloadKey('episode', epFullId);
 
-                        const worker = async () => {
-                            while (nextIdx < remainingEpisodes.length) {
-                                if (seasonState.cancelled || !activeDownloads.has(seasonKey)) break;
-                                const epNum = remainingEpisodes[nextIdx++];
-                                await downloadEpisode(epNum);
-                            }
-                        };
+                        if (activeDownloads.has(epKey)) {
+                            completedCount++;
+                            seasonState.filename = `${showTitle} Season ${parsed.season} (${completedCount}/${totalCount})`;
+                            return;
+                        }
 
-                        const workers = Array.from({ length: workerCount }, () => worker());
-                        await Promise.all(workers);
-                    } catch (err) {
-                        app.log.warn({ err, id }, 'Direct season download from selection failed');
-                    } finally {
-                        activeDownloads.delete(seasonKey);
-                    }
-                })();
-            }
+                        const spaceCheck = verifyStorageAvailable(size);
+                        if (!spaceCheck.ok) {
+                            app.log.warn({ seasonKey, epNum, reason: spaceCheck.reason }, 'Stopping season episode: storage limit reached');
+                            return;
+                        }
+                        const ss = String(parsed.season).padStart(2, '0');
+                        const ee = String(epNum).padStart(2, '0');
+                        const destDir = path.join('/media/tv', showTitle, `Season ${parsed.season}`);
+
+                        if (epNum === parsed.episode && url) {
+                            const ext = path.extname(givenFilename) || '.mkv';
+                            const filename = sanitizePathSegment(givenFilename || `${showTitle} - S${ss}E${ee} - ${resolution}${ext}`, `${showTitle} - S${ss}E${ee}${ext}`);
+                            await downloadFileToDisk(epKey, url, destDir, filename, size, triggerRescan, verifyStorageAvailable);
+                            completedCount++;
+                            seasonState.filename = `${showTitle} Season ${parsed.season} (${completedCount}/${totalCount})`;
+                            return;
+                        }
+
+                        let targetStream = null;
+                        if (aioBase) {
+                            try {
+                                const resp = await fetch(`${aioBase}/stream/series/${encodeURIComponent(epFullId)}.json`, {
+                                    headers: { 'User-Agent': 'Stremio/5.0' },
+                                    signal: AbortSignal.timeout(9000)
+                                });
+                                if (resp.ok) {
+                                    const epData = await resp.json() as any;
+                                    const validStreams = (epData?.streams || [])
+                                        .filter((s: any) => s && s.url)
+                                        .map(parseAioStream);
+
+                                    if (group) {
+                                        targetStream = validStreams.find((s: any) => s.group && s.group.toLowerCase() === group.toLowerCase());
+                                    }
+                                    if (!targetStream && resolution && quality) {
+                                        targetStream = validStreams.find((s: any) => s.resolution === resolution && s.quality === quality);
+                                    }
+                                    if (!targetStream && resolution) {
+                                        targetStream = validStreams.find((s: any) => s.resolution === resolution);
+                                    }
+                                    if (!targetStream) {
+                                        targetStream = validStreams[0] || null;
+                                    }
+                                }
+                            } catch { /* ignore fetch error for individual ep */ }
+                        }
+
+                        if (!targetStream) return;
+                        if (seasonState.cancelled || !activeDownloads.has(seasonKey)) return;
+
+                        const ext = path.extname(targetStream.filename) || '.mkv';
+                        const filename = sanitizePathSegment(targetStream.filename || `${showTitle} - S${ss}E${ee} - ${resolution}${ext}`, `${showTitle} - S${ss}E${ee}${ext}`);
+                        await downloadFileToDisk(epKey, targetStream.url, destDir, filename, targetStream.videoSize, triggerRescan, verifyStorageAvailable);
+                        completedCount++;
+                        seasonState.filename = `${showTitle} Season ${parsed.season} (${completedCount}/${totalCount})`;
+                    };
+
+                    const concurrency = Math.max(1, sharedSettings ? sharedSettings.maxConcurrentDownloads : 2);
+                    const workerCount = Math.min(concurrency, remainingEpisodes.length);
+                    let nextIdx = 0;
+
+                    const worker = async () => {
+                        while (nextIdx < remainingEpisodes.length) {
+                            if (seasonState.cancelled || !activeDownloads.has(seasonKey)) break;
+                            const epNum = remainingEpisodes[nextIdx++];
+                            await downloadEpisode(epNum);
+                        }
+                    };
+
+                    const workers = Array.from({ length: workerCount }, () => worker());
+                    await Promise.all(workers);
+                } catch (err: any) {
+                    app.log.warn({ err: err?.message, id }, 'Direct season download from selection failed');
+                } finally {
+                    activeDownloads.delete(seasonKey);
+                }
+            })();
             return reply.send({ ok: true, key: seasonKey });
         }
 
@@ -1507,18 +1863,17 @@ export function registerStremioRoutes(app, database, settings, config, requester
         if (request.query?.all === 'true') {
             for (const active of activeDownloads.values()) {
                 if (active?.controller) active.controller.abort();
+                if (active?.cancelled !== undefined) active.cancelled = true;
+            }
+            for (const key of activeDownloads.keys()) {
+                downloadQueue.removeFromQueue(key);
             }
             activeDownloads.clear();
             return reply.send({ ok: true, cancelledAll: true });
         }
         const key = String(request.query?.key || '');
-        const active = activeDownloads.get(key);
-        if (active) {
-            if (active.controller) active.controller.abort();
-            downloadQueue.removeFromQueue(key);
-            activeDownloads.delete(key);
-        }
-        return reply.send({ ok: true });
+        const cancelled = cancelDownloadByKey(key);
+        return reply.send({ ok: true, cancelled });
     });
 
     const verifyAdminPassword = async (password: unknown): Promise<boolean> => {
@@ -2030,9 +2385,28 @@ export function registerStremioRoutes(app, database, settings, config, requester
 
         // 2. Build in-Stremio Download, Progress Bar & Delete buttons
         if (type === 'movie') {
-            if (files.length > 0) {
+            const cleanId = cleanMediaId(id);
+            const active = getActiveDownloadForMedia('movie', cleanId);
+            if (active) {
+                const desc = active.status === 'queued'
+                    ? `⏳ Queued (${active.queuePosition ? '#' + active.queuePosition : 'waiting'})\nWaiting for download slot`
+                    : `⏳ Downloading Movie\n${formatProgressBar(active.downloadedBytes, active.totalBytes, active.startedAt)}`;
+                streams.push({
+                    name: addonName,
+                    description: desc,
+                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/download/status/${encodeURIComponent(id)}`,
+                    behaviorHints: { bingeGroup: `nuvi-flow:dl:${id}` }
+                });
+                streams.push({
+                    name: addonName,
+                    description: active.status === 'queued' ? `🛑 Remove from Queue\nCancel queued download` : `🛑 Cancel Movie Download\nStop active download`,
+                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/cancel/movie/${encodeURIComponent(id)}`,
+                    behaviorHints: { bingeGroup: `nuvi-flow:cancel:${id}` }
+                });
+            }
+            else if (files.length > 0) {
                 const totalBytes = files.reduce((acc, f) => acc + (Number(f.size) || 0), 0);
-                const delKey = `movie:${id}`;
+                const delKey = `movie:${cleanId}`;
                 const armed = isDeleteArmed(delKey);
                 streams.push({
                     name: addonName,
@@ -2042,44 +2416,54 @@ export function registerStremioRoutes(app, database, settings, config, requester
                     url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/delete/movie/${encodeURIComponent(id)}`,
                     behaviorHints: { bingeGroup: `nuvi-flow:del:movie:${id}` }
                 });
+                streams.push({
+                    name: addonName,
+                    description: `🔄 Replace / Upgrade Movie\nChoose higher quality or new source`,
+                    externalUrl: `${settings.baseUrl}/downloads/choose?token=${encodeURIComponent(accessToken)}&type=movie&id=${encodeURIComponent(id)}&mode=movie`,
+                    behaviorHints: { bingeGroup: `nuvi-flow:choose:movie:${id}` }
+                });
             }
             else {
-                const active = activeDownloads.get(`movie:${id}`);
-                if (active) {
-                    const desc = active.status === 'queued'
-                        ? `⏳ Queued (${active.queuePosition ? '#' + active.queuePosition : 'waiting'})\nWaiting for download slot`
-                        : `⏳ Downloading Movie\n${formatProgressBar(active.downloadedBytes, active.totalBytes, active.startedAt)}`;
-                    streams.push({
-                        name: addonName,
-                        description: desc,
-                        url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/download/status/${encodeURIComponent(id)}`,
-                        behaviorHints: { bingeGroup: `nuvi-flow:dl:${id}` }
-                    });
-                    streams.push({
-                        name: addonName,
-                        description: active.status === 'queued' ? `🛑 Remove from Queue\nCancel queued download` : `🛑 Cancel Movie Download\nStop active download`,
-                        url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/cancel/movie/${encodeURIComponent(id)}`,
-                        behaviorHints: { bingeGroup: `nuvi-flow:cancel:${id}` }
-                    });
-                }
-                else {
-                    streams.push({
-                        name: addonName,
-                        description: `⬇️ Download Movie\nChoose quality & source`,
-                        externalUrl: `${settings.baseUrl}/downloads/choose?token=${encodeURIComponent(accessToken)}&type=movie&id=${encodeURIComponent(id)}&mode=movie`,
-                        behaviorHints: { bingeGroup: `nuvi-flow:choose:movie:${id}` }
-                    });
-                }
+                streams.push({
+                    name: addonName,
+                    description: `⬇️ Download Movie\nChoose quality & source`,
+                    externalUrl: `${settings.baseUrl}/downloads/choose?token=${encodeURIComponent(accessToken)}&type=movie&id=${encodeURIComponent(id)}&mode=movie`,
+                    behaviorHints: { bingeGroup: `nuvi-flow:choose:movie:${id}` }
+                });
             }
         }
         else if (type === 'series' && parsedSeries) {
             const ss = String(parsedSeries.season).padStart(2, '0');
             const ee = String(parsedSeries.episode).padStart(2, '0');
-            const epKey = `episode:${id}`;
+            const cleanId = cleanMediaId(id);
+            const epKey = canonicalDownloadKey('episode', id);
             const seasonKey = `season:${parsedSeries.itemId}:${parsedSeries.season}`;
             const meta = await fetchCinemeta('series', parsedSeries.itemId);
+            const activeEp = getActiveDownloadForMedia('episode', cleanId);
 
-            if (files.length > 0) {
+            if (activeEp) {
+                const isSeasonBatch = activeEp.key.startsWith('season:');
+                const desc = activeEp.status === 'queued'
+                    ? `⏳ Queued (${activeEp.queuePosition ? '#' + activeEp.queuePosition : 'waiting'})\nWaiting for download slot`
+                    : (isSeasonBatch
+                        ? `⏳ Downloading with Season ${parsedSeries.season}\n${activeEp.filename}`
+                        : `⏳ Downloading S${ss}E${ee}\n${formatProgressBar(activeEp.downloadedBytes, activeEp.totalBytes, activeEp.startedAt)}`);
+                streams.push({
+                    name: addonName,
+                    description: desc,
+                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/download/status/${encodeURIComponent(id)}`,
+                    behaviorHints: { bingeGroup: `nuvi-flow:dl:ep:${id}` }
+                });
+                streams.push({
+                    name: addonName,
+                    description: isSeasonBatch
+                        ? `🛑 Cancel Season ${parsedSeries.season} Download\nStop batch download`
+                        : (activeEp.status === 'queued' ? `🛑 Remove from Queue\nCancel queued download` : `🛑 Cancel S${ss}E${ee} Download\nStop active download`),
+                    url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/cancel/${isSeasonBatch ? 'season' : 'episode'}/${encodeURIComponent(id)}`,
+                    behaviorHints: { bingeGroup: `nuvi-flow:cancel:ep:${id}` }
+                });
+            }
+            else if (files.length > 0) {
                 const epBytes = files.reduce((acc, f) => acc + (Number(f.size) || 0), 0);
                 const armedEp = isDeleteArmed(epKey);
                 streams.push({
@@ -2090,34 +2474,20 @@ export function registerStremioRoutes(app, database, settings, config, requester
                     url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/delete/episode/${encodeURIComponent(id)}`,
                     behaviorHints: { bingeGroup: `nuvi-flow:del:ep:${id}` }
                 });
+                streams.push({
+                    name: addonName,
+                    description: `🔄 Replace / Upgrade S${ss}E${ee}\nChoose higher quality or new source`,
+                    externalUrl: `${settings.baseUrl}/downloads/choose?token=${encodeURIComponent(accessToken)}&type=series&id=${encodeURIComponent(id)}&mode=episode`,
+                    behaviorHints: { bingeGroup: `nuvi-flow:choose:ep:${id}` }
+                });
             }
             else {
-                const activeEp = activeDownloads.get(epKey);
-                if (activeEp) {
-                    const desc = activeEp.status === 'queued'
-                        ? `⏳ Queued (${activeEp.queuePosition ? '#' + activeEp.queuePosition : 'waiting'})\nWaiting for download slot`
-                        : `⏳ Downloading S${ss}E${ee}\n${formatProgressBar(activeEp.downloadedBytes, activeEp.totalBytes, activeEp.startedAt)}`;
-                    streams.push({
-                        name: addonName,
-                        description: desc,
-                        url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/download/status/${encodeURIComponent(id)}`,
-                        behaviorHints: { bingeGroup: `nuvi-flow:dl:ep:${id}` }
-                    });
-                    streams.push({
-                        name: addonName,
-                        description: activeEp.status === 'queued' ? `🛑 Remove from Queue\nCancel queued download` : `🛑 Cancel S${ss}E${ee} Download\nStop active download`,
-                        url: `${settings.baseUrl}/addon/${encodeURIComponent(accessToken)}/cancel/episode/${encodeURIComponent(id)}`,
-                        behaviorHints: { bingeGroup: `nuvi-flow:cancel:ep:${id}` }
-                    });
-                }
-                else {
-                    streams.push({
-                        name: addonName,
-                        description: `⬇️ Download S${ss}E${ee}\nChoose quality & source`,
-                        externalUrl: `${settings.baseUrl}/downloads/choose?token=${encodeURIComponent(accessToken)}&type=series&id=${encodeURIComponent(id)}&mode=episode`,
-                        behaviorHints: { bingeGroup: `nuvi-flow:choose:ep:${id}` }
-                    });
-                }
+                streams.push({
+                    name: addonName,
+                    description: `⬇️ Download S${ss}E${ee}\nChoose quality & source`,
+                    externalUrl: `${settings.baseUrl}/downloads/choose?token=${encodeURIComponent(accessToken)}&type=series&id=${encodeURIComponent(id)}&mode=episode`,
+                    behaviorHints: { bingeGroup: `nuvi-flow:choose:ep:${id}` }
+                });
             }
 
             // Entire Season Download & Delete buttons
@@ -2193,42 +2563,15 @@ export function registerStremioRoutes(app, database, settings, config, requester
 
     app.get(`${prefix}/cancel/:mode/:id`, secureRoute, async (request, reply) => {
         const { mode } = request.params;
-        const id = request.params.id.replace(/^(dls|zpm):/, '');
-        if (mode === 'movie') {
-            const active = activeDownloads.get(`movie:${id}`);
-            if (active?.controller)
-                active.controller.abort();
-            activeDownloads.delete(`movie:${id}`);
-        }
-        else if (mode === 'episode') {
-            const active = activeDownloads.get(`episode:${id}`);
-            if (active?.controller)
-                active.controller.abort();
-            activeDownloads.delete(`episode:${id}`);
-        }
-        else if (mode === 'season') {
-            const parsed = episodeId(id);
-            if (parsed) {
-                const seasonKey = `season:${parsed.itemId}:${parsed.season}`;
-                const sState = activeDownloads.get(seasonKey);
-                if (sState)
-                    sState.cancelled = true;
-                activeDownloads.delete(seasonKey);
-                for (const [k, v] of activeDownloads.entries()) {
-                    if (k.startsWith(`episode:${parsed.itemId}:${parsed.season}:`)) {
-                        if (v?.controller)
-                            v.controller.abort();
-                        activeDownloads.delete(k);
-                    }
-                }
-            }
-        }
+        const rawId = request.params.id;
+        const key = canonicalDownloadKey(mode, rawId);
+        cancelDownloadByKey(key);
         return sendCardMp4(request, reply, 'cancelled.mp4');
     });
 
     app.get(`${prefix}/delete/:mode/:id`, secureRoute, async (request, reply) => {
         const { mode } = request.params;
-        const id = request.params.id.replace(/^(dls|zpm):/, '');
+        const id = cleanMediaId(request.params.id);
         if (mode === 'movie') {
             const delKey = `movie:${id}`;
             if (!isDeleteArmed(delKey)) {
@@ -2304,93 +2647,50 @@ export function registerStremioRoutes(app, database, settings, config, requester
 
     app.get(`${prefix}/download/prompt/:mode/:id`, secureRoute, async (request, reply) => {
         const { mode } = request.params;
-        const id = request.params.id.replace(/^(dls|zpm):/, '');
+        const id = cleanMediaId(request.params.id);
         const type = mode === 'movie' ? 'movie' : 'series';
         promptUrl = `${settings.baseUrl}/downloads/choose?type=${type}&id=${encodeURIComponent(id)}&mode=${encodeURIComponent(mode)}`;
         lastDownloadTriggeredAt = Date.now();
-
-        // Also initiate download in background if not already active so clicking never hangs!
-        if (mode === 'movie') {
-            const dlKey = `movie:${id}`;
-            if (!activeDownloads.has(dlKey)) {
-                (async () => {
-                    try {
-                        const [best, meta] = await Promise.all([
-                            fetchBestCandidate('movie', id),
-                            fetchCinemeta('movie', id)
-                        ]);
-                        if (!best) return;
-                        const title = sanitizePathSegment(meta?.name || id, id);
-                        const year = meta?.releaseInfo ? String(meta.releaseInfo).slice(0, 4) : '';
-                        const folderName = year ? `${title} (${year})` : title;
-                        const ext = path.extname(best.filename || '') || '.mkv';
-                        const filename = sanitizePathSegment(best.filename || `${folderName}.1080p${ext}`, `${folderName}${ext}`);
-                        const destDir = path.join('/media/movies', folderName);
-                        await downloadFileToDisk(dlKey, best.url, destDir, filename, best.videoSize, triggerRescan, verifyStorageAvailable);
-                    } catch (err) {
-                        app.log.warn({ err, id }, 'Direct movie download failed from prompt');
-                    }
-                })();
-            }
-        } else if (mode === 'episode') {
-            const parsed = episodeId(id);
-            const dlKey = `episode:${id}`;
-            if (parsed && !activeDownloads.has(dlKey)) {
-                (async () => {
-                    try {
-                        const [best, meta] = await Promise.all([
-                            fetchBestCandidate('series', id),
-                            fetchCinemeta('series', parsed.itemId)
-                        ]);
-                        if (!best) return;
-                        const showTitle = sanitizePathSegment(meta?.name || parsed.itemId, parsed.itemId);
-                        const ss = String(parsed.season).padStart(2, '0');
-                        const ee = String(parsed.episode).padStart(2, '0');
-                        const ext = path.extname(best.filename || '') || '.mkv';
-                        const filename = sanitizePathSegment(best.filename || `${showTitle} - S${ss}E${ee} - 1080p${ext}`, `${showTitle} - S${ss}E${ee}${ext}`);
-                        const destDir = path.join('/media/tv', showTitle, `Season ${parsed.season}`);
-                        await downloadFileToDisk(dlKey, best.url, destDir, filename, best.videoSize, triggerRescan, verifyStorageAvailable);
-                    } catch (err) {
-                        app.log.warn({ err, id }, 'Direct episode download failed from prompt');
-                    }
-                })();
-            }
-        }
         return sendCardMp4(request, reply, 'download-started.mp4');
     });
 
     app.get(`${prefix}/download/:mode/:id`, secureRoute, async (request, reply) => {
         const { mode } = request.params;
-        const id = request.params.id.replace(/^(dls|zpm):/, '');
+        const rawId = request.params.id;
+        const id = cleanMediaId(rawId);
+        const dlKey = canonicalDownloadKey(mode, id);
+
         if (mode === 'movie') {
-            const dlKey = `movie:${id}`;
-            if (!activeDownloads.has(dlKey)) {
-                (async () => {
-                    try {
-                        const [best, meta] = await Promise.all([
-                            fetchBestCandidate('movie', id),
-                            fetchCinemeta('movie', id)
-                        ]);
-                        if (!best)
-                            return;
-                        const title = sanitizePathSegment(meta?.name || id, id);
-                        const year = meta?.releaseInfo ? String(meta.releaseInfo).slice(0, 4) : '';
-                        const folderName = year ? `${title} (${year})` : title;
-                        const ext = path.extname(best.filename || '') || '.mkv';
-                        const filename = sanitizePathSegment(best.filename || `${folderName}.1080p${ext}`, `${folderName}${ext}`);
-                        const destDir = path.join('/media/movies', folderName);
-                        await downloadFileToDisk(dlKey, best.url, destDir, filename, best.videoSize, triggerRescan, verifyStorageAvailable);
-                    }
-                    catch (err) {
-                        app.log.warn({ err, id }, 'Direct movie download failed');
-                    }
-                })();
+            if (getActiveDownloadForMedia('movie', id) || getExistingMovieDetails(database, id)) {
+                return sendCardMp4(request, reply, 'download-started.mp4');
             }
+            (async () => {
+                try {
+                    const [best, meta] = await Promise.all([
+                        fetchBestCandidate('movie', id),
+                        fetchCinemeta('movie', id)
+                    ]);
+                    if (!best)
+                        return;
+                    const title = sanitizePathSegment(meta?.name || id, id);
+                    const year = meta?.releaseInfo ? String(meta.releaseInfo).slice(0, 4) : '';
+                    const folderName = year ? `${title} (${year})` : title;
+                    const ext = path.extname(best.filename || '') || '.mkv';
+                    const filename = sanitizePathSegment(best.filename || `${folderName}.1080p${ext}`, `${folderName}${ext}`);
+                    const destDir = path.join('/media/movies', folderName);
+                    await downloadFileToDisk(dlKey, best.url, destDir, filename, best.videoSize, triggerRescan, verifyStorageAvailable);
+                }
+                catch (err) {
+                    app.log.warn({ err, id }, 'Direct movie download failed');
+                }
+            })();
         }
         else if (mode === 'episode') {
             const parsed = episodeId(id);
-            const dlKey = `episode:${id}`;
-            if (parsed && !activeDownloads.has(dlKey)) {
+            if (parsed) {
+                if (getActiveDownloadForMedia('episode', id) || getExistingEpisodeDetails(database, id)) {
+                    return sendCardMp4(request, reply, 'download-started.mp4');
+                }
                 (async () => {
                     try {
                         const [best, meta] = await Promise.all([
@@ -2416,7 +2716,7 @@ export function registerStremioRoutes(app, database, settings, config, requester
         else if (mode === 'season') {
             const parsed = episodeId(id);
             if (parsed) {
-                const seasonKey = `season:${parsed.itemId}:${parsed.season}`;
+                const seasonKey = canonicalDownloadKey('season', id);
                 if (!activeDownloads.has(seasonKey)) {
                     (async () => {
                         try {
@@ -2428,11 +2728,14 @@ export function registerStremioRoutes(app, database, settings, config, requester
                             const epNumbers = seasonVideos.length > 0
                                 ? seasonVideos.map((v) => Number(v.episode))
                                 : Array.from({ length: 10 }, (_, idx) => idx + 1);
-                            const remainingEpisodes = epNumbers.filter(epNum =>
-                                !isEpisodeAlreadyPresent(parsed.itemId, showTitle, parsed.season, epNum) &&
-                                !activeDownloads.has(`episode:${parsed.itemId}:${parsed.season}:${epNum}`)
-                            );
+                            const remainingEpisodes = epNumbers.filter(epNum => {
+                                const epFullId = `${parsed.itemId}:${parsed.season}:${epNum}`;
+                                return !getExistingEpisodeDetails(database, epFullId) &&
+                                       !getActiveDownloadForMedia('episode', epFullId);
+                            });
                             const totalCount = remainingEpisodes.length;
+                            if (totalCount === 0) return;
+
                             let completedCount = 0;
                             const seasonState = {
                                 key: seasonKey,
@@ -2448,15 +2751,17 @@ export function registerStremioRoutes(app, database, settings, config, requester
                             const downloadEpisode = async (epNum) => {
                                 if (seasonState.cancelled || !activeDownloads.has(seasonKey)) return;
                                 const epFullId = `${parsed.itemId}:${parsed.season}:${epNum}`;
+                                const childKey = `episode:${epFullId}`;
+                                if (getExistingEpisodeDetails(database, epFullId) || activeDownloads.has(childKey)) return;
                                 const best = await fetchBestCandidate('series', epFullId);
-                                if (!best) return;
+                                if (!best || seasonState.cancelled || !activeDownloads.has(seasonKey)) return;
                                 const ss = String(parsed.season).padStart(2, '0');
                                 const ee = String(epNum).padStart(2, '0');
                                 const ext = path.extname(best.filename || '') || '.mkv';
                                 const filename = sanitizePathSegment(best.filename || `${showTitle} - S${ss}E${ee} - 1080p${ext}`, `${showTitle} - S${ss}E${ee}${ext}`);
                                 const destDir = path.join('/media/tv', showTitle, `Season ${parsed.season}`);
                                 try {
-                                    await downloadFileToDisk(`episode:${epFullId}`, best.url, destDir, filename, best.videoSize, triggerRescan);
+                                    await downloadFileToDisk(childKey, best.url, destDir, filename, best.videoSize, triggerRescan);
                                     completedCount++;
                                     seasonState.filename = `${showTitle} Season ${parsed.season} (${completedCount}/${totalCount})`;
                                 } catch (err) {
