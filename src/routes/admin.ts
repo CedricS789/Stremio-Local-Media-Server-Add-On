@@ -1564,4 +1564,44 @@ export function registerAdminRoutes(
     systemDiagnostics.invalidate();
     return reply.send({ ok: true, settings: settings.publicView() });
   });
+
+  app.post('/admin/api/metadata-provider/test', {
+    preHandler: requireAdmin(config, true)
+  }, async (request, reply) => {
+    const body = (request.body || {}) as { url?: string };
+    let rawUrl = (body.url || settings.aiometadataUrl || '').trim();
+    if (!rawUrl) {
+      return reply.send({ ok: false, error: 'No metadata provider URL provided' });
+    }
+    rawUrl = rawUrl.replace(/^stremio:\/\//i, 'https://').replace(/\/+$/, '');
+    if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
+      if (/^[0-9a-f-]{36}$/i.test(rawUrl)) {
+        rawUrl = `https://aiometadata.elfhosted.com/stremio/${rawUrl}`;
+      } else {
+        rawUrl = `https://${rawUrl}`;
+      }
+    }
+    const manifestUrl = rawUrl.endsWith('/manifest.json') ? rawUrl : `${rawUrl}/manifest.json`;
+    const start = Date.now();
+    try {
+      const resp = await fetch(manifestUrl, {
+        headers: { 'User-Agent': 'Stremio/5.0' },
+        signal: AbortSignal.timeout(6000)
+      });
+      if (!resp.ok) {
+        return reply.send({ ok: false, error: `Provider returned HTTP ${resp.status} ${resp.statusText}` });
+      }
+      const data = (await resp.json()) as any;
+      const latencyMs = Date.now() - start;
+      return reply.send({
+        ok: true,
+        name: data?.name || 'AIOMetadata',
+        version: data?.version || '',
+        latencyMs,
+        cleanBaseUrl: rawUrl.replace(/\/manifest\.json$/, '')
+      });
+    } catch (err: any) {
+      return reply.send({ ok: false, error: err?.message || 'Connection timed out or failed' });
+    }
+  });
 }

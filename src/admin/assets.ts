@@ -22,6 +22,20 @@ export const adminCss = `
 .btn-signout:hover{background:rgba(244,63,94,0.14);border-color:rgba(244,63,94,0.38);color:#fda4af;transform:translateY(-1px)}
 .btn-signout:active{transform:translateY(1px)!important}
 
+.provider-card{padding:16px 18px;border:1px solid var(--line);border-radius:13px;background:var(--panel2);display:flex;flex-direction:column;gap:12px;margin-top:6px}
+.provider-card.good{border-color:rgba(16,185,129,0.38);background:linear-gradient(180deg,rgba(16,185,129,0.05) 0%,rgba(18,20,29,0.98) 100%)}
+.provider-card-header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.provider-card-left{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.provider-badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;text-transform:uppercase;letter-spacing:.05em}
+.provider-badge.good{background:rgba(16,185,129,0.15);color:#34d399;border:1px solid rgba(16,185,129,0.3)}
+.provider-badge.neutral{background:rgba(255,255,255,0.06);color:var(--muted);border:1px solid var(--line)}
+.provider-name{font-size:14px;font-weight:750;color:#ffffff}
+.provider-card-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.provider-card-body{display:flex;flex-direction:column;gap:8px}
+.provider-url-locked{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;background:#050608;border:1px solid var(--line);border-radius:8px;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:11.5px;color:var(--muted);width:fit-content;max-width:100%;overflow:hidden}
+.provider-url-locked .locked-url-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.provider-meta{font-size:12px;color:var(--dim);margin:0;line-height:1.45}
+
 /* Downloads View & Components */
 .show-group{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;transition:border-color .15s ease}
 .show-group:hover{border-color:var(--line-strong)}
@@ -790,9 +804,50 @@ export function adminHtml(csrf: string): string {
   <p class="help"><b>Preserve Tracking (Default):</b> Series in your "Downloaded" catalog show only episodes stored on your server. Playback retains canonical media identifiers, enabling player scrobblers, watch progress tracking, and external sync tools to function normally. Local Gigabit LAN streams are prioritized at the top.<br><b>Strict Offline Isolation:</b> Completely isolates metadata and streams using offline prefixes to hide all third-party add-ons (external scrobblers and tracking tools will not recognize offline IDs).<br><b>Standard:</b> Displays full series listings directly from Cinemeta.</p>
 </div>
 <div class="field full">
-  <label for="aiometadataUrl">Upstream Metadata Provider URL (e.g. AIOMetadata)</label>
-  <input id="aiometadataUrl" class="input" name="aiometadataUrl" type="url" placeholder="https://aiometadata.elfhosted.com/stremio/... (leave blank for Cinemeta)">
-  <p class="help">Fetches rich metadata (Rotten Tomatoes / IMDb ratings, cast photos, ExtendedRatings episode score thumbnails) while filtering episodes strictly to those downloaded on your server. If empty or unreachable, Cinemeta is used as fallback.</p>
+  <label>Upstream Metadata Provider (AIOMetadata / ERDB)</label>
+  <input type="hidden" id="aiometadataUrl" name="aiometadataUrl" value="">
+
+  <!-- Connected State (Active & Locked) -->
+  <div id="aiometadataConnectedCard" class="provider-card good" style="display:none;">
+    <div class="provider-card-header">
+      <div class="provider-card-left">
+        <span class="provider-badge good">● Connected</span>
+        <span class="provider-name" id="aiometadataProviderName">AIOMetadata | ElfHosted</span>
+      </div>
+      <div class="provider-card-actions">
+        <button type="button" class="btn small" id="testAiometadataBtn">Test Connection</button>
+        <button type="button" class="btn small" id="changeAiometadataBtn">Change</button>
+        <button type="button" class="btn small danger" id="disconnectAiometadataBtn">Disconnect</button>
+      </div>
+    </div>
+    <div class="provider-card-body">
+      <div class="provider-url-locked">
+        <span class="lock-icon" title="Connection locked">🔒</span>
+        <span id="aiometadataUrlDisplay" class="locked-url-text">https://aiometadata.elfhosted.com/...</span>
+      </div>
+      <p class="provider-meta">
+        Active · Providing Rotten Tomatoes & IMDb score badges, ExtendedRatings episode thumbnails, and full cast portraits for downloaded media.
+      </p>
+    </div>
+  </div>
+
+  <!-- Disconnected State (Default Cinemeta) -->
+  <div id="aiometadataDisconnectedCard" class="provider-card" style="display:none;">
+    <div class="provider-card-header">
+      <div class="provider-card-left">
+        <span class="provider-badge neutral">Cinemeta (Default)</span>
+        <span class="provider-name">Standard Metadata Provider</span>
+      </div>
+      <div class="provider-card-actions">
+        <button type="button" class="btn small primary" id="connectAiometadataBtn">⚡ Connect AIOMetadata</button>
+      </div>
+    </div>
+    <div class="provider-card-body">
+      <p class="provider-meta">
+        Currently using Stremio's default Cinemeta provider. Connect your AIOMetadata instance to unlock Rotten Tomatoes ratings, ExtendedRatings episode badges, and cast pictures in your downloaded catalog.
+      </p>
+    </div>
+  </div>
 </div>
 </section>
 
@@ -980,6 +1035,36 @@ export function adminHtml(csrf: string): string {
           <button class="btn danger" type="button" onclick="dlGoToStep2()" id="dlModalNextBtn" style="font-weight:750;">Next: Enter Password →</button>
           <button class="btn danger" type="button" onclick="dlExecuteDeletion()" id="dlModalConfirmBtn" style="display:none; font-weight:800;">🗑️ Permanently Delete</button>
         </div>
+      </footer>
+    </div>
+  </dialog>
+  <dialog class="modal" id="aiometadataModal" role="dialog" aria-modal="true" aria-labelledby="aiometadataModalTitle">
+    <div class="modal-card" style="width:min(540px, calc(100vw - 32px));">
+      <header class="modal-header">
+        <div class="modal-heading">
+          <div class="eyebrow">Metadata Integration</div>
+          <h3 id="aiometadataModalTitle">Connect AIOMetadata Provider</h3>
+        </div>
+        <button class="btn small modal-close" type="button" data-close aria-label="Close modal">✕</button>
+      </header>
+      <div class="modal-body" style="display:flex;flex-direction:column;gap:16px;">
+        <p style="margin:0;font-size:13px;color:var(--muted);line-height:1.5;">
+          Connect your personal AIOMetadata instance to display ExtendedRatings episode badges, Rotten Tomatoes scores, and cast pictures in your downloaded catalog.
+        </p>
+        <div class="field full" style="margin:0;">
+          <label for="aiometadataModalInput">AIOMetadata Manifest URL or UUID</label>
+          <input id="aiometadataModalInput" class="input" type="text" placeholder="Paste stremio://... or https://... or your UUID" autocomplete="off" spellcheck="false">
+          <p class="help">Accepts <code>https://aiometadata.elfhosted.com/...</code>, <code>stremio://...</code> install links, or your configuration UUID.</p>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;background:#050608;border:1px solid var(--line);border-radius:10px;">
+          <span style="font-size:12px;color:var(--dim);">Need to configure or get your link?</span>
+          <a href="https://aiometadata.elfhosted.com/configure" target="_blank" rel="noopener noreferrer" class="btn small" style="text-decoration:none;">Configure on ElfHosted ↗</a>
+        </div>
+        <div id="aiometadataModalStatus" style="display:none;font-size:12.5px;padding:10px 12px;border-radius:8px;"></div>
+      </div>
+      <footer class="modal-footer">
+        <button type="button" class="btn" id="aiometadataModalCancelBtn" data-close>Cancel</button>
+        <button type="button" class="btn primary" id="aiometadataModalSaveBtn">Connect & Lock</button>
       </footer>
     </div>
   </dialog>
@@ -1234,7 +1319,8 @@ function renderLibrary(){
   }).join('') || '<tr><td colspan="7"><div class="empty">No files match this filter.</div></td></tr>';
 }
 function setSelectValue(select,value,label){if(!select)return;const stringValue=String(value??'');if(stringValue&&!Array.from(select.options).some(option=>option.value===stringValue)){const option=document.createElement('option');option.value=stringValue;option.textContent=label||stringValue;select.appendChild(option)}select.value=stringValue}
-function fillSettings(force=false){if(settingsDirty&&!force)return;const form=document.getElementById('settingsForm'),s=state.settings;for(const name of ['addonName','baseUrl','mediaSoftLimitGb','lanBaseUrl','moviesPath','tvPath','scanIntervalMinutes','minimumFileSizeMb','streamTokenExpiryHours','longLivedStreamTokens','adminUsername','maxConcurrentDownloads','maxDownloadSpeedMBps','downloadTimeoutSeconds','autoRescanOnDownload','enableLibraryEditing','enableDeviceDownloads','restrictDeviceDownloadsToLan','isolateDownloadedCatalog','downloadedCatalogMode','aiometadataUrl'])if(form.elements[name])form.elements[name].value=String(s[name]??'');document.getElementById('tmdbStatus').textContent=s.metadataProvider||'Automatic metadata is active.';refreshBranding();syncManifestUrl()}
+function renderAiometadataCard(){const url=String(state.settings?.aiometadataUrl||'').trim(),conn=document.getElementById('aiometadataConnectedCard'),disconn=document.getElementById('aiometadataDisconnectedCard'),display=document.getElementById('aiometadataUrlDisplay'),input=document.getElementById('aiometadataUrl');if(input)input.value=url;if(!conn||!disconn)return;if(url){conn.style.display='flex';disconn.style.display='none';if(display)display.textContent=url}else{conn.style.display='none';disconn.style.display='flex'}}
+function fillSettings(force=false){if(settingsDirty&&!force)return;const form=document.getElementById('settingsForm'),s=state.settings;for(const name of ['addonName','baseUrl','mediaSoftLimitGb','lanBaseUrl','moviesPath','tvPath','scanIntervalMinutes','minimumFileSizeMb','streamTokenExpiryHours','longLivedStreamTokens','adminUsername','maxConcurrentDownloads','maxDownloadSpeedMBps','downloadTimeoutSeconds','autoRescanOnDownload','enableLibraryEditing','enableDeviceDownloads','restrictDeviceDownloadsToLan','isolateDownloadedCatalog','downloadedCatalogMode','aiometadataUrl'])if(form.elements[name])form.elements[name].value=String(s[name]??'');document.getElementById('tmdbStatus').textContent=s.metadataProvider||'Automatic metadata is active.';refreshBranding();syncManifestUrl();renderAiometadataCard()}
 async function load(){const request=++stateRequest,data=await api('/admin/api/state');if(request!==stateRequest)return;state={...state,...data};render()}
 async function loadHealth(force=false){const request=++healthRequest,summary=document.getElementById('healthSummary');if(!state.health&&summary){summary.className='health-banner';summary.innerHTML='<div><div class="health-banner-title">Running system checks…</div><div class="health-banner-meta">External checks are bounded and cached for one minute.</div></div>'}try{const data=await api('/admin/api/system-health'+(force?'?refresh=1':''));if(request!==healthRequest)return;state.health=data;renderHealth()}catch(err){if(request===healthRequest&&summary){summary.className='health-banner danger';summary.innerHTML='<div><div class="health-banner-title">System checks could not run</div><div class="health-banner-meta">'+esc(err.message||'The diagnostic request failed.')+'</div></div>'+diagnosticBadge('error')}throw err}}
 async function refreshHealth(button){const original=button.textContent;button.disabled=true;button.textContent='Checking…';try{await loadHealth(true);toast('System checks refreshed')}catch(err){toast(err.message||'System checks failed')}finally{button.disabled=false;button.textContent=original}}
@@ -1285,6 +1371,24 @@ document.addEventListener('click',async e=>{const target=e.target.closest('butto
 document.getElementById('librarySearch').addEventListener('input',renderLibrary);document.getElementById('libraryType').addEventListener('change',renderLibrary);
 const addonIconFile=document.getElementById('addonIconFile');addonIconFile?.addEventListener('change',e=>uploadAddonIcon(e.target.files?.[0]));
 document.getElementById('regenerateAddonUrl')?.addEventListener('click',e=>regenerateAddonUrl(e.currentTarget));
+const aioModal=document.getElementById('aiometadataModal');
+const aioInput=document.getElementById('aiometadataModalInput');
+const aioStatus=document.getElementById('aiometadataModalStatus');
+const aioSaveBtn=document.getElementById('aiometadataModalSaveBtn');
+
+function openAiometadataModal(){if(!aioModal)return;if(aioInput)aioInput.value=state.settings?.aiometadataUrl||'';if(aioStatus){aioStatus.style.display='none';aioStatus.textContent=''}if(aioSaveBtn){aioSaveBtn.disabled=false;aioSaveBtn.textContent='Connect & Lock'}aioModal.showModal();aioInput?.focus()}
+function closeAiometadataModal(){aioModal?.close()}
+
+document.getElementById('connectAiometadataBtn')?.addEventListener('click',openAiometadataModal);
+document.getElementById('changeAiometadataBtn')?.addEventListener('click',openAiometadataModal);
+document.getElementById('aiometadataModalCancelBtn')?.addEventListener('click',closeAiometadataModal);
+aioModal?.querySelector('.modal-close')?.addEventListener('click',closeAiometadataModal);
+
+document.getElementById('testAiometadataBtn')?.addEventListener('click',async e=>{const btn=e.currentTarget,original=btn.textContent;btn.disabled=true;btn.textContent='Testing…';try{const data=await api('/admin/api/metadata-provider/test',{method:'POST',body:JSON.stringify({url:state.settings?.aiometadataUrl})});if(data.ok){toast(`AIOMetadata healthy! Latency: ${data.latencyMs}ms (${data.name} v${data.version})`)}else{toast(`AIOMetadata test failed: ${data.error||'Unknown error'}`)}}catch(err){toast(`AIOMetadata test failed: ${err.message}`)}finally{btn.disabled=false;btn.textContent=original}});
+
+document.getElementById('disconnectAiometadataBtn')?.addEventListener('click',async()=>{if(!await showConfirm({title:'Disconnect AIOMetadata',eyebrow:'Metadata Integration',message:'Disconnect AIOMetadata? The server will fall back to standard Cinemeta metadata for your downloaded catalog.',confirmText:'Disconnect',danger:true}))return;try{const data=await api('/admin/api/settings',{method:'PUT',body:JSON.stringify({aiometadataUrl:''})});state.settings=data.settings;fillSettings(true);toast('AIOMetadata disconnected. Reverted to Cinemeta default.')}catch(err){toast(`Could not disconnect: ${err.message}`)}});
+
+aioSaveBtn?.addEventListener('click',async()=>{const raw=String(aioInput?.value||'').trim();if(!raw){if(aioStatus){aioStatus.style.display='block';aioStatus.style.background='rgba(244,63,94,0.15)';aioStatus.style.color='#fecdd3';aioStatus.style.border='1px solid rgba(244,63,94,0.38)';aioStatus.textContent='Please enter a valid AIOMetadata URL or UUID'}return}aioSaveBtn.disabled=true;aioSaveBtn.textContent='Connecting…';if(aioStatus){aioStatus.style.display='block';aioStatus.style.background='rgba(14,165,233,0.15)';aioStatus.style.color='#7dd3fc';aioStatus.style.border='1px solid rgba(56,189,248,0.38)';aioStatus.textContent='Validating connection to metadata provider…'}try{const testData=await api('/admin/api/metadata-provider/test',{method:'POST',body:JSON.stringify({url:raw})});if(!testData.ok)throw new Error(testData.error||'Provider check failed');const saveRes=await api('/admin/api/settings',{method:'PUT',body:JSON.stringify({aiometadataUrl:testData.cleanBaseUrl})});state.settings=saveRes.settings;fillSettings(true);closeAiometadataModal();toast(`Connected & locked to ${testData.name||'AIOMetadata'}!`)}catch(err){if(aioStatus){aioStatus.style.display='block';aioStatus.style.background='rgba(244,63,94,0.15)';aioStatus.style.color='#fecdd3';aioStatus.style.border='1px solid rgba(244,63,94,0.38)';aioStatus.textContent=`Connection error: ${err.message}`}}finally{aioSaveBtn.disabled=false;aioSaveBtn.textContent='Connect & Lock'}});
 const settingsForm=document.getElementById('settingsForm');settingsForm.addEventListener('input',e=>{if(e.target?.id!=='addonIconFile')settingsDirty=true;if(e.target?.name==='baseUrl')syncManifestUrl()});settingsForm.addEventListener('change',e=>{if(e.target?.id==='addonIconFile')return;settingsDirty=true});settingsForm.addEventListener('invalid',e=>{const panel=e.target.closest?.('[data-settings-panel]');if(panel)activateSettingsPanel(panel.dataset.settingsPanel)},true);settingsForm.addEventListener('submit',async e=>{e.preventDefault();const data=Object.fromEntries(new FormData(e.target));try{state.settings=(await api('/admin/api/settings',{method:'PUT',body:JSON.stringify(data)})).settings;state.health=null;settingsDirty=false;fillSettings(true);toast('Settings saved')}catch(err){toast(err.message)}});
 document.querySelector('.settings-nav')?.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;const tabs=[...document.querySelectorAll('[data-settings-tab]')],current=tabs.indexOf(document.activeElement);if(current<0)return;e.preventDefault();const next=e.key==='Home'?0:e.key==='End'?tabs.length-1:(current+(e.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;activateSettingsPanel(tabs[next].dataset.settingsTab,{focus:true})});
 fileModal.addEventListener('close',cleanupModal);
